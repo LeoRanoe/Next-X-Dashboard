@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name       String
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  items      Item[]
+
+  @@map("categories")
+}
+
+model Item {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name              String
+  categoryId        String?   @map("category_id") @db.Uuid
+  purchasePriceUsd  Decimal   @map("purchase_price_usd") @db.Decimal(10, 2)
+  sellingPriceSrd   Decimal?  @map("selling_price_srd") @db.Decimal(10, 2)
+  sellingPriceUsd   Decimal?  @map("selling_price_usd") @db.Decimal(10, 2)
+  imageUrl          String?   @map("image_url")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  category          Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  stock             Stock[]
+  saleItems         SaleItem[]
+  reservations      Reservation[]
+  stockTransfers    StockTransfer[]
+
+  @@map("items")
+}
+
+model Location {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name            String
+  address         String?
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  stock           Stock[]
+  sales           Sale[]
+  reservations    Reservation[]
+  transfersFrom   StockTransfer[]  @relation("FromLocation")
+  transfersTo     StockTransfer[]  @relation("ToLocation")
+
+  @@map("locations")
+}
+
+model Stock {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  itemId     String   @map("item_id") @db.Uuid
+  locationId String   @map("location_id") @db.Uuid
+  quantity   Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, locationId])
+  @@map("stock")
+}
+
+model StockTransfer {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  itemId         String   @map("item_id") @db.Uuid
+  fromLocationId String   @map("from_location_id") @db.Uuid
+  toLocationId   String   @map("to_location_id") @db.Uuid
+  quantity       Int
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  item           Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  fromLocation   Location @relation("FromLocation", fields: [fromLocationId], references: [id], onDelete: Cascade)
+  toLocation     Location @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: Cascade)
+
+  @@map("stock_transfers")
+}
+
+model ExchangeRate {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  usdToSrd  Decimal  @map("usd_to_srd") @db.Decimal(10, 4)
+  setAt     DateTime @default(now()) @map("set_at") @db.Timestamptz(6)
+  isActive  Boolean  @default(true) @map("is_active")
+
+  @@map("exchange_rates")
+}
+
+model Client {
+  id           String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name         String
+  phone        String?
+  email        String?
+  notes        String?
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  reservations Reservation[]
+
+  @@map("clients")
+}
+
+model Reservation {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clientId   String   @map("client_id") @db.Uuid
+  itemId     String   @map("item_id") @db.Uuid
+  locationId String   @map("location_id") @db.Uuid
+  quantity   Int
+  status     String   @default("pending")
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@map("reservations")
+}
+
+model Sale {
+  id            String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  locationId    String     @map("location_id") @db.Uuid
+  sellerId      String?    @map("seller_id") @db.Uuid
+  currency      String
+  exchangeRate  Decimal?   @map("exchange_rate") @db.Decimal(10, 4)
+  totalAmount   Decimal    @map("total_amount") @db.Decimal(10, 2)
+  paymentMethod String?    @map("payment_method")
+  notes         String?
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  location      Location   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  seller        Seller?    @relation(fields: [sellerId], references: [id])
+  saleItems     SaleItem[]
+  commissions   Commission[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  saleId    String   @map("sale_id") @db.Uuid
+  itemId    String   @map("item_id") @db.Uuid
+  quantity  Int
+  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2)
+  subtotal  Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("sale_items")
+}
+
+model Wallet {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personName String    @map("person_name")
+  type       String
+  currency   String
+  balance    Decimal   @default(0) @db.Decimal(10, 2)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  expenses   Expense[]
+
+  @@unique([personName, type, currency])
+  @@map("wallets")
+}
+
+model ExpenseCategory {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expenses  Expense[]
+
+  @@map("expense_categories")
+}
+
+model Expense {
+  id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  categoryId  String?          @map("category_id") @db.Uuid
+  walletId    String           @map("wallet_id") @db.Uuid
+  amount      Decimal          @db.Decimal(10, 2)
+  currency    String
+  description String?
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  category    ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  wallet      Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+model Seller {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name           String
+  commissionRate Decimal      @default(0) @map("commission_rate") @db.Decimal(5, 2)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sales          Sale[]
+  commissions    Commission[]
+
+  @@map("sellers")
+}
+
+model Commission {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sellerId         String   @map("seller_id") @db.Uuid
+  saleId           String   @map("sale_id") @db.Uuid
+  commissionAmount Decimal  @map("commission_amount") @db.Decimal(10, 2)
+  paid             Boolean  @default(false)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  seller           Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  sale             Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@map("commissions")
+}
+
+model BudgetCategory {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String
+  type      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  budgets   Budget[]
+
+  @@map("budget_categories")
+}
+
+model Budget {
+  id            String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  categoryId    String         @map("category_id") @db.Uuid
+  amountAllowed Decimal        @map("amount_allowed") @db.Decimal(10, 2)
+  amountSpent   Decimal        @default(0) @map("amount_spent") @db.Decimal(10, 2)
+  period        String
+  startDate     DateTime       @map("start_date") @db.Date
+  endDate       DateTime?      @map("end_date") @db.Date
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  category      BudgetCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("budgets")
+}
+
+model Goal {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name          String
+  targetAmount  Decimal   @map("target_amount") @db.Decimal(10, 2)
+  currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(10, 2)
+  deadline      DateTime? @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("goals")
+}
