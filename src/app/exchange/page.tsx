@@ -14,10 +14,6 @@ export default function ExchangeRatePage() {
   const [usdAmount, setUsdAmount] = useState('')
   const [srdAmount, setSrdAmount] = useState('')
 
-  useEffect(() => {
-    loadRates()
-  }, [])
-
   const loadRates = async () => {
     const { data } = await supabase
       .from('exchange_rates')
@@ -30,6 +26,10 @@ export default function ExchangeRatePage() {
       setCurrentRate(active || null)
     }
   }
+
+  useEffect(() => {
+    loadRates()
+  }, [])
 
   const handleSetRate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,12 +73,12 @@ export default function ExchangeRatePage() {
   return (
     <div className="min-h-screen">
       {/* Page Header */}
-      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] px-4 lg:px-8 py-6">
+      <div className="bg-card border-b border-border px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-[hsl(var(--foreground))]">Exchange Rate</h1>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Manage currency exchange rates</p>
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Exchange Rate</h1>
+              <p className="text-sm text-muted-foreground mt-1">Manage currency exchange rates</p>
             </div>
             <button 
               onClick={loadRates}
@@ -94,7 +94,7 @@ export default function ExchangeRatePage() {
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-8">
         {/* Current Rate Card */}
         {currentRate && (
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 lg:p-8 rounded-2xl shadow-xl mb-6 lg:mb-8">
+          <div className="bg-linear-to-br from-orange-500 to-orange-600 text-white p-6 lg:p-8 rounded-2xl shadow-xl mb-6 lg:mb-8">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -124,19 +124,19 @@ export default function ExchangeRatePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
           {/* Set New Rate */}
-          <div className="bg-[hsl(var(--card))] rounded-2xl shadow-sm border border-[hsl(var(--border))] p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
                 <TrendingUp size={20} className="text-orange-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Set New Rate</h3>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Update exchange rate</p>
+                <h3 className="text-lg font-bold text-foreground">Set New Rate</h3>
+                <p className="text-sm text-muted-foreground">Update exchange rate</p>
               </div>
             </div>
             <form onSubmit={handleSetRate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Exchange Rate (1 USD equals)
                 </label>
                 <div className="relative">
@@ -146,17 +146,17 @@ export default function ExchangeRatePage() {
                     value={newRate}
                     onChange={(e) => setNewRate(e.target.value)}
                     placeholder="0.0000"
-                    className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-lg font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                    className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl text-lg font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
                     required
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] font-medium">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
                     SRD
                   </span>
                 </div>
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-3 rounded-xl font-semibold shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
+                className="w-full bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-3 rounded-xl font-semibold shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
               >
                 Update Rate
               </button>
@@ -164,19 +164,19 @@ export default function ExchangeRatePage() {
           </div>
 
           {/* Quick Converter */}
-          <div className="bg-[hsl(var(--card))] rounded-2xl shadow-sm border border-[hsl(var(--border))] p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
                 <ArrowRightLeft size={20} className="text-orange-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Quick Converter</h3>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Convert currencies instantly</p>
+                <h3 className="text-lg font-bold text-foreground">Quick Converter</h3>
+                <p className="text-sm text-muted-foreground">Convert currencies instantly</p>
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">USD Amount</label>
+                <label className="block text-sm font-medium text-foreground mb-2">USD Amount</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -184,20 +184,20 @@ export default function ExchangeRatePage() {
                     value={usdAmount}
                     onChange={(e) => handleUsdChange(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-lg font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                    className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl text-lg font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                   />
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] font-medium">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
                     $
                   </span>
                 </div>
               </div>
               <div className="flex justify-center">
-                <div className="w-10 h-10 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center">
-                  <ArrowRightLeft size={18} className="text-[hsl(var(--muted-foreground))]" />
+                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                  <ArrowRightLeft size={18} className="text-muted-foreground" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">SRD Amount</label>
+                <label className="block text-sm font-medium text-foreground mb-2">SRD Amount</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -205,7 +205,7 @@ export default function ExchangeRatePage() {
                     value={srdAmount}
                     onChange={(e) => handleSrdChange(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-lg font-semibold focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                    className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl text-lg font-semibold focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                     SRD
@@ -217,14 +217,14 @@ export default function ExchangeRatePage() {
         </div>
 
         {/* Rate History */}
-        <div className="bg-[hsl(var(--card))] rounded-2xl shadow-sm border border-[hsl(var(--border))] p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
               <History size={20} className="text-purple-600" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Rate History</h3>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">Previous exchange rates</p>
+              <h3 className="text-lg font-bold text-foreground">Rate History</h3>
+              <p className="text-sm text-muted-foreground">Previous exchange rates</p>
             </div>
           </div>
           <div className="space-y-3">
@@ -235,13 +235,13 @@ export default function ExchangeRatePage() {
                   className={`p-4 rounded-xl border-2 transition-all ${
                     rate.is_active 
                       ? 'border-orange-500 bg-orange-500/10' 
-                      : 'border-[hsl(var(--border))] bg-[hsl(var(--card))]'
+                      : 'border-border bg-card'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg font-bold text-[hsl(var(--foreground))]">
+                        <span className="text-lg font-bold text-foreground">
                           1 USD = {rate.usd_to_srd} SRD
                         </span>
                         {rate.is_active && (
@@ -275,3 +275,4 @@ export default function ExchangeRatePage() {
     </div>
   )
 }
+

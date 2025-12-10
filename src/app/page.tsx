@@ -11,7 +11,6 @@ import {
   Receipt, 
   DollarSign, 
   Users, 
-  Calendar, 
   TrendingUp, 
   Target,
   BarChart3,
@@ -29,7 +28,7 @@ type DashboardStats = {
   todaysSales: number
   salesTrend: number
   recentActivity: Array<{
-    icon: any
+    icon: typeof ShoppingCart
     title: string
     time: string
     color: 'orange' | 'blue' | 'green' | 'purple'
@@ -49,11 +48,6 @@ export default function Home() {
     recentActivity: []
   })
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
-
   const [monthlySales, setMonthlySales] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
   const loadDashboardData = async () => {
@@ -121,7 +115,7 @@ export default function Home() {
           icon: DollarSign,
           title: `Exchange rate: 1 USD = ${currentRate.usd_to_srd} SRD`,
           time: getTimeAgo(currentRate.set_at),
-          color: 'green' as const
+          color: 'orange' as const
         })
       }
 
@@ -141,6 +135,11 @@ export default function Home() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadDashboardData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -186,14 +185,14 @@ export default function Home() {
                 Welcome back 👋
               </h1>
               <p className="text-orange-100 text-base lg:text-lg font-medium max-w-2xl leading-relaxed">
-                Here's what's happening with your business today. All metrics are updated in real-time.
+                Here&apos;s what&apos;s happening with your business today. All metrics are updated in real-time.
               </p>
             </div>
             
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-white">
-                <div className="text-sm font-medium text-orange-100 mb-1">Today's Sales</div>
+                <div className="text-sm font-medium text-orange-100 mb-1">Today&apos;s Sales</div>
                 <div className="text-2xl font-bold">${stats.todaysSales.toFixed(2)}</div>
                 <div className="text-xs text-orange-200 mt-1 flex items-center gap-1">
                   <ArrowUpRight size={12} />
@@ -247,8 +246,8 @@ export default function Home() {
         <div className="mb-8 lg:mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">Quick Actions</h2>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Common tasks and shortcuts</p>
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Quick Actions</h2>
+              <p className="text-sm text-muted-foreground mt-1">Common tasks and shortcuts</p>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -307,36 +306,36 @@ export default function Home() {
             <div className="hidden lg:block">
               <ChartCard title="Quick Stats" subtitle="Overview of key metrics">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-orange-500/10 rounded-xl border border-[hsl(var(--border))]">
+                  <div className="flex items-center justify-between p-4 bg-orange-500/10 rounded-xl border border-border">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
                         <DollarSign className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">Total Sales (USD)</p>
-                        <p className="text-xl font-bold text-[hsl(var(--foreground))]">${stats.totalSalesUSD.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">Total Sales (USD)</p>
+                        <p className="text-xl font-bold text-foreground">${stats.totalSalesUSD.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-blue-500/10 rounded-xl border border-[hsl(var(--border))]">
+                  <div className="flex items-center justify-between p-4 bg-blue-500/10 rounded-xl border border-border">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
                         <Package className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">Stock Items</p>
-                        <p className="text-xl font-bold text-[hsl(var(--foreground))]">{stats.stockItems}</p>
+                        <p className="text-sm text-muted-foreground">Stock Items</p>
+                        <p className="text-xl font-bold text-foreground">{stats.stockItems}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-xl border border-[hsl(var(--border))]">
+                  <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-xl border border-border">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
                         <ShoppingCart className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">Pending Reservations</p>
-                        <p className="text-xl font-bold text-[hsl(var(--foreground))]">{stats.activeOrders}</p>
+                        <p className="text-sm text-muted-foreground">Pending Reservations</p>
+                        <p className="text-xl font-bold text-foreground">{stats.activeOrders}</p>
                       </div>
                     </div>
                   </div>
@@ -365,7 +364,7 @@ export default function Home() {
 
         {/* Mobile: All Modules Grid */}
         <div className="lg:hidden mt-8">
-          <h2 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4">All Modules</h2>
+          <h2 className="text-lg font-bold text-foreground mb-4">All Modules</h2>
           <div className="grid grid-cols-3 gap-3">
             {[
               { name: 'Items', icon: Package, path: '/items' },
@@ -380,10 +379,10 @@ export default function Home() {
                 <button
                   key={item.name}
                   onClick={() => router.push(item.path)}
-                  className="bg-[hsl(var(--card))] p-4 rounded-xl shadow-sm border border-[hsl(var(--border))] hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-2"
+                  className="bg-card p-4 rounded-xl shadow-sm border border-border hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-2"
                 >
                   <Icon size={24} className="text-orange-500" />
-                  <span className="text-xs font-medium text-[hsl(var(--foreground))]">{item.name}</span>
+                  <span className="text-xs font-medium text-foreground">{item.name}</span>
                 </button>
               )
             })}
@@ -393,3 +392,4 @@ export default function Home() {
     </div>
   )
 }
+

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
 import { Package, Plus, ArrowRightLeft, AlertTriangle, Filter } from 'lucide-react'
-import { PageHeader, PageContainer, Button, Badge } from '@/components/UI'
+import { PageHeader, PageContainer, Button } from '@/components/UI'
 import { StockCard, Modal } from '@/components/PageCards'
 
 type Item = Database['public']['Tables']['items']['Row']
@@ -36,18 +36,6 @@ export default function StockPage() {
     quantity: ''
   })
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  useEffect(() => {
-    if (selectedLocation) {
-      loadStockByLocation(selectedLocation)
-    } else {
-      loadAllStock()
-    }
-  }, [selectedLocation])
-
   const loadData = async () => {
     const [itemsRes, locationsRes] = await Promise.all([
       supabase.from('items').select('*').order('name'),
@@ -63,7 +51,7 @@ export default function StockPage() {
       .from('stock')
       .select('*, items(*), locations(*)')
       .order('quantity', { ascending: false })
-    if (data) setStocks(data as any)
+    if (data) setStocks(data as StockWithDetails[])
   }
 
   const loadStockByLocation = async (locationId: string) => {
@@ -72,8 +60,21 @@ export default function StockPage() {
       .select('*, items(*), locations(*)')
       .eq('location_id', locationId)
       .order('quantity', { ascending: false })
-    if (data) setStocks(data as any)
+    if (data) setStocks(data as StockWithDetails[])
   }
+
+  useEffect(() => {
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (selectedLocation) {
+      loadStockByLocation(selectedLocation)
+    } else {
+      loadAllStock()
+    }
+  }, [selectedLocation])
 
   const handleAddStock = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -212,20 +213,20 @@ export default function StockPage() {
       <PageContainer>
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
-            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Total Items</div>
-            <div className="text-3xl font-bold text-[hsl(var(--foreground))]">{totalItems}</div>
+          <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+            <div className="text-sm text-muted-foreground mb-1">Total Items</div>
+            <div className="text-3xl font-bold text-foreground">{totalItems}</div>
           </div>
-          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
-            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Total Quantity</div>
+          <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+            <div className="text-sm text-muted-foreground mb-1">Total Quantity</div>
             <div className="text-3xl font-bold text-orange-600">{totalQuantity}</div>
           </div>
-          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
-            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Locations</div>
-            <div className="text-3xl font-bold text-[hsl(var(--foreground))]">{locations.length}</div>
+          <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+            <div className="text-sm text-muted-foreground mb-1">Locations</div>
+            <div className="text-3xl font-bold text-foreground">{locations.length}</div>
           </div>
-          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
-            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1 flex items-center gap-1">
+          <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+            <div className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
               <AlertTriangle size={16} className="text-red-500" />
               Low Stock
             </div>
@@ -234,17 +235,17 @@ export default function StockPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-[hsl(var(--card))] p-4 rounded-2xl shadow-sm border border-[hsl(var(--border))] mb-6">
+        <div className="bg-card p-4 rounded-2xl shadow-sm border border-border mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 <Filter size={16} className="inline mr-1" />
                 Filter by Location
               </label>
               <select
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               >
                 <option value="">All Locations</option>
                 {locations.map((loc) => (
@@ -260,7 +261,7 @@ export default function StockPage() {
                 className={`px-6 py-3 rounded-xl font-semibold transition ${
                   showLowStock
                     ? 'bg-red-500 text-white shadow-lg'
-                    : 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]/80'
+                    : 'bg-muted text-foreground hover:bg-muted/80'
                 }`}
               >
                 {showLowStock ? '✓ Low Stock Only' : 'Show Low Stock'}
@@ -295,11 +296,11 @@ export default function StockPage() {
       <Modal isOpen={showAddForm} onClose={() => setShowAddForm(false)} title="Add Stock">
         <form onSubmit={handleAddStock} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Item</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Item</label>
             <select
               value={addForm.item_id}
               onChange={(e) => setAddForm({ ...addForm, item_id: e.target.value })}
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
             >
               <option value="">Select Item</option>
@@ -311,11 +312,11 @@ export default function StockPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Location</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Location</label>
             <select
               value={addForm.location_id}
               onChange={(e) => setAddForm({ ...addForm, location_id: e.target.value })}
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
             >
               <option value="">Select Location</option>
@@ -327,13 +328,13 @@ export default function StockPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Quantity</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Quantity</label>
             <input
               type="number"
               value={addForm.quantity}
               onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })}
               placeholder="Enter quantity"
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
               min="1"
             />
@@ -348,11 +349,11 @@ export default function StockPage() {
       <Modal isOpen={showTransferForm} onClose={() => setShowTransferForm(false)} title="Transfer Stock">
         <form onSubmit={handleTransferStock} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Item</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Item</label>
             <select
               value={transferForm.item_id}
               onChange={(e) => setTransferForm({ ...transferForm, item_id: e.target.value })}
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
             >
               <option value="">Select Item</option>
@@ -365,11 +366,11 @@ export default function StockPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">From Location</label>
+              <label className="block text-sm font-medium text-foreground mb-2">From Location</label>
               <select
                 value={transferForm.from_location_id}
                 onChange={(e) => setTransferForm({ ...transferForm, from_location_id: e.target.value })}
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
                 required
               >
                 <option value="">Select</option>
@@ -381,11 +382,11 @@ export default function StockPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">To Location</label>
+              <label className="block text-sm font-medium text-foreground mb-2">To Location</label>
               <select
                 value={transferForm.to_location_id}
                 onChange={(e) => setTransferForm({ ...transferForm, to_location_id: e.target.value })}
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
                 required
               >
                 <option value="">Select</option>
@@ -398,13 +399,13 @@ export default function StockPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Quantity</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Quantity</label>
             <input
               type="number"
               value={transferForm.quantity}
               onChange={(e) => setTransferForm({ ...transferForm, quantity: e.target.value })}
               placeholder="Enter quantity to transfer"
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
               min="1"
             />
@@ -417,3 +418,4 @@ export default function StockPage() {
     </div>
   )
 }
+

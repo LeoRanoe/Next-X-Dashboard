@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Plus, Tag, Receipt, TrendingUp } from 'lucide-react'
-import { PageHeader, PageContainer, Button, Badge } from '@/components/UI'
-import { Modal } from '@/components/PageCards'
+import { Plus, Tag, Receipt } from 'lucide-react'
+import { PageHeader, PageContainer, Button } from '@/components/UI'
 
 type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row']
 type Expense = Database['public']['Tables']['expenses']['Row']
@@ -31,10 +30,6 @@ export default function ExpensesPage() {
     description: ''
   })
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
   const loadData = async () => {
     const [categoriesRes, expensesRes, walletsRes] = await Promise.all([
       supabase.from('expense_categories').select('*').order('name'),
@@ -43,9 +38,13 @@ export default function ExpensesPage() {
     ])
     
     if (categoriesRes.data) setCategories(categoriesRes.data)
-    if (expensesRes.data) setExpenses(expensesRes.data as any)
+    if (expensesRes.data) setExpenses(expensesRes.data as ExpenseWithDetails[])
     if (walletsRes.data) setWallets(walletsRes.data)
   }
+
+  useEffect(() => {
+    loadData()
+  }, [])
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,10 +94,6 @@ export default function ExpensesPage() {
   }
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
-  const expensesByCategory = categories.map(cat => ({
-    category: cat,
-    total: expenses.filter(e => e.category_id === cat.id).reduce((sum, e) => sum + e.amount, 0)
-  })).sort((a, b) => b.total - a.total)
 
   return (
     <div className="min-h-screen">
@@ -156,7 +151,7 @@ export default function ExpensesPage() {
           </div>
 
           {showCategoryForm && (
-            <form onSubmit={handleCreateCategory} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
+            <form onSubmit={handleCreateCategory} className="bg-card p-4 rounded-lg shadow mb-4 border border-border">
               <input
                 type="text"
                 value={categoryName}
@@ -172,7 +167,7 @@ export default function ExpensesPage() {
                 <button
                   type="button"
                   onClick={() => setShowCategoryForm(false)}
-                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
+                  className="flex-1 bg-muted py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -182,7 +177,7 @@ export default function ExpensesPage() {
 
           <div className="flex gap-2 flex-wrap">
             {categories.map((category) => (
-              <div key={category.id} className="bg-[hsl(var(--card))] px-3 py-2 rounded-full shadow text-sm border border-[hsl(var(--border))]">
+              <div key={category.id} className="bg-card px-3 py-2 rounded-full shadow text-sm border border-border">
                 {category.name}
               </div>
             ))}
@@ -206,7 +201,7 @@ export default function ExpensesPage() {
           </button>
 
           {showExpenseForm && (
-            <form onSubmit={handleCreateExpense} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
+            <form onSubmit={handleCreateExpense} className="bg-card p-4 rounded-lg shadow mb-4 border border-border">
               <select
                 value={expenseForm.category_id}
                 onChange={(e) => setExpenseForm({ ...expenseForm, category_id: e.target.value })}
@@ -263,7 +258,7 @@ export default function ExpensesPage() {
                 <button
                   type="button"
                   onClick={() => setShowExpenseForm(false)}
-                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
+                  className="flex-1 bg-muted py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -274,14 +269,14 @@ export default function ExpensesPage() {
           <div className="space-y-2">
             <h3 className="font-semibold">Recent Expenses</h3>
             {expenses.map((expense) => (
-              <div key={expense.id} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
+              <div key={expense.id} className="bg-card p-4 rounded-lg shadow border border-border">
                 <div className="flex justify-between items-start mb-1">
                   <div className="flex-1">
                     <div className="font-semibold">
                       {expense.expense_categories?.name || 'Uncategorized'}
                     </div>
                     {expense.description && (
-                      <p className="text-sm text-[hsl(var(--muted-foreground))]">{expense.description}</p>
+                      <p className="text-sm text-muted-foreground">{expense.description}</p>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
                       From: {expense.wallets?.person_name} ({expense.wallets?.type})
@@ -304,3 +299,4 @@ export default function ExpensesPage() {
     </div>
   )
 }
+

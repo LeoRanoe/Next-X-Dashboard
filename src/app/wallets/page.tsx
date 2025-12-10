@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Wallet, Plus, TrendingUp, TrendingDown, DollarSign } from 'lucide-react'
-import { PageHeader, PageContainer, Button, Badge } from '@/components/UI'
+import { Wallet, Plus, DollarSign } from 'lucide-react'
+import { PageHeader, PageContainer, Button } from '@/components/UI'
 import { WalletCard, Modal } from '@/components/PageCards'
 
 type WalletType = Database['public']['Tables']['wallets']['Row']
@@ -25,14 +25,14 @@ export default function WalletsPage() {
     amount: ''
   })
 
-  useEffect(() => {
-    loadWallets()
-  }, [])
-
   const loadWallets = async () => {
     const { data } = await supabase.from('wallets').select('*').order('person_name')
     if (data) setWallets(data)
   }
+
+  useEffect(() => {
+    loadWallets()
+  }, [])
 
   const handleCreateWallet = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,7 +129,7 @@ export default function WalletsPage() {
 
         {/* Wallet List */}
         <div>
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))] mb-4">All Wallets</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">All Wallets</h2>
           {wallets.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <Wallet size={48} className="mx-auto mb-4 opacity-50" />
@@ -159,47 +159,47 @@ export default function WalletsPage() {
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Create New Wallet">
         <form onSubmit={handleCreateWallet} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Person Name</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Person Name</label>
             <input
               type="text"
               value={walletForm.person_name}
               onChange={(e) => setWalletForm({ ...walletForm, person_name: e.target.value })}
               placeholder="Enter person name"
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Type</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Type</label>
             <select
               value={walletForm.type}
               onChange={(e) => setWalletForm({ ...walletForm, type: e.target.value as 'cash' | 'bank' })}
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
             >
               <option value="cash">💵 Cash</option>
               <option value="bank">🏦 Bank</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Currency</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Currency</label>
             <select
               value={walletForm.currency}
               onChange={(e) => setWalletForm({ ...walletForm, currency: e.target.value as 'SRD' | 'USD' })}
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
             >
               <option value="SRD">SRD (Suriname Dollar)</option>
               <option value="USD">USD (US Dollar)</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Initial Balance</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Initial Balance</label>
             <input
               type="number"
               step="0.01"
               value={walletForm.balance}
               onChange={(e) => setWalletForm({ ...walletForm, balance: e.target.value })}
               placeholder="0.00"
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
             />
           </div>
           <div className="flex gap-3">
@@ -225,16 +225,16 @@ export default function WalletsPage() {
         {selectedWallet && (
           <form onSubmit={handleTransaction} className="space-y-4">
             <div className="bg-orange-50 p-4 rounded-xl">
-              <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Current Balance</div>
+              <div className="text-sm text-muted-foreground mb-1">Current Balance</div>
               <div className="text-2xl font-bold text-orange-600">
                 {selectedWallet.currency} {selectedWallet.balance.toFixed(2)}
               </div>
-              <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 {selectedWallet.type === 'cash' ? '💵 Cash' : '🏦 Bank'} • {selectedWallet.currency}
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Transaction Type</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Transaction Type</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -242,7 +242,7 @@ export default function WalletsPage() {
                   className={`py-3 px-4 rounded-xl font-semibold transition ${
                     transactionForm.type === 'add'
                       ? 'bg-green-500 text-white shadow-lg'
-                      : 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]/80'
+                      : 'bg-muted text-foreground hover:bg-muted/80'
                   }`}
                 >
                   ➕ Add Money
@@ -253,7 +253,7 @@ export default function WalletsPage() {
                   className={`py-3 px-4 rounded-xl font-semibold transition ${
                     transactionForm.type === 'remove'
                       ? 'bg-red-500 text-white shadow-lg'
-                      : 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]/80'
+                      : 'bg-muted text-foreground hover:bg-muted/80'
                   }`}
                 >
                   ➖ Remove Money
@@ -261,14 +261,14 @@ export default function WalletsPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Amount</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Amount</label>
               <input
                 type="number"
                 step="0.01"
                 value={transactionForm.amount}
                 onChange={(e) => setTransactionForm({ ...transactionForm, amount: e.target.value })}
                 placeholder="0.00"
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition text-lg"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition text-lg"
                 required
                 min="0.01"
               />
@@ -288,3 +288,4 @@ export default function WalletsPage() {
     </div>
   )
 }
+

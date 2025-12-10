@@ -1,4 +1,4 @@
-import { LucideIcon } from 'lucide-react'
+import Image from 'next/image'
 
 interface WalletCardProps {
   personName: string
@@ -12,7 +12,7 @@ export function WalletCard({ personName, type, currency, balance, onClick }: Wal
   return (
     <button
       onClick={onClick}
-      className="w-full bg-[hsl(var(--card))] rounded-2xl p-6 shadow-sm border border-[hsl(var(--border))] hover:shadow-md transition-all active:scale-[0.98] text-left"
+      className="w-full bg-card rounded-2xl p-6 shadow-sm border border-border hover:shadow-md transition-all active:scale-[0.98] text-left"
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
@@ -23,15 +23,15 @@ export function WalletCard({ personName, type, currency, balance, onClick }: Wal
               </span>
             </div>
             <div>
-              <h3 className="font-bold text-[hsl(var(--foreground))]">{personName}</h3>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">
+              <h3 className="font-bold text-foreground">{personName}</h3>
+              <p className="text-sm text-muted-foreground">
                 {type === 'cash' ? '💵 Cash' : '🏦 Bank'} • {currency}
               </p>
             </div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Balance</div>
+          <div className="text-sm text-muted-foreground mb-1">Balance</div>
           <div className="text-2xl font-bold text-orange-600">
             {currency === 'USD' ? '$' : ''}{balance.toFixed(2)}
             {currency === 'SRD' ? ' SRD' : ''}
@@ -64,10 +64,10 @@ export function ItemCard({
   onDelete
 }: ItemCardProps) {
   return (
-    <div className="bg-[hsl(var(--card))] rounded-2xl shadow-sm border border-[hsl(var(--border))] overflow-hidden hover:shadow-md transition-all">
+    <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-all">
       {imageUrl && (
         <div className="h-48 bg-gray-100 relative">
-          <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
+          <Image src={imageUrl} alt={name} fill className="object-cover" unoptimized />
         </div>
       )}
       {!imageUrl && (
@@ -77,25 +77,25 @@ export function ItemCard({
       )}
       <div className="p-4">
         <div className="mb-3">
-          <h3 className="font-bold text-lg text-[hsl(var(--foreground))] mb-1">{name}</h3>
+          <h3 className="font-bold text-lg text-foreground mb-1">{name}</h3>
           <span className="inline-block bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-1 rounded-full">
             {categoryName}
           </span>
         </div>
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
-            <span className="text-[hsl(var(--muted-foreground))]">Purchase:</span>
-            <span className="font-semibold text-[hsl(var(--foreground))]">${purchasePrice.toFixed(2)}</span>
+            <span className="text-muted-foreground">Purchase:</span>
+            <span className="font-semibold text-foreground">${purchasePrice.toFixed(2)}</span>
           </div>
           {sellingPriceSRD && (
             <div className="flex justify-between text-sm">
-              <span className="text-[hsl(var(--muted-foreground))]">Selling (SRD):</span>
+              <span className="text-muted-foreground">Selling (SRD):</span>
               <span className="font-semibold text-orange-600">{sellingPriceSRD.toFixed(2)} SRD</span>
             </div>
           )}
           {sellingPriceUSD && (
             <div className="flex justify-between text-sm">
-              <span className="text-[hsl(var(--muted-foreground))]">Selling (USD):</span>
+              <span className="text-muted-foreground">Selling (USD):</span>
               <span className="font-semibold text-orange-600">${sellingPriceUSD.toFixed(2)}</span>
             </div>
           )}
@@ -129,20 +129,20 @@ interface LocationCardProps {
 
 export function LocationCard({ name, address, itemCount = 0, onEdit, onDelete }: LocationCardProps) {
   return (
-    <div className="bg-[hsl(var(--card))] rounded-2xl p-6 shadow-sm border border-[hsl(var(--border))] hover:shadow-md transition-all">
+    <div className="bg-card rounded-2xl p-6 shadow-sm border border-border hover:shadow-md transition-all">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
             <span className="text-2xl">📍</span>
           </div>
           <div>
-            <h3 className="font-bold text-lg text-[hsl(var(--foreground))]">{name}</h3>
-            {address && <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{address}</p>}
+            <h3 className="font-bold text-lg text-foreground">{name}</h3>
+            {address && <p className="text-sm text-muted-foreground mt-1">{address}</p>}
           </div>
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <div className="text-sm text-[hsl(var(--muted-foreground))]">
+        <div className="text-sm text-muted-foreground">
           <span className="font-semibold text-orange-600">{itemCount}</span> items in stock
         </div>
         <div className="flex gap-2">
@@ -176,18 +176,20 @@ export function StockCard({ itemName, locationName, quantity, imageUrl, onRemove
   const isLowStock = quantity < 10
   
   return (
-    <div className="bg-[hsl(var(--card))] rounded-2xl p-4 shadow-sm border border-[hsl(var(--border))] hover:shadow-md transition-all">
+    <div className="bg-card rounded-2xl p-4 shadow-sm border border-border hover:shadow-md transition-all">
       <div className="flex items-center gap-4">
         {imageUrl ? (
-          <img src={imageUrl} alt={itemName} className="w-16 h-16 rounded-xl object-cover" />
+          <div className="relative w-16 h-16 rounded-xl overflow-hidden">
+            <Image src={imageUrl} alt={itemName} fill className="object-cover" unoptimized />
+          </div>
         ) : (
           <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center">
             <span className="text-2xl">📦</span>
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-[hsl(var(--foreground))] truncate">{itemName}</h3>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">📍 {locationName}</p>
+          <h3 className="font-bold text-foreground truncate">{itemName}</h3>
+          <p className="text-sm text-muted-foreground">📍 {locationName}</p>
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
               <div
@@ -231,12 +233,12 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[hsl(var(--card))] rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">{title}</h2>
+      <div className="relative bg-card rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground">{title}</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] transition"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition"
           >
             ✕
           </button>
@@ -246,3 +248,4 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     </div>
   )
 }
+

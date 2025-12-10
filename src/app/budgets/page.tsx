@@ -41,10 +41,6 @@ export default function BudgetsGoalsPage() {
     deadline: ''
   })
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
   const loadData = async () => {
     const [categoriesRes, budgetsRes, goalsRes] = await Promise.all([
       supabase.from('budget_categories').select('*').order('name'),
@@ -53,9 +49,13 @@ export default function BudgetsGoalsPage() {
     ])
     
     if (categoriesRes.data) setBudgetCategories(categoriesRes.data)
-    if (budgetsRes.data) setBudgets(budgetsRes.data as any)
+    if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetWithCategory[])
     if (goalsRes.data) setGoals(goalsRes.data)
   }
+
+  useEffect(() => {
+    loadData()
+  }, [])
 
   const handleCreateBudgetCategory = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,7 +129,7 @@ export default function BudgetsGoalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <PageHeader 
         title="Budgets & Goals" 
         subtitle="Track spending and financial objectives"
@@ -142,11 +142,11 @@ export default function BudgetsGoalsPage() {
           <div className="card-premium group">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-caption text-[hsl(var(--muted-foreground))] mb-1">Total Budget</p>
+                <p className="text-caption text-muted-foreground mb-1">Total Budget</p>
                 <p className="text-3xl lg:text-4xl font-bold tracking-tight">${getTotalBudget().toFixed(2)}</p>
                 <p className="text-caption text-gray-500 mt-1">Across all categories</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 flex items-center justify-center shadow-sm">
                 <Wallet className="w-5 h-5 text-blue-600" />
               </div>
             </div>
@@ -155,11 +155,11 @@ export default function BudgetsGoalsPage() {
           <div className="card-premium group">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-caption text-[hsl(var(--muted-foreground))] mb-1">Total Spent</p>
+                <p className="text-caption text-muted-foreground mb-1">Total Spent</p>
                 <p className="text-3xl lg:text-4xl font-bold tracking-tight">${getTotalSpent().toFixed(2)}</p>
                 <p className="text-caption text-gray-500 mt-1">This period</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 flex items-center justify-center shadow-sm">
                 <TrendingUp className="w-5 h-5 text-orange-600" />
               </div>
             </div>
@@ -168,11 +168,11 @@ export default function BudgetsGoalsPage() {
           <div className="card-premium group">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-caption text-[hsl(var(--muted-foreground))] mb-1">Goal Progress</p>
+                <p className="text-caption text-muted-foreground mb-1">Goal Progress</p>
                 <p className="text-3xl lg:text-4xl font-bold tracking-tight">{getTotalGoalProgress().toFixed(0)}%</p>
                 <p className="text-caption text-gray-500 mt-1">Average completion</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-green-500/10 to-green-600/10 border border-green-500/20 flex items-center justify-center shadow-sm">
                 <Target className="w-5 h-5 text-green-600" />
               </div>
             </div>
@@ -180,13 +180,13 @@ export default function BudgetsGoalsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 p-1 bg-[hsl(var(--card))] rounded-xl shadow-sm border border-[hsl(var(--border))]">
+        <div className="flex gap-2 mb-6 p-1 bg-card rounded-xl shadow-sm border border-border">
           <button
             onClick={() => setActiveTab('budgets')}
             className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
               activeTab === 'budgets'
-                ? 'bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]/50'
+                ? 'bg-linear-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
@@ -198,8 +198,8 @@ export default function BudgetsGoalsPage() {
             onClick={() => setActiveTab('goals')}
             className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
               activeTab === 'goals'
-                ? 'bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]/50'
+                ? 'bg-linear-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
@@ -211,8 +211,8 @@ export default function BudgetsGoalsPage() {
             onClick={() => setActiveTab('categories')}
             className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
               activeTab === 'categories'
-                ? 'bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
-                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]/50'
+                ? 'bg-linear-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
@@ -229,7 +229,7 @@ export default function BudgetsGoalsPage() {
           <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-headline font-semibold tracking-tight">Budget Categories</h2>
-            <Button onClick={() => setShowBudgetCategoryForm(true)} className="!px-4">
+            <Button onClick={() => setShowBudgetCategoryForm(true)} className="px-4!">
               <Plus size={18} />
               <span>Add Category</span>
             </Button>
@@ -242,13 +242,13 @@ export default function BudgetsGoalsPage() {
                 value={budgetCategoryForm.name}
                 onChange={(e) => setBudgetCategoryForm({ ...budgetCategoryForm, name: e.target.value })}
                 placeholder="Category name"
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 required
               />
               <select
                 value={budgetCategoryForm.type}
-                onChange={(e) => setBudgetCategoryForm({ ...budgetCategoryForm, type: e.target.value as any })}
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-4 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                onChange={(e) => setBudgetCategoryForm({ ...budgetCategoryForm, type: e.target.value as 'marketing' | 'trips' | 'orders' | 'custom' })}
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-4 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
               >
                 <option value="marketing">Marketing</option>
                 <option value="trips">Trips</option>
@@ -260,7 +260,7 @@ export default function BudgetsGoalsPage() {
                 <button
                   type="button"
                   onClick={() => setShowBudgetCategoryForm(false)}
-                  className="flex-1 px-4 py-3 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))]/80 text-[hsl(var(--foreground))] rounded-xl font-medium transition-all active:scale-[0.98]"
+                  className="flex-1 px-4 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-medium transition-all active:scale-[0.98]"
                 >
                   Cancel
                 </button>
@@ -291,7 +291,7 @@ export default function BudgetsGoalsPage() {
           <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-headline font-semibold tracking-tight">Active Budgets</h2>
-            <Button onClick={() => setShowBudgetForm(true)} className="!px-4">
+            <Button onClick={() => setShowBudgetForm(true)} className="px-4!">
               <Plus size={18} />
               <span>Add Budget</span>
             </Button>
@@ -302,7 +302,7 @@ export default function BudgetsGoalsPage() {
               <select
                 value={budgetForm.category_id}
                 onChange={(e) => setBudgetForm({ ...budgetForm, category_id: e.target.value })}
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 required
               >
                 <option value="">Select Category</option>
@@ -318,13 +318,13 @@ export default function BudgetsGoalsPage() {
                 value={budgetForm.amount_allowed}
                 onChange={(e) => setBudgetForm({ ...budgetForm, amount_allowed: e.target.value })}
                 placeholder="Budget amount"
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 required
               />
               <select
                 value={budgetForm.period}
-                onChange={(e) => setBudgetForm({ ...budgetForm, period: e.target.value as any })}
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                onChange={(e) => setBudgetForm({ ...budgetForm, period: e.target.value as 'monthly' | 'yearly' | 'custom' })}
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
               >
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly</option>
@@ -334,7 +334,7 @@ export default function BudgetsGoalsPage() {
                 type="date"
                 value={budgetForm.start_date}
                 onChange={(e) => setBudgetForm({ ...budgetForm, start_date: e.target.value })}
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 required
               />
               <input
@@ -342,14 +342,14 @@ export default function BudgetsGoalsPage() {
                 value={budgetForm.end_date}
                 onChange={(e) => setBudgetForm({ ...budgetForm, end_date: e.target.value })}
                 placeholder="End date (optional)"
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
               />
               <div className="flex gap-3">
                 <Button type="submit" className="flex-1">Create Budget</Button>
                 <button
                   type="button"
                   onClick={() => setShowBudgetForm(false)}
-                  className="flex-1 px-4 py-3 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))]/80 text-[hsl(var(--foreground))] rounded-xl font-medium transition-all active:scale-[0.98]"
+                  className="flex-1 px-4 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-medium transition-all active:scale-[0.98]"
                 >
                   Cancel
                 </button>
@@ -378,7 +378,7 @@ export default function BudgetsGoalsPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-2xl font-bold tracking-tight ${isOverBudget ? 'text-red-600' : 'text-[hsl(var(--foreground))]'}`}>
+                      <div className={`text-2xl font-bold tracking-tight ${isOverBudget ? 'text-red-600' : 'text-foreground'}`}>
                         ${budget.amount_spent.toFixed(2)}
                       </div>
                       <div className="text-caption text-gray-500">of ${budget.amount_allowed.toFixed(2)}</div>
@@ -386,7 +386,7 @@ export default function BudgetsGoalsPage() {
                   </div>
                   
                   {/* Progress Bar with Glass Effect */}
-                  <div className="relative w-full h-3 bg-[hsl(var(--muted))] rounded-full overflow-hidden shadow-inner">
+                  <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden shadow-inner">
                     <div
                       className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
                         isOverBudget 
@@ -402,7 +402,7 @@ export default function BudgetsGoalsPage() {
                   </div>
                   
                   <div className="mt-2 flex justify-between items-center">
-                    <span className="text-caption text-[hsl(var(--muted-foreground))]">{percentage.toFixed(1)}% used</span>
+                    <span className="text-caption text-muted-foreground">{percentage.toFixed(1)}% used</span>
                     {isOverBudget && (
                       <Badge variant="danger">Over Budget</Badge>
                     )}
@@ -422,7 +422,7 @@ export default function BudgetsGoalsPage() {
           <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-headline font-semibold tracking-tight">Financial Goals</h2>
-            <Button onClick={() => setShowGoalForm(true)} className="!px-4">
+            <Button onClick={() => setShowGoalForm(true)} className="px-4!">
               <Plus size={18} />
               <span>Add Goal</span>
             </Button>
@@ -435,7 +435,7 @@ export default function BudgetsGoalsPage() {
                 value={goalForm.name}
                 onChange={(e) => setGoalForm({ ...goalForm, name: e.target.value })}
                 placeholder="Goal name"
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 required
               />
               <input
@@ -444,21 +444,21 @@ export default function BudgetsGoalsPage() {
                 value={goalForm.target_amount}
                 onChange={(e) => setGoalForm({ ...goalForm, target_amount: e.target.value })}
                 placeholder="Target amount"
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 required
               />
               <input
                 type="date"
                 value={goalForm.deadline}
                 onChange={(e) => setGoalForm({ ...goalForm, deadline: e.target.value })}
-                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl mb-4 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-4 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
               />
               <div className="flex gap-3">
                 <Button type="submit" className="flex-1">Create Goal</Button>
                 <button
                   type="button"
                   onClick={() => setShowGoalForm(false)}
-                  className="flex-1 px-4 py-3 bg-[hsl(var(--muted))] hover:bg-[hsl(var(--muted))]/80 text-[hsl(var(--foreground))] rounded-xl font-medium transition-all active:scale-[0.98]"
+                  className="flex-1 px-4 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-medium transition-all active:scale-[0.98]"
                 >
                   Cancel
                 </button>
@@ -484,13 +484,13 @@ export default function BudgetsGoalsPage() {
                         {isComplete && <Badge variant="success">Complete</Badge>}
                       </div>
                       {goal.deadline && (
-                        <p className="text-caption text-[hsl(var(--muted-foreground))]">
+                        <p className="text-caption text-muted-foreground">
                           Deadline: {new Date(goal.deadline).toLocaleDateString()}
                         </p>
                       )}
                     </div>
                     <div className="text-right">
-                      <div className={`text-2xl font-bold tracking-tight ${isComplete ? 'text-green-600' : 'text-[hsl(var(--foreground))]'}`}>
+                      <div className={`text-2xl font-bold tracking-tight ${isComplete ? 'text-green-600' : 'text-foreground'}`}>
                         ${goal.current_amount.toFixed(2)}
                       </div>
                       <div className="text-caption text-gray-500">of ${goal.target_amount.toFixed(2)}</div>
@@ -498,7 +498,7 @@ export default function BudgetsGoalsPage() {
                   </div>
                   
                   {/* Progress Bar with Glass Effect */}
-                  <div className="relative w-full h-3 bg-[hsl(var(--muted))] rounded-full overflow-hidden shadow-inner">
+                  <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden shadow-inner">
                     <div
                       className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
                         isComplete 
@@ -512,8 +512,8 @@ export default function BudgetsGoalsPage() {
                   </div>
                   
                   <div className="mt-2 flex justify-between items-center">
-                    <span className="text-caption text-[hsl(var(--muted-foreground))]">{percentage.toFixed(1)}% complete</span>
-                    <span className="text-caption text-[hsl(var(--muted-foreground))]">Click to add progress</span>
+                    <span className="text-caption text-muted-foreground">{percentage.toFixed(1)}% complete</span>
+                    <span className="text-caption text-muted-foreground">Click to add progress</span>
                   </div>
                 </div>
               )
@@ -525,3 +525,4 @@ export default function BudgetsGoalsPage() {
     </div>
   )
 }
+

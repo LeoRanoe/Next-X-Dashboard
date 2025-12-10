@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Plus, Check, X, User, Calendar, Users } from 'lucide-react'
-import { PageHeader, PageContainer, Button, Badge } from '@/components/UI'
-import { Modal } from '@/components/PageCards'
+import { Plus, Check, X, User } from 'lucide-react'
+import { PageHeader, PageContainer, Button } from '@/components/UI'
 
 type Client = Database['public']['Tables']['clients']['Row']
 type Item = Database['public']['Tables']['items']['Row']
@@ -34,10 +33,6 @@ export default function ReservationsPage() {
     notes: ''
   })
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
   const loadData = async () => {
     const [clientsRes, itemsRes, locationsRes, reservationsRes] = await Promise.all([
       supabase.from('clients').select('*').order('name'),
@@ -49,8 +44,12 @@ export default function ReservationsPage() {
     if (clientsRes.data) setClients(clientsRes.data)
     if (itemsRes.data) setItems(itemsRes.data)
     if (locationsRes.data) setLocations(locationsRes.data)
-    if (reservationsRes.data) setReservations(reservationsRes.data as any)
+    if (reservationsRes.data) setReservations(reservationsRes.data as ReservationWithDetails[])
   }
+
+  useEffect(() => {
+    loadData()
+  }, [])
 
   const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,7 +89,7 @@ export default function ReservationsPage() {
       case 'pending': return 'bg-yellow-100 text-yellow-800'
       case 'completed': return 'bg-green-100 text-green-800'
       case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-[hsl(var(--muted))] text-gray-800'
+      default: return 'bg-muted text-gray-800'
     }
   }
 
@@ -119,21 +118,21 @@ export default function ReservationsPage() {
       <PageContainer>
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
-            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Total</div>
-            <div className="text-3xl font-bold text-[hsl(var(--foreground))]">{reservations.length}</div>
+          <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+            <div className="text-sm text-muted-foreground mb-1">Total</div>
+            <div className="text-3xl font-bold text-foreground">{reservations.length}</div>
           </div>
-          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
-            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Pending</div>
+          <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+            <div className="text-sm text-muted-foreground mb-1">Pending</div>
             <div className="text-3xl font-bold text-orange-600">{pendingCount}</div>
           </div>
-          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
-            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Completed</div>
+          <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+            <div className="text-sm text-muted-foreground mb-1">Completed</div>
             <div className="text-3xl font-bold text-green-600">{completedCount}</div>
           </div>
-          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
-            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Clients</div>
-            <div className="text-3xl font-bold text-[hsl(var(--foreground))]">{clients.length}</div>
+          <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+            <div className="text-sm text-muted-foreground mb-1">Clients</div>
+            <div className="text-3xl font-bold text-foreground">{clients.length}</div>
           </div>
         </div>
 
@@ -149,7 +148,7 @@ export default function ReservationsPage() {
           </div>
 
           {showClientForm && (
-            <form onSubmit={handleCreateClient} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
+            <form onSubmit={handleCreateClient} className="bg-card p-4 rounded-lg shadow mb-4 border border-border">
               <input
                 type="text"
                 value={clientForm.name}
@@ -186,7 +185,7 @@ export default function ReservationsPage() {
                 <button
                   type="button"
                   onClick={() => setShowClientForm(false)}
-                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
+                  className="flex-1 bg-muted py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -196,12 +195,12 @@ export default function ReservationsPage() {
 
           <div className="grid grid-cols-2 gap-2">
             {clients.slice(0, 4).map((client) => (
-              <div key={client.id} className="bg-[hsl(var(--card))] p-3 rounded-lg shadow border border-[hsl(var(--border))]">
+              <div key={client.id} className="bg-card p-3 rounded-lg shadow border border-border">
                 <div className="flex items-center gap-2 mb-1">
                   <User size={16} className="text-orange-500" />
                   <span className="font-semibold text-sm">{client.name}</span>
                 </div>
-                {client.phone && <p className="text-xs text-[hsl(var(--muted-foreground))]">{client.phone}</p>}
+                {client.phone && <p className="text-xs text-muted-foreground">{client.phone}</p>}
               </div>
             ))}
           </div>
@@ -219,7 +218,7 @@ export default function ReservationsPage() {
           </div>
 
           {showReservationForm && (
-            <form onSubmit={handleCreateReservation} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
+            <form onSubmit={handleCreateReservation} className="bg-card p-4 rounded-lg shadow mb-4 border border-border">
               <select
                 value={reservationForm.client_id}
                 onChange={(e) => setReservationForm({ ...reservationForm, client_id: e.target.value })}
@@ -282,7 +281,7 @@ export default function ReservationsPage() {
                 <button
                   type="button"
                   onClick={() => setShowReservationForm(false)}
-                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
+                  className="flex-1 bg-muted py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -292,14 +291,14 @@ export default function ReservationsPage() {
 
           <div className="space-y-2">
             {reservations.map((reservation) => (
-              <div key={reservation.id} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
+              <div key={reservation.id} className="bg-card p-4 rounded-lg shadow border border-border">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
                     <h3 className="font-semibold">{reservation.items?.name}</h3>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">Client: {reservation.clients?.name}</p>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">Location: {reservation.locations?.name}</p>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">Quantity: {reservation.quantity}</p>
-                    {reservation.notes && <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{reservation.notes}</p>}
+                    <p className="text-sm text-muted-foreground">Client: {reservation.clients?.name}</p>
+                    <p className="text-sm text-muted-foreground">Location: {reservation.locations?.name}</p>
+                    <p className="text-sm text-muted-foreground">Quantity: {reservation.quantity}</p>
+                    {reservation.notes && <p className="text-sm text-muted-foreground mt-1">{reservation.notes}</p>}
                   </div>
                   <span className={`text-xs px-2 py-1 rounded ${getStatusColor(reservation.status)}`}>
                     {reservation.status}
@@ -331,3 +330,4 @@ export default function ReservationsPage() {
     </div>
   )
 }
+

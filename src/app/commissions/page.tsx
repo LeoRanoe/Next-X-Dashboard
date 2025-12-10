@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Plus, DollarSign, CheckCircle, Users, TrendingUp } from 'lucide-react'
-import { PageHeader, PageContainer, Button, Badge } from '@/components/UI'
-import { Modal } from '@/components/PageCards'
+import { Plus, CheckCircle } from 'lucide-react'
+import { PageHeader, PageContainer, Button } from '@/components/UI'
 
 type Seller = Database['public']['Tables']['sellers']['Row']
 type Commission = Database['public']['Tables']['commissions']['Row']
@@ -25,10 +24,6 @@ export default function CommissionsPage() {
     commission_rate: ''
   })
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
   const loadData = async () => {
     const [sellersRes, commissionsRes] = await Promise.all([
       supabase.from('sellers').select('*').order('name'),
@@ -36,8 +31,12 @@ export default function CommissionsPage() {
     ])
     
     if (sellersRes.data) setSellers(sellersRes.data)
-    if (commissionsRes.data) setCommissions(commissionsRes.data as any)
+    if (commissionsRes.data) setCommissions(commissionsRes.data as CommissionWithDetails[])
   }
+
+  useEffect(() => {
+    loadData()
+  }, [])
 
   const handleCreateSeller = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,7 +96,7 @@ export default function CommissionsPage() {
           </div>
 
           {showSellerForm && (
-            <form onSubmit={handleCreateSeller} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
+            <form onSubmit={handleCreateSeller} className="bg-card p-4 rounded-lg shadow mb-4 border border-border">
               <input
                 type="text"
                 value={sellerForm.name}
@@ -124,7 +123,7 @@ export default function CommissionsPage() {
                 <button
                   type="button"
                   onClick={() => setShowSellerForm(false)}
-                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
+                  className="flex-1 bg-muted py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -139,27 +138,27 @@ export default function CommissionsPage() {
               const totalSales = getTotalSales(seller.id)
 
               return (
-                <div key={seller.id} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
+                <div key={seller.id} className="bg-card p-4 rounded-lg shadow border border-border">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="text-lg font-semibold">{seller.name}</h3>
-                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                      <p className="text-sm text-muted-foreground">
                         Commission: {seller.commission_rate}%
                       </p>
-                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                      <p className="text-sm text-muted-foreground">
                         Total Sales: {totalSales}
                       </p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                      <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Unpaid</div>
+                      <div className="text-xs text-muted-foreground mb-1">Unpaid</div>
                       <div className="text-lg font-bold text-yellow-700">
                         ${unpaid.toFixed(2)}
                       </div>
                     </div>
                     <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                      <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Paid</div>
+                      <div className="text-xs text-muted-foreground mb-1">Paid</div>
                       <div className="text-lg font-bold text-green-700">
                         ${paid.toFixed(2)}
                       </div>
@@ -175,11 +174,11 @@ export default function CommissionsPage() {
           <h2 className="text-lg font-semibold mb-3">Commission History</h2>
           <div className="space-y-2">
             {commissions.map((commission) => (
-              <div key={commission.id} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
+              <div key={commission.id} className="bg-card p-4 rounded-lg shadow border border-border">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
                     <div className="font-semibold">{commission.sellers?.name}</div>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                    <p className="text-sm text-muted-foreground">
                       Sale Amount: ${commission.sales?.total_amount.toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500">
@@ -214,3 +213,4 @@ export default function CommissionsPage() {
     </div>
   )
 }
+

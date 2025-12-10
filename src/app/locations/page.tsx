@@ -20,11 +20,6 @@ export default function LocationsPage() {
     address: ''
   })
 
-  useEffect(() => {
-    loadLocations()
-    loadStock()
-  }, [])
-
   const loadLocations = async () => {
     const { data } = await supabase.from('locations').select('*').order('name')
     if (data) setLocations(data)
@@ -34,6 +29,11 @@ export default function LocationsPage() {
     const { data } = await supabase.from('stock').select('*')
     if (data) setStock(data)
   }
+
+  useEffect(() => {
+    loadLocations()
+    loadStock()
+  }, [])
 
   const getLocationItemCount = (locationId: string) => {
     return stock.filter(s => s.location_id === locationId && s.quantity > 0).length
@@ -127,23 +127,23 @@ export default function LocationsPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Location Name</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Location Name</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Enter location name"
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Address (Optional)</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Address (Optional)</label>
             <textarea
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="Enter full address"
-              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               rows={3}
             />
           </div>
@@ -155,3 +155,4 @@ export default function LocationsPage() {
     </div>
   )
 }
+

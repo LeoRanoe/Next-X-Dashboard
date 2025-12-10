@@ -10,7 +10,6 @@ import {
   DollarSign, 
   Users, 
   Calendar, 
-  TrendingUp, 
   Target,
   BarChart3,
   LayoutDashboard,
@@ -129,3 +128,4 @@ export default function Sidebar() {
     </aside>
   )
 }
+
