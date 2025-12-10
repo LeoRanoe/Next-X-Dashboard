@@ -1,21 +1,53 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { ShoppingCart, Plus, Minus, Check, MapPin, Package } from 'lucide-react'
-import { PageHeader, PageContainer, Button, Select, CurrencyToggle, EmptyState, LoadingSpinner } from '@/components/UI'
+import { ShoppingCart, Plus, Minus, Check, MapPin, Package, Receipt, Printer, History, Undo2, CheckCircle, Clock } from 'lucide-react'
+import { PageHeader, PageContainer, Button, Select, CurrencyToggle, EmptyState, LoadingSpinner, Badge } from '@/components/UI'
+import { Modal } from '@/components/PageCards'
 import { formatCurrency, type Currency } from '@/lib/currency'
 
 type Item = Database['public']['Tables']['items']['Row']
 type Location = Database['public']['Tables']['locations']['Row']
 type ExchangeRate = Database['public']['Tables']['exchange_rates']['Row']
 type Stock = Database['public']['Tables']['stock']['Row']
+type Sale = Database['public']['Tables']['sales']['Row']
 
 interface CartItem {
   item: Item
   quantity: number
   availableStock: number
+}
+
+interface SaleItem {
+  id: string
+  item_id: string
+  quantity: number
+  unit_price: number
+  subtotal: number
+  items?: Item
+}
+
+interface SaleWithDetails extends Sale {
+  locations?: Location
+  sale_items?: SaleItem[]
+}
+
+interface InvoiceData {
+  saleId: string
+  date: string
+  location: string
+  items: Array<{
+    name: string
+    quantity: number
+    unitPrice: number
+    subtotal: number
+  }>
+  currency: Currency
+  paymentMethod: string
+  total: number
+  invoiceNumber: string
 }
 
 export default function SalesPage() {
@@ -30,6 +62,14 @@ export default function SalesPage() {
   const [reservationsMap, setReservationsMap] = useState<Map<string, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  
+  // New states for invoice/receipt and recent sales
+  const [showInvoice, setShowInvoice] = useState(false)
+  const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [recentSales, setRecentSales] = useState<SaleWithDetails[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+  const invoiceRef = useRef<HTMLDivElement>(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -42,7 +82,22 @@ export default function SalesPage() {
     if (itemsRes.data) setItems(itemsRes.data)
     if (locationsRes.data) setLocations(locationsRes.data)
     if (ratesRes.data) setCurrentRate(ratesRes.data)
+    await loadRecentSales()
     setLoading(false)
+  }
+
+  const loadRecentSales = async () => {
+    const { data } = await supabase
+      .from('sales')
+      .select(`
+        *,
+        locations (*),
+        sale_items (*, items (*))
+      `)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    
+    if (data) setRecentSales(data as SaleWithDetails[])
   }
 
   const loadStock = async (locationId: string) => {
@@ -136,11 +191,22 @@ export default function SalesPage() {
     }, 0)
   }
 
+  const generateInvoiceNumber = () => {
+    const date = new Date()
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+    return `INV-${year}${month}${day}-${random}`
+  }
+
   const handleCompleteSale = async () => {
     if (!selectedLocation || cart.length === 0 || submitting) return
 
     setSubmitting(true)
     const total = calculateTotal()
+    const location = locations.find(l => l.id === selectedLocation)
+    const invoiceNumber = generateInvoiceNumber()
     
     try {
       const { data: sale, error: saleError } = await supabase
@@ -160,6 +226,8 @@ export default function SalesPage() {
         return
       }
 
+      const saleItems: InvoiceData['items'] = []
+
       for (const cartItem of cart) {
         const price = currency === 'SRD'
           ? (cartItem.item.selling_price_srd || 0)
@@ -170,6 +238,13 @@ export default function SalesPage() {
           item_id: cartItem.item.id,
           quantity: cartItem.quantity,
           unit_price: price,
+          subtotal: price * cartItem.quantity
+        })
+
+        saleItems.push({
+          name: cartItem.item.name,
+          quantity: cartItem.quantity,
+          unitPrice: price,
           subtotal: price * cartItem.quantity
         })
 
@@ -188,11 +263,127 @@ export default function SalesPage() {
         }
       }
 
+      // Create invoice data
+      setInvoiceData({
+        saleId: sale.id,
+        date: new Date().toLocaleString(),
+        location: location?.name || 'Unknown Location',
+        items: saleItems,
+        currency: currency,
+        paymentMethod: paymentMethod === 'cash' ? 'Cash' : 'Bank Transfer',
+        total: total,
+        invoiceNumber: invoiceNumber
+      })
+
       setCart([])
       loadStock(selectedLocation)
+      await loadRecentSales()
+      
+      // Show success message and invoice
+      setShowSuccess(true)
+      setTimeout(() => setShowSuccess(false), 3000)
+      setShowInvoice(true)
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleUndoSale = async (sale: SaleWithDetails) => {
+    if (!confirm('Are you sure you want to undo this sale? Stock will be restored.')) return
+
+    try {
+      // Restore stock for each item
+      if (sale.sale_items) {
+        for (const saleItem of sale.sale_items) {
+          const { data: stock } = await supabase
+            .from('stock')
+            .select('*')
+            .eq('item_id', saleItem.item_id)
+            .eq('location_id', sale.location_id)
+            .single()
+
+          if (stock) {
+            await supabase
+              .from('stock')
+              .update({ quantity: stock.quantity + saleItem.quantity })
+              .eq('id', stock.id)
+          } else {
+            // If stock record doesn't exist, create it
+            await supabase
+              .from('stock')
+              .insert({
+                item_id: saleItem.item_id,
+                location_id: sale.location_id,
+                quantity: saleItem.quantity
+              })
+          }
+        }
+      }
+
+      // Delete sale items first (due to foreign key constraint)
+      await supabase.from('sale_items').delete().eq('sale_id', sale.id)
+      
+      // Delete the sale
+      await supabase.from('sales').delete().eq('id', sale.id)
+
+      // Reload data
+      await loadRecentSales()
+      if (selectedLocation) {
+        loadStock(selectedLocation)
+      }
+
+      alert('Sale has been undone and stock restored.')
+    } catch (error) {
+      console.error('Error undoing sale:', error)
+      alert('Error undoing sale')
+    }
+  }
+
+  const handlePrintInvoice = () => {
+    if (invoiceRef.current) {
+      const printContent = invoiceRef.current.innerHTML
+      const printWindow = window.open('', '_blank')
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Invoice - ${invoiceData?.invoiceNumber}</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                .invoice-header { text-align: center; margin-bottom: 30px; }
+                .invoice-header h1 { color: #f97316; margin: 0; }
+                .invoice-details { margin-bottom: 20px; }
+                .invoice-details p { margin: 5px 0; color: #666; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                th { background: #f5f5f5; font-weight: 600; }
+                .total-row { font-weight: bold; font-size: 1.1em; }
+                .total-row td { border-top: 2px solid #333; }
+                .footer { text-align: center; margin-top: 40px; color: #666; font-size: 0.9em; }
+              </style>
+            </head>
+            <body>
+              ${printContent}
+            </body>
+          </html>
+        `)
+        printWindow.document.close()
+        printWindow.print()
+      }
+    }
+  }
+
+  const getTimeSince = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    return date.toLocaleDateString()
   }
 
   if (loading) {
@@ -212,10 +403,29 @@ export default function SalesPage() {
 
   return (
     <div className="min-h-screen pb-20 lg:pb-0">
+      {/* Success Toast */}
+      {showSuccess && (
+        <div className="fixed top-4 right-4 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="bg-success text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
+            <CheckCircle size={24} />
+            <div>
+              <div className="font-bold">Sale Completed!</div>
+              <div className="text-sm opacity-90">Invoice generated successfully</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PageHeader 
         title="Sales" 
         subtitle="Process new sales"
         icon={<ShoppingCart size={24} />}
+        action={
+          <Button onClick={() => setShowHistory(true)} variant="secondary">
+            <History size={20} />
+            <span className="hidden sm:inline">Recent Sales</span>
+          </Button>
+        }
       />
 
       <PageContainer>
@@ -277,6 +487,9 @@ export default function SalesPage() {
                 <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
                   <Package size={18} className="text-primary" />
                   Available Items
+                  <span className="text-sm font-normal text-muted-foreground ml-auto">
+                    {availableItems.length} items
+                  </span>
                 </h3>
                 {availableItems.length === 0 ? (
                   <p className="text-muted-foreground text-sm text-center py-12">
@@ -398,7 +611,7 @@ export default function SalesPage() {
                         fullWidth
                       >
                         <Check size={20} />
-                        Complete Sale
+                        Complete Sale & Generate Receipt
                       </Button>
                     </div>
                   </>
@@ -408,6 +621,155 @@ export default function SalesPage() {
           </div>
         )}
       </PageContainer>
+
+      {/* Invoice/Receipt Modal */}
+      <Modal isOpen={showInvoice} onClose={() => setShowInvoice(false)} title="Invoice / Receipt">
+        {invoiceData && (
+          <div className="space-y-4">
+            <div ref={invoiceRef}>
+              <div className="invoice-header text-center mb-6">
+                <h1 className="text-2xl font-bold text-primary">NextX Business</h1>
+                <p className="text-muted-foreground text-sm mt-1">Sales Receipt</p>
+              </div>
+              
+              <div className="invoice-details bg-muted/50 rounded-xl p-4 mb-4">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Invoice #:</span>
+                    <span className="font-bold text-foreground ml-2">{invoiceData.invoiceNumber}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Date:</span>
+                    <span className="font-medium text-foreground ml-2">{invoiceData.date}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Location:</span>
+                    <span className="font-medium text-foreground ml-2">{invoiceData.location}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Payment:</span>
+                    <span className="font-medium text-foreground ml-2">{invoiceData.paymentMethod}</span>
+                  </div>
+                </div>
+              </div>
+
+              <table className="w-full text-sm mb-4">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 text-muted-foreground font-medium">Item</th>
+                    <th className="text-center py-2 text-muted-foreground font-medium">Qty</th>
+                    <th className="text-right py-2 text-muted-foreground font-medium">Price</th>
+                    <th className="text-right py-2 text-muted-foreground font-medium">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoiceData.items.map((item, index) => (
+                    <tr key={index} className="border-b border-border/50">
+                      <td className="py-3 font-medium text-foreground">{item.name}</td>
+                      <td className="py-3 text-center text-foreground">{item.quantity}</td>
+                      <td className="py-3 text-right text-muted-foreground">
+                        {formatCurrency(item.unitPrice, invoiceData.currency)}
+                      </td>
+                      <td className="py-3 text-right font-medium text-foreground">
+                        {formatCurrency(item.subtotal, invoiceData.currency)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="total-row">
+                    <td colSpan={3} className="py-3 text-right font-bold text-foreground">Total:</td>
+                    <td className="py-3 text-right text-xl font-bold text-primary">
+                      {formatCurrency(invoiceData.total, invoiceData.currency)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              <div className="footer text-center text-sm text-muted-foreground pt-4 border-t border-border">
+                <p>Thank you for your business!</p>
+                <p className="mt-1">This receipt serves as proof of purchase.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button onClick={handlePrintInvoice} variant="primary" fullWidth>
+                <Printer size={18} />
+                Print Receipt
+              </Button>
+              <Button onClick={() => setShowInvoice(false)} variant="secondary" fullWidth>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Recent Sales History Modal */}
+      <Modal isOpen={showHistory} onClose={() => setShowHistory(false)} title="Recent Sales">
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          {recentSales.length === 0 ? (
+            <div className="text-center py-12">
+              <Receipt size={40} className="mx-auto mb-3 text-muted-foreground/30" />
+              <p className="text-muted-foreground">No recent sales</p>
+            </div>
+          ) : (
+            recentSales.map((sale) => (
+              <div key={sale.id} className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-bold text-foreground">
+                      {formatCurrency(sale.total_amount, sale.currency as Currency)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {sale.locations?.name || 'Unknown Location'}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={sale.payment_method === 'cash' ? 'default' : 'orange'}>
+                      {sale.payment_method === 'cash' ? '💵 Cash' : '🏦 Bank'}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock size={12} />
+                      {getTimeSince(sale.created_at)}
+                    </span>
+                  </div>
+                </div>
+                
+                {sale.sale_items && sale.sale_items.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border/50">
+                    <div className="text-xs text-muted-foreground mb-2">Items:</div>
+                    <div className="space-y-1">
+                      {sale.sale_items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between text-sm">
+                          <span className="text-foreground">
+                            {item.items?.name || 'Unknown Item'} × {item.quantity}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {formatCurrency(item.subtotal, sale.currency as Currency)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  <Button
+                    onClick={() => handleUndoSale(sale)}
+                    variant="danger"
+                    size="sm"
+                    fullWidth
+                  >
+                    <Undo2 size={16} />
+                    Undo Sale & Restore Stock
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }

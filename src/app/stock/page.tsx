@@ -12,8 +12,8 @@ type Location = Database['public']['Tables']['locations']['Row']
 type Stock = Database['public']['Tables']['stock']['Row']
 
 interface StockWithDetails extends Stock {
-  item?: Item
-  location?: Location
+  items?: Item | null
+  locations?: Location | null
 }
 
 export default function StockPage() {
@@ -329,10 +329,10 @@ export default function StockPage() {
             {filteredStocks.map((stock) => (
               <StockCard
                 key={stock.id}
-                itemName={stock.item?.name || 'Unknown Item'}
-                locationName={stock.location?.name || 'Unknown Location'}
+                itemName={stock.items?.name || 'Unknown Item'}
+                locationName={stock.locations?.name || 'Unknown Location'}
                 quantity={stock.quantity}
-                imageUrl={stock.item?.image_url}
+                imageUrl={stock.items?.image_url}
                 onRemove={() => handleRemoveStock(stock.id, stock.quantity)}
               />
             ))}

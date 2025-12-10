@@ -180,19 +180,19 @@ export default function BudgetsGoalsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <StatBox
             label="Total Budget"
-            value={`$${getTotalBudget().toFixed(2)}`}
-            icon={Wallet}
+            value={`${getTotalBudget().toFixed(2)} SRD`}
+            icon={<Wallet size={24} />}
           />
           <StatBox
             label="Total Spent"
-            value={`$${getTotalSpent().toFixed(2)}`}
-            icon={TrendingUp}
+            value={`${getTotalSpent().toFixed(2)} SRD`}
+            icon={<TrendingUp size={24} />}
             variant="warning"
           />
           <StatBox
             label="Goal Progress"
             value={`${getTotalGoalProgress().toFixed(0)}%`}
-            icon={Target}
+            icon={<Target size={24} />}
             variant="success"
           />
         </div>

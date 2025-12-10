@@ -151,24 +151,24 @@ export default function ReservationsPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatBox
-            icon={ClipboardList}
+            icon={<ClipboardList size={24} />}
             label="Total"
             value={reservations.length}
           />
           <StatBox
-            icon={Calendar}
+            icon={<Calendar size={24} />}
             label="Pending"
             value={pendingCount}
             variant="warning"
           />
           <StatBox
-            icon={Check}
+            icon={<Check size={24} />}
             label="Completed"
             value={completedCount}
             variant="success"
           />
           <StatBox
-            icon={User}
+            icon={<User size={24} />}
             label="Clients"
             value={clients.length}
           />

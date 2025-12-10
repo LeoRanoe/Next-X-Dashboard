@@ -214,7 +214,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <StatCard 
             title="Total Sales (USD)" 
-            value={`$${stats.totalSalesUSD.toFixed(2)}`}
+            value={`${stats.totalSalesUSD.toFixed(2)} SRD`}
             icon={DollarSign}
             trend={{ value: `${stats.salesTrend.toFixed(1)}%`, isPositive: stats.salesTrend >= 0 }}
             color="orange"
@@ -236,7 +236,7 @@ export default function Home() {
           <StatCard 
             title="Total Revenue" 
             icon={TrendingUp}
-            value={`$${stats.totalRevenue.toFixed(2)}`}
+            value={`${stats.totalRevenue.toFixed(2)} SRD`}
             trend={{ value: "All time", isPositive: true }}
             color="purple"
           />
