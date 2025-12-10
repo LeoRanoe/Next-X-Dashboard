@@ -3,6 +3,7 @@ import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
+import { CurrencyProvider } from "@/lib/CurrencyContext";
 
 export const metadata: Metadata = {
   title: "NextX Dashboard - Inventory & Sales Management",
@@ -24,26 +25,28 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <div className="flex h-screen overflow-hidden">
-          {/* Desktop Sidebar */}
-          <Sidebar />
-          
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Top Bar */}
-            <TopBar />
+        <CurrencyProvider>
+          <div className="flex h-screen overflow-hidden">
+            {/* Desktop Sidebar */}
+            <Sidebar />
             
-            {/* Page Content */}
-            <main className="flex-1 overflow-y-auto pb-20 lg:pb-8">
-              <div className="h-full">
-                {children}
-              </div>
-            </main>
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Top Bar */}
+              <TopBar />
+              
+              {/* Page Content */}
+              <main className="flex-1 overflow-y-auto pb-20 lg:pb-8">
+                <div className="h-full">
+                  {children}
+                </div>
+              </main>
+            </div>
           </div>
-        </div>
-        
-        {/* Mobile Bottom Navigation */}
-        <BottomNav />
+          
+          {/* Mobile Bottom Navigation */}
+          <BottomNav />
+        </CurrencyProvider>
       </body>
     </html>
   );

@@ -7,7 +7,7 @@ export const CURRENCY_CONFIG = {
     code: 'SRD',
     locale: 'en-SR',
     decimals: 2,
-    position: 'after' as const,
+    position: 'before' as const,
   },
   USD: {
     symbol: '$',
@@ -23,17 +23,26 @@ export const CURRENCY_CONFIG = {
  */
 export function formatCurrency(amount: number, currency: Currency): string {
   const config = CURRENCY_CONFIG[currency]
+  // Round to cents to avoid floating point artifacts
+  const cents = Math.round(Math.abs(amount) * 100)
+  const isWhole = cents % 100 === 0
+
+  // If the amount is a whole currency amount (e.g. 5600.00), don't show decimals.
+  // Otherwise show the configured number of decimals (usually 2).
+  const minimumFractionDigits = isWhole ? 0 : config.decimals
+  const maximumFractionDigits = config.decimals
+
   const formattedNumber = new Intl.NumberFormat(config.locale, {
-    minimumFractionDigits: config.decimals,
-    maximumFractionDigits: config.decimals,
+    minimumFractionDigits,
+    maximumFractionDigits,
   }).format(Math.abs(amount))
 
   const sign = amount < 0 ? '-' : ''
-  
+
   if (currency === 'USD') {
-    return `${sign}$${formattedNumber}`
+    return `${sign}${config.symbol}${formattedNumber}`
   }
-  return `${sign}${formattedNumber} SRD`
+  return `${sign}${config.symbol} ${formattedNumber}`
 }
 
 /**

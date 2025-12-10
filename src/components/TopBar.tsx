@@ -1,12 +1,14 @@
 'use client'
 
-import { Bell, Search, Menu } from 'lucide-react'
+import { Bell, Search, Menu, DollarSign } from 'lucide-react'
 import { useState } from 'react'
 import MobileMenu from './MobileMenu'
+import { useCurrency } from '@/lib/CurrencyContext'
 
 export default function TopBar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { displayCurrency, setDisplayCurrency, exchangeRate } = useCurrency()
 
   return (
     <>
@@ -42,8 +44,39 @@ export default function TopBar() {
           </div>
         </div>
 
-        {/* Right Section - Actions & Profile */}
+        {/* Right Section - Currency Toggle, Actions & Profile */}
         <div className="flex items-center gap-1 lg:gap-2">
+          {/* Currency Toggle */}
+          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5 border border-border">
+            <button
+              onClick={() => setDisplayCurrency('USD')}
+              className={`flex items-center gap-1 px-2 py-1 lg:px-3 lg:py-1.5 rounded-md text-xs lg:text-sm font-semibold transition-all ${
+                displayCurrency === 'USD'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <DollarSign size={14} />
+              <span className="hidden sm:inline">USD</span>
+            </button>
+            <button
+              onClick={() => setDisplayCurrency('SRD')}
+              className={`flex items-center gap-1 px-2 py-1 lg:px-3 lg:py-1.5 rounded-md text-xs lg:text-sm font-semibold transition-all ${
+                displayCurrency === 'SRD'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span className="hidden sm:inline">SRD</span>
+              <span className="sm:hidden">S</span>
+            </button>
+          </div>
+
+          {/* Exchange Rate Display - Desktop only */}
+          <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 bg-muted/30 rounded-lg border border-border/50 text-xs text-muted-foreground">
+            <span>1 USD = {exchangeRate} SRD</span>
+          </div>
+
           {/* Search Icon - Mobile */}
           <button className="lg:hidden p-1.5 hover:bg-muted rounded-lg transition-colors">
             <Search size={18} className="text-muted-foreground" />

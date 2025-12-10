@@ -18,6 +18,8 @@ import {
   Activity
 } from 'lucide-react'
 import { StatCard, ChartCard, QuickActionCard, ActivityItem } from '@/components/Cards'
+import { formatCurrency } from '@/lib/currency'
+import { useCurrency } from '@/lib/CurrencyContext'
 
 type DashboardStats = {
   totalSalesUSD: number
@@ -25,7 +27,8 @@ type DashboardStats = {
   activeOrders: number
   stockItems: number
   totalRevenue: number
-  todaysSales: number
+  todaysSalesUSD: number
+  todaysSalesSRD: number
   salesTrend: number
   recentActivity: Array<{
     icon: typeof ShoppingCart
@@ -37,13 +40,15 @@ type DashboardStats = {
 
 export default function Home() {
   const router = useRouter()
+  const { displayCurrency, exchangeRate, convertToDisplay } = useCurrency()
   const [stats, setStats] = useState<DashboardStats>({
     totalSalesUSD: 0,
     totalSalesSRD: 0,
     activeOrders: 0,
     stockItems: 0,
     totalRevenue: 0,
-    todaysSales: 0,
+    todaysSalesUSD: 0,
+    todaysSalesSRD: 0,
     salesTrend: 0,
     recentActivity: []
   })
@@ -68,43 +73,52 @@ export default function Home() {
       const stock = stockRes.data || []
       const reservations = reservationsRes.data || []
       const currentRate = exchangeRes.data
+      const rate = currentRate?.usd_to_srd || 40
 
-      // Calculate monthly sales for chart
+      // Calculate monthly sales for chart (normalized to USD)
       const monthlyData = Array(12).fill(0)
       sales.forEach(sale => {
         const month = new Date(sale.created_at).getMonth()
-        monthlyData[month] += Number(sale.total_amount)
+        const amountInUSD = sale.currency === 'USD' 
+          ? Number(sale.total_amount) 
+          : Number(sale.total_amount) / rate
+        monthlyData[month] += amountInUSD
       })
       setMonthlySales(monthlyData)
 
-      // Calculate total sales
+      // Calculate total sales by currency
       const totalUSD = sales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_amount), 0)
       const totalSRD = sales.filter(s => s.currency === 'SRD').reduce((sum, s) => sum + Number(s.total_amount), 0)
 
-      // Today's sales
+      // Today's sales by currency
       const todaySales = sales.filter(s => new Date(s.created_at) >= today)
-      const todaysTotal = todaySales.reduce((sum, s) => sum + Number(s.total_amount), 0)
+      const todaysUSD = todaySales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_amount), 0)
+      const todaysSRD = todaySales.filter(s => s.currency === 'SRD').reduce((sum, s) => sum + Number(s.total_amount), 0)
+      const todaysTotalInUSD = todaysUSD + (todaysSRD / rate)
 
-      // Yesterday's sales for trend
+      // Yesterday's sales for trend (normalized to USD)
       const yesterdaySales = sales.filter(s => {
         const date = new Date(s.created_at)
         return date >= yesterday && date < today
       })
-      const yesterdaysTotal = yesterdaySales.reduce((sum, s) => sum + Number(s.total_amount), 0)
-      const trend = yesterdaysTotal > 0 ? ((todaysTotal - yesterdaysTotal) / yesterdaysTotal) * 100 : 0
+      const yesterdaysUSD = yesterdaySales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_amount), 0)
+      const yesterdaysSRD = yesterdaySales.filter(s => s.currency === 'SRD').reduce((sum, s) => sum + Number(s.total_amount), 0)
+      const yesterdaysTotalInUSD = yesterdaysUSD + (yesterdaysSRD / rate)
+      
+      const trend = yesterdaysTotalInUSD > 0 ? ((todaysTotalInUSD - yesterdaysTotalInUSD) / yesterdaysTotalInUSD) * 100 : 0
 
       // Stock items with quantity > 0
       const stockItemsCount = stock.filter(s => s.quantity > 0).length
 
-      // Total revenue (convert SRD to USD)
-      const srdToUSD = currentRate ? totalSRD / Number(currentRate.usd_to_srd) : totalSRD / 40
+      // Total revenue (all sales converted to USD)
+      const srdToUSD = totalSRD / rate
       const totalRevenue = totalUSD + srdToUSD
 
       // Recent activity - get last 4 sales
       const recentSales = sales.slice(-4).reverse()
       const activity = recentSales.map(sale => ({
         icon: ShoppingCart,
-        title: `New sale - ${sale.currency} ${Number(sale.total_amount).toFixed(2)}`,
+        title: `New sale - ${formatCurrency(Number(sale.total_amount), sale.currency)}`,
         time: getTimeAgo(sale.created_at),
         color: 'orange' as const
       }))
@@ -125,7 +139,8 @@ export default function Home() {
         activeOrders: reservations.length,
         stockItems: stockItemsCount,
         totalRevenue,
-        todaysSales: todaysTotal,
+        todaysSalesUSD: todaysUSD,
+        todaysSalesSRD: todaysSRD,
         salesTrend: Math.abs(trend),
         recentActivity: activity.slice(0, 4)
       })
@@ -193,7 +208,14 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white/15 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-white shadow-lg">
                 <div className="text-sm font-semibold text-orange-100 mb-1.5">Today&apos;s Sales</div>
-                <div className="text-2xl lg:text-3xl font-bold">${stats.todaysSales.toFixed(2)}</div>
+                <div className="text-2xl lg:text-3xl font-bold">
+                  {formatCurrency(
+                    displayCurrency === 'USD' 
+                      ? stats.todaysSalesUSD + (stats.todaysSalesSRD / exchangeRate)
+                      : stats.todaysSalesSRD + (stats.todaysSalesUSD * exchangeRate),
+                    displayCurrency
+                  )}
+                </div>
                 <div className="text-xs text-orange-200 mt-2 flex items-center gap-1">
                   <ArrowUpRight size={12} />
                   <span className="font-medium">{stats.salesTrend > 0 ? '+' : ''}{stats.salesTrend.toFixed(1)}% vs yesterday</span>
@@ -211,19 +233,17 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 lg:py-12">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <StatCard 
-            title="Total Sales (USD)" 
-            value={`$${stats.totalSalesUSD.toFixed(2)} USD`}
+            title={`Total Sales (${displayCurrency})`}
+            value={formatCurrency(
+              displayCurrency === 'USD' 
+                ? stats.totalSalesUSD + (stats.totalSalesSRD / exchangeRate)
+                : stats.totalSalesSRD + (stats.totalSalesUSD * exchangeRate),
+              displayCurrency
+            )}
             icon={DollarSign}
             trend={{ value: `${stats.salesTrend.toFixed(1)}%`, isPositive: stats.salesTrend >= 0 }}
-            color="orange"
-          />
-          <StatCard 
-            title="Total Sales (SRD)" 
-            value={`${stats.totalSalesSRD.toFixed(2)} SRD`}
-            icon={DollarSign}
-            trend={{ value: "Suriname", isPositive: true }}
             color="orange"
           />
           <StatCard 
@@ -241,9 +261,14 @@ export default function Home() {
             color="green"
           />
           <StatCard 
-            title="Total Revenue (USD)" 
+            title={`Total Revenue (${displayCurrency})`}
             icon={TrendingUp}
-            value={`$${stats.totalRevenue.toFixed(2)} USD`}
+            value={formatCurrency(
+              displayCurrency === 'USD'
+                ? stats.totalRevenue
+                : stats.totalRevenue * exchangeRate,
+              displayCurrency
+            )}
             trend={{ value: "All time", isPositive: true }}
             color="purple"
           />
@@ -275,7 +300,7 @@ export default function Home() {
           {/* Chart Section */}
           <div className="lg:col-span-2 space-y-6">
             <ChartCard 
-              title="Monthly Sales" 
+              title={`Monthly Sales (${displayCurrency})`}
               subtitle="Sales trends throughout the year"
               action={
                 <button 
@@ -288,18 +313,20 @@ export default function Home() {
             >
               <div className="h-64 lg:h-80 flex items-end justify-between gap-2 lg:gap-4">
                 {monthlySales.map((amount, i) => {
-                  const maxSale = Math.max(...monthlySales, 1)
-                  const height = (amount / maxSale) * 100 || 5
+                  const displayAmount = displayCurrency === 'USD' ? amount : amount * exchangeRate
+                  const displayAmounts = monthlySales.map(a => displayCurrency === 'USD' ? a : a * exchangeRate)
+                  const maxSale = Math.max(...displayAmounts, 1)
+                  const height = (displayAmount / maxSale) * 100 || 5
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
                       <div className="relative">
                         <div 
                           className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-t-lg hover:from-orange-600 hover:to-orange-500 transition-all cursor-pointer"
                           style={{ height: `${Math.max(height, 5)}px`, minHeight: '5px' }}
-                          title={`${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}: $${amount.toFixed(2)}`}
+                          title={`${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}: ${formatCurrency(displayAmount, displayCurrency)}`}
                         ></div>
                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card text-foreground text-xs font-bold px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-lg border border-border">
-                          ${amount.toFixed(0)}
+                          {formatCurrency(displayAmount, displayCurrency)}
                         </div>
                       </div>
                       <span className="text-xs text-muted-foreground hidden lg:block font-medium">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}</span>
@@ -319,8 +346,15 @@ export default function Home() {
                         <DollarSign className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground font-medium">Total Sales (USD)</p>
-                        <p className="text-xl font-bold text-foreground">${stats.totalSalesUSD.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground font-medium">Total Sales ({displayCurrency})</p>
+                        <p className="text-xl font-bold text-foreground">
+                          {formatCurrency(
+                            displayCurrency === 'USD' 
+                              ? stats.totalSalesUSD + (stats.totalSalesSRD / exchangeRate)
+                              : stats.totalSalesSRD + (stats.totalSalesUSD * exchangeRate),
+                            displayCurrency
+                          )}
+                        </p>
                       </div>
                     </div>
                   </div>

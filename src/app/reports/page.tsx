@@ -6,6 +6,8 @@ import { Database } from '@/types/database.types'
 import { BarChart3, TrendingUp, Package, DollarSign, MapPin, Award } from 'lucide-react'
 import { PageHeader, Badge } from '@/components/UI'
 import { ChartCard } from '@/components/Cards'
+import { formatCurrency } from '@/lib/currency'
+import { useCurrency } from '@/lib/CurrencyContext'
 
 type Sale = Database['public']['Tables']['sales']['Row']
 type Item = Database['public']['Tables']['items']['Row']
@@ -22,6 +24,7 @@ interface SaleWithItems extends Sale {
 }
 
 export default function ReportsPage() {
+  const { displayCurrency, exchangeRate } = useCurrency()
   const [sales, setSales] = useState<SaleWithItems[]>([])
   const [items, setItems] = useState<Item[]>([])
   const [stocks, setStocks] = useState<Stock[]>([])
@@ -69,16 +72,22 @@ export default function ReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period])
 
-  const getTotalSales = (currency: 'SRD' | 'USD') => {
-    return sales
-      .filter(s => !selectedLocation || s.location_id === selectedLocation)
-      .filter(s => s.currency === currency)
-      .reduce((sum, s) => sum + s.total_amount, 0)
+  // Get total sales converted to display currency
+  const getTotalSalesInDisplayCurrency = () => {
+    const filteredSales = sales.filter(s => !selectedLocation || s.location_id === selectedLocation)
+    
+    const totalUSD = filteredSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + s.total_amount, 0)
+    const totalSRD = filteredSales.filter(s => s.currency === 'SRD').reduce((sum, s) => sum + s.total_amount, 0)
+    
+    if (displayCurrency === 'USD') {
+      return totalUSD + (totalSRD / exchangeRate)
+    }
+    return totalSRD + (totalUSD * exchangeRate)
   }
 
-  const getTotalProfit = () => {
-    let profit = 0
-    const conversionRate = 40 // 1 USD = 40 SRD
+  // Calculate profit in USD (base currency for cost)
+  const getTotalProfitUSD = () => {
+    let profitUSD = 0
     
     sales
       .filter(s => !selectedLocation || s.location_id === selectedLocation)
@@ -89,20 +98,29 @@ export default function ReportsPage() {
             const costInUSD = item.purchase_price_usd * saleItem.quantity
             let revenueInUSD = saleItem.subtotal
             
-            // Convert SRD revenue to USD using conversion rate
+            // Convert SRD revenue to USD using actual exchange rate
             if (sale.currency === 'SRD') {
-              revenueInUSD = saleItem.subtotal / conversionRate
+              revenueInUSD = saleItem.subtotal / exchangeRate
             }
             
-            profit += revenueInUSD - costInUSD
+            profitUSD += revenueInUSD - costInUSD
           }
         })
       })
-    return profit
+    return profitUSD
+  }
+
+  // Get profit in display currency
+  const getTotalProfit = () => {
+    const profitUSD = getTotalProfitUSD()
+    if (displayCurrency === 'USD') {
+      return profitUSD
+    }
+    return profitUSD * exchangeRate
   }
 
   const getTopSellingItems = () => {
-    const itemSales = new Map<string, { name: string; quantity: number; revenue: number }>()
+    const itemSales = new Map<string, { name: string; quantity: number; revenueUSD: number }>()
     
     sales
       .filter(s => !selectedLocation || s.location_id === selectedLocation)
@@ -110,15 +128,20 @@ export default function ReportsPage() {
         sale.sale_items?.forEach(saleItem => {
           const item = items.find(i => i.id === saleItem.item_id)
           if (item) {
+            // Convert revenue to USD for consistent comparison
+            const revenueUSD = sale.currency === 'USD' 
+              ? saleItem.subtotal 
+              : saleItem.subtotal / exchangeRate
+            
             const existing = itemSales.get(saleItem.item_id)
             if (existing) {
               existing.quantity += saleItem.quantity
-              existing.revenue += saleItem.subtotal
+              existing.revenueUSD += revenueUSD
             } else {
               itemSales.set(saleItem.item_id, {
                 name: item.name,
                 quantity: saleItem.quantity,
-                revenue: saleItem.subtotal
+                revenueUSD: revenueUSD
               })
             }
           }
@@ -128,9 +151,14 @@ export default function ReportsPage() {
     return Array.from(itemSales.values())
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5)
+      .map(item => ({
+        ...item,
+        revenue: displayCurrency === 'USD' ? item.revenueUSD : item.revenueUSD * exchangeRate
+      }))
   }
 
-  const getStockValue = (locationId?: string) => {
+  // Get stock value in USD (base), then convert to display currency
+  const getStockValueUSD = (locationId?: string) => {
     return stocks
       .filter(s => !locationId || s.location_id === locationId)
       .reduce((sum, stock) => {
@@ -142,12 +170,18 @@ export default function ReportsPage() {
       }, 0)
   }
 
+  const getStockValue = (locationId?: string) => {
+    const valueUSD = getStockValueUSD(locationId)
+    if (displayCurrency === 'USD') {
+      return valueUSD
+    }
+    return valueUSD * exchangeRate
+  }
+
   const getProfitByLocation = () => {
-    const conversionRate = 40 // 1 USD = 40 SRD
-    
     return locations.map(location => {
       const locationSales = sales.filter(s => s.location_id === location.id)
-      let profit = 0
+      let profitUSD = 0
       
       locationSales.forEach(sale => {
         sale.sale_items?.forEach(saleItem => {
@@ -156,21 +190,23 @@ export default function ReportsPage() {
             const costInUSD = item.purchase_price_usd * saleItem.quantity
             let revenueInUSD = saleItem.subtotal
             
-            // Convert SRD revenue to USD using conversion rate
+            // Convert SRD revenue to USD using actual exchange rate
             if (sale.currency === 'SRD') {
-              revenueInUSD = saleItem.subtotal / conversionRate
+              revenueInUSD = saleItem.subtotal / exchangeRate
             }
             
-            profit += revenueInUSD - costInUSD
+            profitUSD += revenueInUSD - costInUSD
           }
         })
       })
 
+      const stockValueUSD = getStockValueUSD(location.id)
+
       return {
         name: location.name,
-        profit,
+        profit: displayCurrency === 'USD' ? profitUSD : profitUSD * exchangeRate,
         sales: locationSales.length,
-        stockValue: getStockValue(location.id)
+        stockValue: displayCurrency === 'USD' ? stockValueUSD : stockValueUSD * exchangeRate
       }
     })
   }
@@ -220,7 +256,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="card-premium group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent blur-2xl"></div>
             <div className="relative">
@@ -228,25 +264,10 @@ export default function ReportsPage() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-blue-600" />
                 </div>
-                <span className="text-caption text-muted-foreground">Sales (SRD)</span>
+                <span className="text-caption text-muted-foreground">Total Sales ({displayCurrency})</span>
               </div>
               <div className="text-3xl font-bold tracking-tight">
-                {getTotalSales('SRD').toFixed(2)}
-              </div>
-            </div>
-          </div>
-
-          <div className="card-premium group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent blur-2xl"></div>
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                </div>
-                <span className="text-caption text-muted-foreground">Sales (USD)</span>
-              </div>
-              <div className="text-3xl font-bold tracking-tight">
-                ${getTotalSales('USD').toFixed(2)} USD
+                {formatCurrency(getTotalSalesInDisplayCurrency(), displayCurrency)}
               </div>
             </div>
           </div>
@@ -258,10 +279,10 @@ export default function ReportsPage() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-purple-600" />
                 </div>
-                <span className="text-caption text-muted-foreground">Est. Profit</span>
+                <span className="text-caption text-muted-foreground">Est. Profit ({displayCurrency})</span>
               </div>
               <div className="text-3xl font-bold tracking-tight">
-                ${getTotalProfit().toFixed(2)} USD
+                {formatCurrency(getTotalProfit(), displayCurrency)}
               </div>
             </div>
           </div>
@@ -298,7 +319,7 @@ export default function ReportsPage() {
                 </div>
                 <div className="text-right ml-4">
                   <div className="text-xl font-bold text-[hsl(var(--success))]">
-                    ${item.revenue.toFixed(2)}
+                    {formatCurrency(item.revenue, displayCurrency)}
                   </div>
                   <div className="text-xs text-muted-foreground">revenue</div>
                 </div>
@@ -324,15 +345,15 @@ export default function ReportsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-[hsl(var(--success-muted))] rounded-xl p-3.5 border border-[hsl(var(--success))]/20">
-                    <div className="text-xs text-muted-foreground mb-1 font-medium">Profit</div>
+                    <div className="text-xs text-muted-foreground mb-1 font-medium">Profit ({displayCurrency})</div>
                     <div className="text-2xl font-bold text-[hsl(var(--success))]">
-                      ${stat.profit.toFixed(2)} USD
+                      {formatCurrency(stat.profit, displayCurrency)}
                     </div>
                   </div>
                   <div className="bg-muted/50 rounded-xl p-3.5 border border-border/50">
-                    <div className="text-xs text-muted-foreground mb-1 font-medium">Stock Value</div>
+                    <div className="text-xs text-muted-foreground mb-1 font-medium">Stock Value ({displayCurrency})</div>
                     <div className="text-2xl font-bold text-foreground">
-                      ${stat.stockValue.toFixed(2)} USD
+                      {formatCurrency(stat.stockValue, displayCurrency)}
                     </div>
                   </div>
                 </div>
@@ -348,9 +369,9 @@ export default function ReportsPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 mb-4">
               <Package className="w-8 h-8 text-blue-600" />
             </div>
-            <h3 className="text-headline font-semibold tracking-tight mb-2">Total Stock Value</h3>
+            <h3 className="text-headline font-semibold tracking-tight mb-2">Total Stock Value ({displayCurrency})</h3>
             <div className="text-5xl font-bold tracking-tight bg-gradient-to-r from-blue-600 via-purple-600 to-orange-600 bg-clip-text text-transparent mb-2">
-              ${getStockValue().toFixed(2)}
+              {formatCurrency(getStockValue(), displayCurrency)}
             </div>
             <div className="text-caption text-muted-foreground">
               Across all locations
@@ -361,4 +382,3 @@ export default function ReportsPage() {
     </div>
   )
 }
-

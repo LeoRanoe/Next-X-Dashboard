@@ -8,6 +8,7 @@ import { PageHeader, PageContainer, Button, Input, Select, Textarea, EmptyState,
 import { Modal } from '@/components/PageCards'
 import { formatCurrency, type Currency } from '@/lib/currency'
 import { logActivity } from '@/lib/activityLog'
+import { useCurrency } from '@/lib/CurrencyContext'
 
 type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row']
 type Expense = Database['public']['Tables']['expenses']['Row']
@@ -22,6 +23,7 @@ type SortField = 'date' | 'amount' | 'category'
 type SortOrder = 'asc' | 'desc'
 
 export default function ExpensesPage() {
+  const { displayCurrency, exchangeRate } = useCurrency()
   const [categories, setCategories] = useState<ExpenseCategory[]>([])
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>([])
   const [wallets, setWallets] = useState<Wallet[]>([])
@@ -298,10 +300,14 @@ export default function ExpensesPage() {
     loadData()
   }
 
-  const getTotalExpenses = (currency: Currency) => {
-    return expenses
-      .filter(e => e.currency === currency)
-      .reduce((sum, e) => sum + e.amount, 0)
+  const getTotalExpensesInDisplayCurrency = () => {
+    const totalUSD = expenses.filter(e => e.currency === 'USD').reduce((sum, e) => sum + e.amount, 0)
+    const totalSRD = expenses.filter(e => e.currency === 'SRD').reduce((sum, e) => sum + e.amount, 0)
+    
+    if (displayCurrency === 'USD') {
+      return totalUSD + (totalSRD / exchangeRate)
+    }
+    return totalSRD + (totalUSD * exchangeRate)
   }
 
   if (loading) {
@@ -329,15 +335,10 @@ export default function ExpensesPage() {
 
       <PageContainer>
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 gap-4 mb-6">
           <StatBox 
-            label="Total SRD" 
-            value={formatCurrency(getTotalExpenses('SRD'), 'SRD')} 
-            icon={<Receipt size={20} />}
-          />
-          <StatBox 
-            label="Total USD" 
-            value={formatCurrency(getTotalExpenses('USD'), 'USD')} 
+            label={`Total Expenses (${displayCurrency})`}
+            value={formatCurrency(getTotalExpensesInDisplayCurrency(), displayCurrency)} 
             icon={<Receipt size={20} />}
           />
         </div>
