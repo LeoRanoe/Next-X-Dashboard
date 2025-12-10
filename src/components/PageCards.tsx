@@ -1,9 +1,10 @@
 import Image from 'next/image'
+import { formatCurrency, type Currency } from '@/lib/currency'
 
 interface WalletCardProps {
   personName: string
   type: 'cash' | 'bank'
-  currency: 'SRD' | 'USD'
+  currency: Currency
   balance: number
   onClick: () => void
 }
@@ -12,29 +13,26 @@ export function WalletCard({ personName, type, currency, balance, onClick }: Wal
   return (
     <button
       onClick={onClick}
-      className="w-full bg-card rounded-2xl p-6 shadow-sm border border-border hover:shadow-md transition-all active:scale-[0.98] text-left"
+      className="w-full bg-card rounded-2xl p-5 border border-border hover:border-[hsl(var(--border-hover))] hover:shadow-lg transition-all duration-200 text-left group"
     >
       <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-              <span className="text-xl font-bold text-orange-600">
-                {personName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <h3 className="font-bold text-foreground">{personName}</h3>
-              <p className="text-sm text-muted-foreground">
-                {type === 'cash' ? '💵 Cash' : '🏦 Bank'} • {currency}
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-[hsl(var(--primary-muted))] rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
+            <span className="text-lg font-bold text-primary">
+              {personName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{personName}</h3>
+            <p className="text-sm text-muted-foreground">
+              {type === 'cash' ? '💵 Cash' : '🏦 Bank'} • {currency}
+            </p>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-sm text-muted-foreground mb-1">Balance</div>
-          <div className="text-2xl font-bold text-orange-600">
-            {currency === 'USD' ? '$' : ''}{balance.toFixed(2)}
-            {currency === 'SRD' ? ' SRD' : ''}
+          <div className="text-xs text-muted-foreground mb-1">Balance</div>
+          <div className="text-xl font-bold text-primary">
+            {formatCurrency(balance, currency)}
           </div>
         </div>
       </div>
@@ -64,52 +62,51 @@ export function ItemCard({
   onDelete
 }: ItemCardProps) {
   return (
-    <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-all">
-      {imageUrl && (
-        <div className="h-48 bg-gray-100 relative">
-          <Image src={imageUrl} alt={name} fill className="object-cover" unoptimized />
+    <div className="bg-card rounded-2xl border border-border overflow-hidden hover:border-[hsl(var(--border-hover))] hover:shadow-lg transition-all duration-200 group">
+      {imageUrl ? (
+        <div className="h-44 bg-muted relative overflow-hidden">
+          <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+        </div>
+      ) : (
+        <div className="h-44 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+          <span className="text-5xl opacity-20">📦</span>
         </div>
       )}
-      {!imageUrl && (
-        <div className="h-48 bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
-          <span className="text-6xl text-orange-300">📦</span>
-        </div>
-      )}
-      <div className="p-4">
-        <div className="mb-3">
-          <h3 className="font-bold text-lg text-foreground mb-1">{name}</h3>
-          <span className="inline-block bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-1 rounded-full">
+      <div className="p-5">
+        <div className="mb-4">
+          <h3 className="font-bold text-foreground mb-1.5 text-lg group-hover:text-primary transition-colors">{name}</h3>
+          <span className="badge badge-neutral text-xs">
             {categoryName}
           </span>
         </div>
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Purchase:</span>
+        <div className="space-y-2 mb-5 text-sm">
+          <div className="flex justify-between items-center py-1 border-b border-border/50">
+            <span className="text-muted-foreground">Purchase</span>
             <span className="font-semibold text-foreground">${purchasePrice.toFixed(2)}</span>
           </div>
-          {sellingPriceSRD && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Selling (SRD):</span>
-              <span className="font-semibold text-orange-600">{sellingPriceSRD.toFixed(2)} SRD</span>
+          {sellingPriceSRD != null && (
+            <div className="flex justify-between items-center py-1 border-b border-border/50">
+              <span className="text-muted-foreground">Sell (SRD)</span>
+              <span className="font-semibold text-primary">{sellingPriceSRD.toFixed(2)} SRD</span>
             </div>
           )}
-          {sellingPriceUSD && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Selling (USD):</span>
-              <span className="font-semibold text-orange-600">${sellingPriceUSD.toFixed(2)}</span>
+          {sellingPriceUSD != null && (
+            <div className="flex justify-between items-center py-1">
+              <span className="text-muted-foreground">Sell (USD)</span>
+              <span className="font-semibold text-primary">${sellingPriceUSD.toFixed(2)}</span>
             </div>
           )}
         </div>
         <div className="flex gap-2">
           <button
             onClick={onEdit}
-            className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-600 py-2 rounded-xl font-medium transition"
+            className="flex-1 bg-secondary hover:bg-[hsl(var(--secondary-hover))] text-foreground py-2.5 rounded-xl text-sm font-semibold transition-colors"
           >
             Edit
           </button>
           <button
             onClick={onDelete}
-            className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-xl font-medium transition"
+            className="flex-1 bg-[hsl(var(--destructive-muted))] hover:bg-[hsl(var(--destructive-muted)/0.8)] text-[hsl(var(--destructive-foreground))] py-2.5 rounded-xl text-sm font-semibold transition-colors"
           >
             Delete
           </button>
@@ -129,32 +126,33 @@ interface LocationCardProps {
 
 export function LocationCard({ name, address, itemCount = 0, onEdit, onDelete }: LocationCardProps) {
   return (
-    <div className="bg-card rounded-2xl p-6 shadow-sm border border-border hover:shadow-md transition-all">
+    <div className="bg-card rounded-2xl p-5 border border-border hover:border-[hsl(var(--border-hover))] hover:shadow-lg transition-all duration-200 group">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-            <span className="text-2xl">📍</span>
+          <div className="w-12 h-12 bg-[hsl(var(--primary-muted))] rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
+            <span className="text-xl">📍</span>
           </div>
-          <div>
-            <h3 className="font-bold text-lg text-foreground">{name}</h3>
-            {address && <p className="text-sm text-muted-foreground mt-1">{address}</p>}
+          <div className="min-w-0">
+            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">{name}</h3>
+            {address && <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{address}</p>}
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-4 border-t border-border">
         <div className="text-sm text-muted-foreground">
-          <span className="font-semibold text-orange-600">{itemCount}</span> items in stock
+          <span className="font-bold text-primary text-lg">{itemCount}</span>
+          <span className="ml-1">items in stock</span>
         </div>
         <div className="flex gap-2">
           <button
             onClick={onEdit}
-            className="px-4 py-2 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-lg font-medium transition"
+            className="px-3 py-1.5 bg-secondary hover:bg-[hsl(var(--secondary-hover))] text-foreground rounded-lg text-sm font-medium transition-colors"
           >
             Edit
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition"
+            className="px-3 py-1.5 bg-[hsl(var(--destructive-muted))] hover:bg-[hsl(var(--destructive-muted)/0.8)] text-[hsl(var(--destructive-foreground))] rounded-lg text-sm font-medium transition-colors"
           >
             Delete
           </button>
@@ -176,41 +174,41 @@ export function StockCard({ itemName, locationName, quantity, imageUrl, onRemove
   const isLowStock = quantity < 10
   
   return (
-    <div className="bg-card rounded-2xl p-4 shadow-sm border border-border hover:shadow-md transition-all">
-      <div className="flex items-center gap-4">
+    <div className="bg-card rounded-2xl p-4 border border-border hover:border-[hsl(var(--border-hover))] hover:shadow-lg transition-all duration-200 group">
+      <div className="flex items-center gap-3">
         {imageUrl ? (
-          <div className="relative w-16 h-16 rounded-xl overflow-hidden">
+          <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
             <Image src={imageUrl} alt={itemName} fill className="object-cover" unoptimized />
           </div>
         ) : (
-          <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center">
-            <span className="text-2xl">📦</span>
+          <div className="w-16 h-16 bg-gradient-to-br from-muted to-muted/50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <span className="text-2xl opacity-40">📦</span>
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-foreground truncate">{itemName}</h3>
-          <p className="text-sm text-muted-foreground">📍 {locationName}</p>
-          <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+          <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{itemName}</h3>
+          <p className="text-sm text-muted-foreground truncate">📍 {locationName}</p>
+          <div className="mt-2.5 flex items-center gap-2">
+            <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
               <div
-                className={`h-full ${isLowStock ? 'bg-red-500' : 'bg-orange-500'}`}
+                className={`h-full transition-all duration-500 rounded-full ${isLowStock ? 'bg-gradient-to-r from-destructive to-destructive/80' : 'bg-gradient-to-r from-primary to-primary/80'}`}
                 style={{ width: `${Math.min((quantity / 100) * 100, 100)}%` }}
               />
             </div>
-            <span className={`text-sm font-bold ${isLowStock ? 'text-red-600' : 'text-orange-600'}`}>
+            <span className={`text-sm font-bold min-w-[2rem] text-right ${isLowStock ? 'text-destructive' : 'text-primary'}`}>
               {quantity}
             </span>
           </div>
           {isLowStock && (
-            <span className="inline-block mt-2 bg-red-100 text-red-700 text-xs font-semibold px-2 py-1 rounded-full">
-              Low Stock
+            <span className="badge badge-danger mt-2.5 text-[10px]">
+              ⚠️ Low Stock
             </span>
           )}
         </div>
         {onRemove && (
           <button
             onClick={onRemove}
-            className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition"
+            className="px-3 py-2 bg-[hsl(var(--destructive-muted))] hover:bg-[hsl(var(--destructive-muted)/0.8)] text-[hsl(var(--destructive-foreground))] rounded-xl text-xs font-semibold transition-colors flex-shrink-0"
           >
             Remove
           </button>
@@ -232,18 +230,24 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">{title}</h2>
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" 
+        onClick={onClose} 
+      />
+      <div className="relative bg-card rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden border border-border animate-in fade-in zoom-in-95 duration-200">
+        <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-border px-6 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">{title}</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            aria-label="Close modal"
           >
-            ✕
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-4.5rem)]">{children}</div>
       </div>
     </div>
   )

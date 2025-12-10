@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
 import { Wallet, Plus, DollarSign } from 'lucide-react'
-import { PageHeader, PageContainer, Button } from '@/components/UI'
+import { PageHeader, PageContainer, Button, Input, Select, EmptyState, LoadingSpinner, StatBox } from '@/components/UI'
 import { WalletCard, Modal } from '@/components/PageCards'
+import { formatCurrency, type Currency } from '@/lib/currency'
 
 type WalletType = Database['public']['Tables']['wallets']['Row']
 
@@ -14,10 +15,12 @@ export default function WalletsPage() {
   const [showForm, setShowForm] = useState(false)
   const [showTransactionForm, setShowTransactionForm] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState<WalletType | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [walletForm, setWalletForm] = useState({
     person_name: '',
     type: 'cash' as 'cash' | 'bank',
-    currency: 'SRD' as 'SRD' | 'USD',
+    currency: 'SRD' as Currency,
     balance: ''
   })
   const [transactionForm, setTransactionForm] = useState({
@@ -26,8 +29,10 @@ export default function WalletsPage() {
   })
 
   const loadWallets = async () => {
+    setLoading(true)
     const { data } = await supabase.from('wallets').select('*').order('person_name')
     if (data) setWallets(data)
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -36,48 +41,69 @@ export default function WalletsPage() {
 
   const handleCreateWallet = async (e: React.FormEvent) => {
     e.preventDefault()
-    await supabase.from('wallets').insert({
-      person_name: walletForm.person_name,
-      type: walletForm.type,
-      currency: walletForm.currency,
-      balance: parseFloat(walletForm.balance) || 0
-    })
-    setWalletForm({ person_name: '', type: 'cash', currency: 'SRD', balance: '' })
-    setShowForm(false)
-    loadWallets()
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      await supabase.from('wallets').insert({
+        person_name: walletForm.person_name,
+        type: walletForm.type,
+        currency: walletForm.currency,
+        balance: parseFloat(walletForm.balance) || 0
+      })
+      setWalletForm({ person_name: '', type: 'cash', currency: 'SRD', balance: '' })
+      setShowForm(false)
+      loadWallets()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleTransaction = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedWallet) return
+    if (!selectedWallet || submitting) return
+    
+    setSubmitting(true)
+    try {
+      const amount = parseFloat(transactionForm.amount)
+      const newBalance = transactionForm.type === 'add'
+        ? selectedWallet.balance + amount
+        : selectedWallet.balance - amount
 
-    const amount = parseFloat(transactionForm.amount)
-    const newBalance = transactionForm.type === 'add'
-      ? selectedWallet.balance + amount
-      : selectedWallet.balance - amount
+      await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('id', selectedWallet.id)
 
-    await supabase
-      .from('wallets')
-      .update({ balance: newBalance })
-      .eq('id', selectedWallet.id)
-
-    setTransactionForm({ type: 'add', amount: '' })
-    setShowTransactionForm(false)
-    setSelectedWallet(null)
-    loadWallets()
+      setTransactionForm({ type: 'add', amount: '' })
+      setShowTransactionForm(false)
+      setSelectedWallet(null)
+      loadWallets()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const getTotalByType = (type: 'cash' | 'bank', currency: 'SRD' | 'USD') => {
+  const getTotalByType = (type: 'cash' | 'bank', currency: Currency) => {
     return wallets
       .filter(w => w.type === type && w.currency === currency)
       .reduce((sum, w) => sum + w.balance, 0)
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <PageHeader title="Wallets" subtitle="Manage cash and bank balances" />
+        <LoadingSpinner />
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 lg:pb-0">
       <PageHeader 
         title="Wallets" 
         subtitle="Manage cash and bank balances"
+        icon={<Wallet size={24} />}
         action={
           <Button onClick={() => setShowForm(true)} variant="primary">
             <Plus size={20} />
@@ -89,52 +115,40 @@ export default function WalletsPage() {
       <PageContainer>
         {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-linear-to-br from-orange-500 to-orange-600 text-white p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={20} className="opacity-80" />
-              <div className="text-sm opacity-90">Cash SRD</div>
-            </div>
-            <div className="text-3xl font-bold">
-              {getTotalByType('cash', 'SRD').toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-linear-to-br from-orange-400 to-orange-500 text-white p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={20} className="opacity-80" />
-              <div className="text-sm opacity-90">Cash USD</div>
-            </div>
-            <div className="text-3xl font-bold">
-              ${getTotalByType('cash', 'USD').toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-linear-to-br from-orange-600 to-orange-700 text-white p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={20} className="opacity-80" />
-              <div className="text-sm opacity-90">Bank SRD</div>
-            </div>
-            <div className="text-3xl font-bold">
-              {getTotalByType('bank', 'SRD').toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-linear-to-br from-orange-500 to-orange-600 text-white p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={20} className="opacity-80" />
-              <div className="text-sm opacity-90">Bank USD</div>
-            </div>
-            <div className="text-3xl font-bold">
-              ${getTotalByType('bank', 'USD').toFixed(2)}
-            </div>
-          </div>
+          <StatBox 
+            label="Cash SRD" 
+            value={formatCurrency(getTotalByType('cash', 'SRD'), 'SRD')} 
+            icon={<DollarSign size={20} />}
+          />
+          <StatBox 
+            label="Cash USD" 
+            value={formatCurrency(getTotalByType('cash', 'USD'), 'USD')} 
+            icon={<DollarSign size={20} />}
+          />
+          <StatBox 
+            label="Bank SRD" 
+            value={formatCurrency(getTotalByType('bank', 'SRD'), 'SRD')} 
+            icon={<DollarSign size={20} />}
+          />
+          <StatBox 
+            label="Bank USD" 
+            value={formatCurrency(getTotalByType('bank', 'USD'), 'USD')} 
+            icon={<DollarSign size={20} />}
+          />
         </div>
 
         {/* Wallet List */}
         <div>
-          <h2 className="text-xl font-bold text-foreground mb-4">All Wallets</h2>
+          <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <Wallet size={18} className="text-primary" />
+            All Wallets
+          </h2>
           {wallets.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Wallet size={48} className="mx-auto mb-4 opacity-50" />
-              <p>No wallets yet. Create your first wallet!</p>
-            </div>
+            <EmptyState
+              icon={Wallet}
+              title="No wallets yet"
+              description="Create your first wallet to get started!"
+            />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {wallets.map((wallet) => (
@@ -142,7 +156,7 @@ export default function WalletsPage() {
                   key={wallet.id}
                   personName={wallet.person_name}
                   type={wallet.type as 'cash' | 'bank'}
-                  currency={wallet.currency as 'SRD' | 'USD'}
+                  currency={wallet.currency as Currency}
                   balance={wallet.balance}
                   onClick={() => {
                     setSelectedWallet(wallet)
@@ -158,52 +172,40 @@ export default function WalletsPage() {
       {/* Create Wallet Modal */}
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Create New Wallet">
         <form onSubmit={handleCreateWallet} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Person Name</label>
-            <input
-              type="text"
-              value={walletForm.person_name}
-              onChange={(e) => setWalletForm({ ...walletForm, person_name: e.target.value })}
-              placeholder="Enter person name"
-              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Type</label>
-            <select
-              value={walletForm.type}
-              onChange={(e) => setWalletForm({ ...walletForm, type: e.target.value as 'cash' | 'bank' })}
-              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
-            >
-              <option value="cash">💵 Cash</option>
-              <option value="bank">🏦 Bank</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Currency</label>
-            <select
-              value={walletForm.currency}
-              onChange={(e) => setWalletForm({ ...walletForm, currency: e.target.value as 'SRD' | 'USD' })}
-              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
-            >
-              <option value="SRD">SRD (Suriname Dollar)</option>
-              <option value="USD">USD (US Dollar)</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Initial Balance</label>
-            <input
-              type="number"
-              step="0.01"
-              value={walletForm.balance}
-              onChange={(e) => setWalletForm({ ...walletForm, balance: e.target.value })}
-              placeholder="0.00"
-              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
-            />
-          </div>
+          <Input
+            label="Person Name"
+            type="text"
+            value={walletForm.person_name}
+            onChange={(e) => setWalletForm({ ...walletForm, person_name: e.target.value })}
+            placeholder="Enter person name"
+            required
+          />
+          <Select
+            label="Type"
+            value={walletForm.type}
+            onChange={(e) => setWalletForm({ ...walletForm, type: e.target.value as 'cash' | 'bank' })}
+          >
+            <option value="cash">💵 Cash</option>
+            <option value="bank">🏦 Bank</option>
+          </Select>
+          <Select
+            label="Currency"
+            value={walletForm.currency}
+            onChange={(e) => setWalletForm({ ...walletForm, currency: e.target.value as Currency })}
+          >
+            <option value="SRD">SRD (Suriname Dollar)</option>
+            <option value="USD">USD (US Dollar)</option>
+          </Select>
+          <Input
+            label="Initial Balance"
+            type="number"
+            step="0.01"
+            value={walletForm.balance}
+            onChange={(e) => setWalletForm({ ...walletForm, balance: e.target.value })}
+            placeholder="0.00"
+          />
           <div className="flex gap-3">
-            <Button type="submit" variant="primary" fullWidth>
+            <Button type="submit" variant="primary" fullWidth loading={submitting}>
               Create Wallet
             </Button>
             <Button type="button" variant="secondary" fullWidth onClick={() => setShowForm(false)}>
@@ -224,24 +226,27 @@ export default function WalletsPage() {
       >
         {selectedWallet && (
           <form onSubmit={handleTransaction} className="space-y-4">
-            <div className="bg-orange-50 p-4 rounded-xl">
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-5 rounded-xl border border-primary/20">
               <div className="text-sm text-muted-foreground mb-1">Current Balance</div>
-              <div className="text-2xl font-bold text-orange-600">
-                {selectedWallet.currency} {selectedWallet.balance.toFixed(2)}
+              <div className="text-3xl font-bold text-primary">
+                {formatCurrency(selectedWallet.balance, selectedWallet.currency as Currency)}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {selectedWallet.type === 'cash' ? '💵 Cash' : '🏦 Bank'} • {selectedWallet.currency}
+              <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
+                <span className="text-base">{selectedWallet.type === 'cash' ? '💵' : '🏦'}</span>
+                <span className="font-medium">{selectedWallet.type === 'cash' ? 'Cash' : 'Bank'}</span>
+                <span>•</span>
+                <span>{selectedWallet.currency}</span>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Transaction Type</label>
+              <label className="input-label">Transaction Type</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setTransactionForm({ ...transactionForm, type: 'add' })}
-                  className={`py-3 px-4 rounded-xl font-semibold transition ${
+                  className={`py-3.5 px-4 rounded-xl font-semibold transition-all duration-200 active:scale-98 ${
                     transactionForm.type === 'add'
-                      ? 'bg-green-500 text-white shadow-lg'
+                      ? 'bg-[hsl(var(--success))] text-white shadow-lg shadow-[hsl(var(--success))]/25'
                       : 'bg-muted text-foreground hover:bg-muted/80'
                   }`}
                 >
@@ -250,9 +255,9 @@ export default function WalletsPage() {
                 <button
                   type="button"
                   onClick={() => setTransactionForm({ ...transactionForm, type: 'remove' })}
-                  className={`py-3 px-4 rounded-xl font-semibold transition ${
+                  className={`py-3.5 px-4 rounded-xl font-semibold transition-all duration-200 active:scale-98 ${
                     transactionForm.type === 'remove'
-                      ? 'bg-red-500 text-white shadow-lg'
+                      ? 'bg-destructive text-destructive-foreground shadow-lg shadow-destructive/25'
                       : 'bg-muted text-foreground hover:bg-muted/80'
                   }`}
                 >
@@ -260,24 +265,21 @@ export default function WalletsPage() {
                 </button>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                value={transactionForm.amount}
-                onChange={(e) => setTransactionForm({ ...transactionForm, amount: e.target.value })}
-                placeholder="0.00"
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition text-lg"
-                required
-                min="0.01"
-              />
-            </div>
+            <Input
+              label="Amount"
+              type="number"
+              step="0.01"
+              value={transactionForm.amount}
+              onChange={(e) => setTransactionForm({ ...transactionForm, amount: e.target.value })}
+              placeholder="0.00"
+              required
+            />
             <Button
               type="submit"
               variant={transactionForm.type === 'add' ? 'primary' : 'danger'}
               fullWidth
               size="lg"
+              loading={submitting}
             >
               {transactionForm.type === 'add' ? '✓ Confirm Add' : '✓ Confirm Remove'}
             </Button>

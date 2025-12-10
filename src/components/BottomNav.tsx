@@ -22,8 +22,8 @@ export default function BottomNav() {
   ]
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-2xl z-50 safe-area-bottom backdrop-blur-md">
-      <div className="flex justify-around items-center h-16">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border z-50 safe-area-bottom">
+      <div className="flex justify-around items-center h-16 px-2">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.path
@@ -31,17 +31,17 @@ export default function BottomNav() {
             <Link
               key={item.path}
               href={item.path}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-all relative ${
-                isActive ? 'text-orange-500' : 'text-muted-foreground'
+              className={`flex flex-col items-center justify-center flex-1 h-full relative transition-colors ${
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {isActive && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-b-full" />
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-10 h-0.5 bg-primary rounded-b-full" />
               )}
-              <div className={`p-2 rounded-xl transition-all ${isActive ? 'bg-orange-50' : ''}`}>
-                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+              <div className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-[hsl(var(--primary-muted))] scale-105' : ''}`}>
+                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className={`text-xs mt-0.5 font-medium ${isActive ? 'text-orange-600' : 'text-gray-500'}`}>
+              <span className={`text-[10px] mt-0.5 font-semibold ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                 {item.name}
               </span>
             </Link>

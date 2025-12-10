@@ -10,28 +10,32 @@ export function PageHeader({
   icon?: React.ReactNode 
 }) {
   return (
-    <div className="bg-gradient-to-b from-[hsl(var(--card))] to-[hsl(var(--background))] border-b border-border backdrop-blur-sm sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            {icon && <div className="text-orange-500">{icon}</div>}
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">{title}</h1>
+    <div className="bg-card/95 border-b border-border sticky top-0 z-10 backdrop-blur-sm">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 lg:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {icon && (
+              <div className="w-10 h-10 rounded-xl bg-[hsl(var(--primary-muted))] flex items-center justify-center flex-shrink-0">
+                <div className="text-primary">{icon}</div>
+              </div>
+            )}
+            <div className="min-w-0">
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground tracking-tight truncate">{title}</h1>
               {subtitle && (
-                <p className="text-sm lg:text-base text-muted-foreground mt-2 font-medium">{subtitle}</p>
+                <p className="text-sm text-muted-foreground mt-0.5 truncate">{subtitle}</p>
               )}
             </div>
           </div>
-          {action && <div className="flex items-center gap-3">{action}</div>}
+          {action && <div className="flex items-center gap-2 flex-shrink-0">{action}</div>}
         </div>
       </div>
     </div>
   )
 }
 
-export function PageContainer({ children }: { children: React.ReactNode }) {
+export function PageContainer({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-8">
+    <div className={`max-w-7xl mx-auto px-4 lg:px-8 py-6 ${className}`}>
       {children}
     </div>
   )
@@ -49,28 +53,37 @@ export function EmptyState({
   action?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 lg:py-24 px-4">
-      <div className="relative mb-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-3xl blur-2xl" />
-        <div className="relative w-20 h-20 bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--card))] rounded-3xl flex items-center justify-center border border-border shadow-lg">
-          <Icon size={36} className="text-muted-foreground" />
-        </div>
-      </div>
-      <h3 className="text-xl font-bold text-foreground mb-2 tracking-tight">{title}</h3>
+    <div className="empty-state">
+      <Icon size={48} className="empty-state-icon" />
+      <h3 className="empty-state-title">{title}</h3>
       {description && (
-        <p className="text-sm text-muted-foreground text-center max-w-md mb-8 leading-relaxed">
-          {description}
-        </p>
+        <p className="empty-state-description">{description}</p>
       )}
-      {action}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   )
 }
 
-export function LoadingSpinner() {
+export function LoadingSpinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+  const sizeClasses = {
+    sm: 'w-4 h-4 border-2',
+    md: 'w-8 h-8 border-2',
+    lg: 'w-12 h-12 border-[3px]',
+  }
+  
   return (
     <div className="flex items-center justify-center py-12">
-      <div className="w-12 h-12 border-4 border-border border-t-orange-500 rounded-full animate-spin" />
+      <div className={`${sizeClasses[size]} border-muted-foreground/20 border-t-primary rounded-full animate-spin`} />
+    </div>
+  )
+}
+
+export function LoadingCard() {
+  return (
+    <div className="bg-card rounded-xl p-6 border border-border">
+      <div className="shimmer h-4 w-24 rounded mb-3" />
+      <div className="shimmer h-8 w-32 rounded mb-2" />
+      <div className="shimmer h-3 w-20 rounded" />
     </div>
   )
 }
@@ -85,16 +98,16 @@ export function Badge({
   className?: string
 }) {
   const variants = {
-    default: 'bg-muted text-foreground border-border',
-    success: 'bg-green-950/50 text-green-400 border-green-800',
-    warning: 'bg-amber-950/50 text-amber-400 border-amber-800',
-    danger: 'bg-red-950/50 text-red-400 border-red-800',
-    info: 'bg-blue-950/50 text-blue-400 border-blue-800',
-    orange: 'bg-orange-950/50 text-orange-400 border-orange-800',
+    default: 'badge-neutral',
+    success: 'badge-success',
+    warning: 'badge-warning',
+    danger: 'badge-danger',
+    info: 'badge-info',
+    orange: 'bg-[hsl(var(--primary-muted))] text-primary border border-primary/30',
   }
 
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold tracking-wide border ${variants[variant]} ${className}`}>
+    <span className={`badge gap-1 ${variants[variant]} ${className}`}>
       {children}
     </span>
   )
@@ -107,51 +120,255 @@ export function Button({
   onClick,
   type = 'button',
   disabled = false,
+  loading = false,
   fullWidth = false,
   className = ''
 }: { 
   children: React.ReactNode
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success'
   size?: 'sm' | 'md' | 'lg'
   onClick?: () => void
   type?: 'button' | 'submit' | 'reset'
   disabled?: boolean
+  loading?: boolean
   fullWidth?: boolean
   className?: string
 }) {
   const variants = {
-    primary: 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 border border-orange-600/20',
-    secondary: 'bg-card hover:bg-muted text-foreground border border-border shadow-sm hover:shadow-md',
-    outline: 'border-2 border-orange-500/70 text-orange-500 hover:bg-orange-500/10 hover:border-orange-500 shadow-sm',
-    ghost: 'hover:bg-muted text-foreground hover:text-foreground',
-    danger: 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30',
+    primary: 'bg-primary hover:bg-[hsl(var(--primary-hover))] active:bg-[hsl(var(--primary-active))] text-white shadow-sm hover:shadow-md',
+    secondary: 'bg-secondary hover:bg-[hsl(var(--secondary-hover))] text-foreground border border-border hover:border-[hsl(var(--border-hover))]',
+    outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white',
+    ghost: 'hover:bg-muted active:bg-[hsl(var(--muted-hover))] text-foreground',
+    danger: 'bg-destructive hover:bg-[hsl(var(--destructive)/0.9)] active:bg-[hsl(var(--destructive)/0.8)] text-white shadow-sm hover:shadow-md',
+    success: 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.9)] active:bg-[hsl(var(--success)/0.8)] text-white shadow-sm hover:shadow-md',
   }
 
   const sizes = {
-    sm: 'px-4 py-2 text-sm gap-2',
-    md: 'px-5 py-2.5 text-sm gap-2',
-    lg: 'px-6 py-3.5 text-base gap-3',
+    sm: 'px-3 py-1.5 text-xs gap-1.5',
+    md: 'px-4 py-2.5 text-sm gap-2',
+    lg: 'px-5 py-3 text-base gap-2',
   }
+
+  const isDisabled = disabled || loading
 
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={isDisabled}
       className={`
         inline-flex items-center justify-center
         ${variants[variant]}
         ${sizes[size]}
         ${fullWidth ? 'w-full' : ''}
+        font-semibold rounded-xl
+        transition-all duration-200
+        active:scale-[0.97]
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:shadow-sm
+        focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background
         ${className}
-        font-semibold rounded-xl transition-all duration-200
-        active:scale-[0.98] active:shadow-sm
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
-        focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2
       `}
     >
+      {loading && <div className="loading-spinner" style={{ width: '1rem', height: '1rem' }} />}
       {children}
     </button>
+  )
+}
+
+export function Input({
+  label,
+  error,
+  prefix,
+  suffix,
+  className = '',
+  ...props
+}: {
+  label?: string
+  error?: string
+  prefix?: string
+  suffix?: string
+  className?: string
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+  const hasAdornment = prefix || suffix
+  
+  return (
+    <div className={className}>
+      {label && <label className="input-label">{label}</label>}
+      {hasAdornment ? (
+        <div className="relative">
+          {prefix && (
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">
+              {prefix}
+            </span>
+          )}
+          <input
+            {...props}
+            className={`input-field ${prefix ? 'pl-8' : ''} ${suffix ? 'pr-14' : ''} ${error ? 'border-destructive focus:border-destructive focus:ring-destructive/15' : ''}`}
+          />
+          {suffix && (
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">
+              {suffix}
+            </span>
+          )}
+        </div>
+      ) : (
+        <input
+          {...props}
+          className={`input-field ${error ? 'border-destructive focus:border-destructive focus:ring-destructive/15' : ''}`}
+        />
+      )}
+      {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
+    </div>
+  )
+}
+
+export function Select({
+  label,
+  error,
+  children,
+  className = '',
+  ...props
+}: {
+  label?: string
+  error?: string
+  children: React.ReactNode
+  className?: string
+} & React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className={className}>
+      {label && <label className="input-label">{label}</label>}
+      <select
+        {...props}
+        className={`select-field ${error ? 'border-destructive focus:border-destructive focus:ring-destructive/15' : ''}`}
+      >
+        {children}
+      </select>
+      {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
+    </div>
+  )
+}
+
+export function Textarea({
+  label,
+  error,
+  className = '',
+  ...props
+}: {
+  label?: string
+  error?: string
+  className?: string
+} & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <div className={className}>
+      {label && <label className="input-label">{label}</label>}
+      <textarea
+        {...props}
+        className={`input-field resize-none ${error ? 'border-destructive focus:border-destructive focus:ring-destructive/15' : ''}`}
+      />
+      {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
+    </div>
+  )
+}
+
+export function CurrencyToggle({
+  value,
+  onChange,
+  className = ''
+}: {
+  value: 'SRD' | 'USD'
+  onChange: (currency: 'SRD' | 'USD') => void
+  className?: string
+}) {
+  return (
+    <div className={`currency-toggle ${className}`}>
+      <button
+        type="button"
+        onClick={() => onChange('SRD')}
+        className={`currency-toggle-btn ${value === 'SRD' ? 'active' : ''}`}
+      >
+        SRD
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('USD')}
+        className={`currency-toggle-btn ${value === 'USD' ? 'active' : ''}`}
+      >
+        USD
+      </button>
+    </div>
+  )
+}
+
+export function Card({
+  children,
+  className = '',
+  padding = true
+}: {
+  children: React.ReactNode
+  className?: string
+  padding?: boolean
+}) {
+  return (
+    <div className={`bg-card rounded-xl border border-border ${padding ? 'p-4 lg:p-6' : ''} ${className}`}>
+      {children}
+    </div>
+  )
+}
+
+export function StatBox({
+  label,
+  value,
+  icon: Icon,
+  trend,
+  variant = 'default'
+}: {
+  label: string
+  value: string | number
+  icon?: React.ComponentType<{ size?: number; className?: string }> | React.ReactNode
+  trend?: { value: string; positive: boolean }
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger'
+}) {
+  const variants = {
+    default: 'bg-card border-border',
+    primary: 'bg-[hsl(var(--primary-muted))] border-primary/20',
+    success: 'bg-[hsl(var(--success-muted))] border-success/20',
+    warning: 'bg-[hsl(var(--warning-muted))] border-warning/20',
+    danger: 'bg-[hsl(var(--destructive-muted))] border-destructive/20',
+  }
+
+  const iconVariants = {
+    default: 'text-muted-foreground',
+    primary: 'text-primary',
+    success: 'text-success',
+    warning: 'text-warning',
+    danger: 'text-destructive',
+  }
+
+  const renderIcon = () => {
+    if (!Icon) return null
+    // Check if it's a component type (has a name property or is a function)
+    if (typeof Icon === 'function') {
+      return <Icon size={24} className={iconVariants[variant]} />
+    }
+    // Otherwise treat as ReactNode
+    return Icon
+  }
+
+  return (
+    <div className={`${variants[variant]} border rounded-xl p-4 lg:p-5`}>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground mb-1">{label}</p>
+          <p className="text-2xl lg:text-3xl font-bold text-foreground">{value}</p>
+          {trend && (
+            <p className={`text-xs mt-1 ${trend.positive ? 'text-success' : 'text-destructive'}`}>
+              {trend.positive ? '↑' : '↓'} {trend.value}
+            </p>
+          )}
+        </div>
+        {Icon && <div>{renderIcon()}</div>}
+      </div>
+    </div>
   )
 }
 

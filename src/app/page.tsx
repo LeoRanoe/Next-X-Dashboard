@@ -177,32 +177,32 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 lg:px-8 py-10 lg:py-16">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex-1">
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-white/20">
+              <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md px-4 py-2 rounded-full mb-4 border border-white/25 shadow-sm">
                 <Activity size={16} className="text-white" />
-                <span className="text-sm font-semibold text-white">Live Dashboard</span>
+                <span className="text-sm font-bold text-white tracking-wide">Live Dashboard</span>
               </div>
-              <h1 className="text-3xl lg:text-5xl font-bold text-white mb-3 tracking-tight">
+              <h1 className="text-3xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
                 Welcome back 👋
               </h1>
-              <p className="text-orange-100 text-base lg:text-lg font-medium max-w-2xl leading-relaxed">
+              <p className="text-orange-100/90 text-base lg:text-lg font-medium max-w-2xl leading-relaxed">
                 Here&apos;s what&apos;s happening with your business today. All metrics are updated in real-time.
               </p>
             </div>
             
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-white">
-                <div className="text-sm font-medium text-orange-100 mb-1">Today&apos;s Sales</div>
-                <div className="text-2xl font-bold">${stats.todaysSales.toFixed(2)}</div>
-                <div className="text-xs text-orange-200 mt-1 flex items-center gap-1">
+              <div className="bg-white/15 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-white shadow-lg">
+                <div className="text-sm font-semibold text-orange-100 mb-1.5">Today&apos;s Sales</div>
+                <div className="text-2xl lg:text-3xl font-bold">${stats.todaysSales.toFixed(2)}</div>
+                <div className="text-xs text-orange-200 mt-2 flex items-center gap-1">
                   <ArrowUpRight size={12} />
-                  {stats.salesTrend > 0 ? '+' : ''}{stats.salesTrend.toFixed(1)}% vs yesterday
+                  <span className="font-medium">{stats.salesTrend > 0 ? '+' : ''}{stats.salesTrend.toFixed(1)}% vs yesterday</span>
                 </div>
               </div>
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-white">
-                <div className="text-sm font-medium text-orange-100 mb-1">Active Orders</div>
-                <div className="text-2xl font-bold">{stats.activeOrders}</div>
-                <div className="text-xs text-orange-200 mt-1">Processing now</div>
+              <div className="bg-white/15 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-white shadow-lg">
+                <div className="text-sm font-semibold text-orange-100 mb-1.5">Active Orders</div>
+                <div className="text-2xl lg:text-3xl font-bold">{stats.activeOrders}</div>
+                <div className="text-xs text-orange-200 mt-2">Processing now</div>
               </div>
             </div>
           </div>
@@ -244,13 +244,13 @@ export default function Home() {
 
         {/* Quick Actions - Premium Design */}
         <div className="mb-8 lg:mb-12">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Quick Actions</h2>
+              <h2 className="text-xl lg:text-2xl font-bold text-foreground tracking-tight">Quick Actions</h2>
               <p className="text-sm text-muted-foreground mt-1">Common tasks and shortcuts</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
             {quickActions.map((action) => (
               <QuickActionCard
                 key={action.name}
@@ -291,11 +291,11 @@ export default function Home() {
                           style={{ height: `${Math.max(height, 5)}px`, minHeight: '5px' }}
                           title={`${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}: $${amount.toFixed(2)}`}
                         ></div>
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card text-foreground text-xs font-bold px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-lg border border-border">
                           ${amount.toFixed(0)}
                         </div>
                       </div>
-                      <span className="text-xs text-gray-500 hidden lg:block">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}</span>
+                      <span className="text-xs text-muted-foreground hidden lg:block font-medium">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}</span>
                     </div>
                   )
                 })}
@@ -305,36 +305,36 @@ export default function Home() {
             {/* Quick Stats - Desktop Only */}
             <div className="hidden lg:block">
               <ChartCard title="Quick Stats" subtitle="Overview of key metrics">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-orange-500/10 rounded-xl border border-border">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 bg-primary/10 rounded-xl border border-primary/20 hover:border-primary/40 transition-all duration-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
                         <DollarSign className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Total Sales (USD)</p>
+                        <p className="text-sm text-muted-foreground font-medium">Total Sales (USD)</p>
                         <p className="text-xl font-bold text-foreground">${stats.totalSalesUSD.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-blue-500/10 rounded-xl border border-border">
+                  <div className="flex items-center justify-between p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                      <div className="w-11 h-11 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
                         <Package className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Stock Items</p>
+                        <p className="text-sm text-muted-foreground font-medium">Stock Items</p>
                         <p className="text-xl font-bold text-foreground">{stats.stockItems}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-xl border border-border">
+                  <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-xl border border-green-500/20 hover:border-green-500/40 transition-all duration-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                      <div className="w-11 h-11 bg-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
                         <ShoppingCart className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Pending Reservations</p>
+                        <p className="text-sm text-muted-foreground font-medium">Pending Reservations</p>
                         <p className="text-xl font-bold text-foreground">{stats.activeOrders}</p>
                       </div>
                     </div>
@@ -349,9 +349,12 @@ export default function Home() {
             <ChartCard title="Recent Activity" subtitle="Latest updates">
               <div className="space-y-2">
                 {loading ? (
-                  <div className="text-center py-8 text-gray-500">Loading...</div>
+                  <div className="text-center py-10 text-muted-foreground">Loading...</div>
                 ) : stats.recentActivity.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">No recent activity</div>
+                  <div className="text-center py-10">
+                    <Activity size={32} className="mx-auto mb-3 text-muted-foreground/30" />
+                    <p className="text-muted-foreground text-sm">No recent activity</p>
+                  </div>
                 ) : (
                   stats.recentActivity.map((activity, i) => (
                     <ActivityItem key={i} {...activity} />
@@ -379,10 +382,12 @@ export default function Home() {
                 <button
                   key={item.name}
                   onClick={() => router.push(item.path)}
-                  className="bg-card p-4 rounded-xl shadow-sm border border-border hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-2"
+                  className="bg-card p-4 rounded-xl shadow-sm border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200 active:scale-95 flex flex-col items-center gap-2.5 group"
                 >
-                  <Icon size={24} className="text-orange-500" />
-                  <span className="text-xs font-medium text-foreground">{item.name}</span>
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Icon size={22} className="text-primary" />
+                  </div>
+                  <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{item.name}</span>
                 </button>
               )
             })}

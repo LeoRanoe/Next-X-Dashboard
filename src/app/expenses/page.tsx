@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
 import { Plus, Tag, Receipt } from 'lucide-react'
-import { PageHeader, PageContainer, Button } from '@/components/UI'
+import { PageHeader, PageContainer, Button, Input, Select, Textarea, EmptyState, LoadingSpinner, StatBox, Badge } from '@/components/UI'
+import { Modal } from '@/components/PageCards'
+import { formatCurrency, type Currency } from '@/lib/currency'
 
 type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row']
 type Expense = Database['public']['Tables']['expenses']['Row']
@@ -21,16 +23,19 @@ export default function ExpensesPage() {
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [showCategoryForm, setShowCategoryForm] = useState(false)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [categoryName, setCategoryName] = useState('')
   const [expenseForm, setExpenseForm] = useState({
     category_id: '',
     wallet_id: '',
     amount: '',
-    currency: 'SRD' as 'SRD' | 'USD',
+    currency: 'SRD' as Currency,
     description: ''
   })
 
   const loadData = async () => {
+    setLoading(true)
     const [categoriesRes, expensesRes, walletsRes] = await Promise.all([
       supabase.from('expense_categories').select('*').order('name'),
       supabase.from('expenses').select('*, expense_categories(*), wallets(*)').order('created_at', { ascending: false }),
@@ -40,6 +45,7 @@ export default function ExpensesPage() {
     if (categoriesRes.data) setCategories(categoriesRes.data)
     if (expensesRes.data) setExpenses(expensesRes.data as ExpenseWithDetails[])
     if (walletsRes.data) setWallets(walletsRes.data)
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -48,17 +54,25 @@ export default function ExpensesPage() {
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault()
-    await supabase.from('expense_categories').insert({ name: categoryName })
-    setCategoryName('')
-    setShowCategoryForm(false)
-    loadData()
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      await supabase.from('expense_categories').insert({ name: categoryName })
+      setCategoryName('')
+      setShowCategoryForm(false)
+      loadData()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleCreateExpense = async (e: React.FormEvent) => {
     e.preventDefault()
-    const amount = parseFloat(expenseForm.amount)
+    if (submitting) return
     
+    const amount = parseFloat(expenseForm.amount)
     const wallet = wallets.find(w => w.id === expenseForm.wallet_id)
+    
     if (!wallet) {
       alert('Select a wallet')
       return
@@ -69,37 +83,50 @@ export default function ExpensesPage() {
       return
     }
 
-    await supabase.from('expenses').insert({
-      category_id: expenseForm.category_id || null,
-      wallet_id: expenseForm.wallet_id,
-      amount,
-      currency: expenseForm.currency,
-      description: expenseForm.description || null
-    })
+    setSubmitting(true)
+    try {
+      await supabase.from('expenses').insert({
+        category_id: expenseForm.category_id || null,
+        wallet_id: expenseForm.wallet_id,
+        amount,
+        currency: expenseForm.currency,
+        description: expenseForm.description || null
+      })
 
-    await supabase
-      .from('wallets')
-      .update({ balance: wallet.balance - amount })
-      .eq('id', wallet.id)
+      await supabase
+        .from('wallets')
+        .update({ balance: wallet.balance - amount })
+        .eq('id', wallet.id)
 
-    setExpenseForm({ category_id: '', wallet_id: '', amount: '', currency: 'SRD', description: '' })
-    setShowExpenseForm(false)
-    loadData()
+      setExpenseForm({ category_id: '', wallet_id: '', amount: '', currency: 'SRD', description: '' })
+      setShowExpenseForm(false)
+      loadData()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const getTotalExpenses = (currency: 'SRD' | 'USD') => {
+  const getTotalExpenses = (currency: Currency) => {
     return expenses
       .filter(e => e.currency === currency)
       .reduce((sum, e) => sum + e.amount, 0)
   }
 
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <PageHeader title="Expenses" subtitle="Track business expenses and categories" />
+        <LoadingSpinner />
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 lg:pb-0">
       <PageHeader 
         title="Expenses" 
         subtitle="Track business expenses and categories"
+        icon={<Receipt size={24} />}
         action={
           <Button onClick={() => setShowExpenseForm(true)} variant="primary">
             <Plus size={20} />
@@ -109,193 +136,171 @@ export default function ExpensesPage() {
       />
 
       <PageContainer>
-        {/* Summary Card */}
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-8 rounded-2xl shadow-lg mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Receipt size={32} />
-            <div>
-              <div className="text-sm opacity-90">Total Expenses</div>
-              <div className="text-4xl font-bold">SRD {totalExpenses.toFixed(2)}</div>
-            </div>
-          </div>
-          <div className="mt-4 text-sm opacity-90">{expenses.length} total transactions</div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <StatBox 
+            label="Total SRD" 
+            value={formatCurrency(getTotalExpenses('SRD'), 'SRD')} 
+            icon={<Receipt size={20} />}
+          />
+          <StatBox 
+            label="Total USD" 
+            value={formatCurrency(getTotalExpenses('USD'), 'USD')} 
+            icon={<Receipt size={20} />}
+          />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-4 rounded-lg shadow">
-            <div className="text-sm opacity-90 mb-1">Total SRD</div>
-            <div className="text-2xl font-bold">
-              {getTotalExpenses('SRD').toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-lg shadow">
-            <div className="text-sm opacity-90 mb-1">Total USD</div>
-            <div className="text-2xl font-bold">
-              ${getTotalExpenses('USD').toFixed(2)}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Tag size={20} />
+        {/* Categories */}
+        <div className="bg-card rounded-2xl border border-border p-4 lg:p-5 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-foreground flex items-center gap-2">
+              <Tag size={18} className="text-primary" />
               Categories
             </h2>
-            <button
-              onClick={() => setShowCategoryForm(true)}
-              className="bg-orange-500 text-white p-3 rounded-full shadow-lg active:scale-95 transition"
-            >
-              <Plus size={24} />
-            </button>
+            <Button onClick={() => setShowCategoryForm(true)} variant="secondary" size="sm">
+              <Plus size={16} />
+              Add
+            </Button>
           </div>
-
-          {showCategoryForm && (
-            <form onSubmit={handleCreateCategory} className="bg-card p-4 rounded-lg shadow mb-4 border border-border">
-              <input
-                type="text"
-                value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)}
-                placeholder="Category name"
-                className="w-full p-3 border rounded-lg mb-3 text-lg"
-                required
-              />
-              <div className="flex gap-2">
-                <button type="submit" className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium">
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryForm(false)}
-                  className="flex-1 bg-muted py-3 rounded-lg font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-
           <div className="flex gap-2 flex-wrap">
-            {categories.map((category) => (
-              <div key={category.id} className="bg-card px-3 py-2 rounded-full shadow text-sm border border-border">
-                {category.name}
-              </div>
-            ))}
+            {categories.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center w-full">No categories yet</p>
+            ) : (
+              categories.map((category) => (
+                <Badge key={category.id} variant="default">
+                  {category.name}
+                </Badge>
+              ))
+            )}
           </div>
         </div>
 
+        {/* Recent Expenses */}
         <div>
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Receipt size={20} />
-              Add Expense
-            </h2>
-          </div>
-
-          <button
-            onClick={() => setShowExpenseForm(true)}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-lg font-medium flex items-center justify-center gap-2 active:scale-95 transition mb-4"
-          >
-            <Plus size={20} />
-            Record Expense
-          </button>
-
-          {showExpenseForm && (
-            <form onSubmit={handleCreateExpense} className="bg-card p-4 rounded-lg shadow mb-4 border border-border">
-              <select
-                value={expenseForm.category_id}
-                onChange={(e) => setExpenseForm({ ...expenseForm, category_id: e.target.value })}
-                className="w-full p-3 border rounded-lg mb-3 text-lg"
-              >
-                <option value="">No Category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={expenseForm.wallet_id}
-                onChange={(e) => {
-                  const wallet = wallets.find(w => w.id === e.target.value)
-                  setExpenseForm({ 
-                    ...expenseForm, 
-                    wallet_id: e.target.value,
-                    currency: (wallet?.currency as 'SRD' | 'USD') || 'SRD'
-                  })
-                }}
-                className="w-full p-3 border rounded-lg mb-3 text-lg"
-                required
-              >
-                <option value="">Select Wallet</option>
-                {wallets.map((wallet) => (
-                  <option key={wallet.id} value={wallet.id}>
-                    {wallet.person_name} - {wallet.type} ({wallet.currency} {wallet.balance.toFixed(2)})
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                step="0.01"
-                value={expenseForm.amount}
-                onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
-                placeholder="Amount"
-                className="w-full p-3 border rounded-lg mb-3 text-lg"
-                required
-                min="0.01"
-              />
-              <textarea
-                value={expenseForm.description}
-                onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-                placeholder="Description"
-                className="w-full p-3 border rounded-lg mb-3 text-lg"
-                rows={2}
-              />
-              <div className="flex gap-2">
-                <button type="submit" className="flex-1 bg-red-500 text-white py-3 rounded-lg font-medium">
-                  Record
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowExpenseForm(false)}
-                  className="flex-1 bg-muted py-3 rounded-lg font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-
-          <div className="space-y-2">
-            <h3 className="font-semibold">Recent Expenses</h3>
-            {expenses.map((expense) => (
-              <div key={expense.id} className="bg-card p-4 rounded-lg shadow border border-border">
-                <div className="flex justify-between items-start mb-1">
-                  <div className="flex-1">
-                    <div className="font-semibold">
-                      {expense.expense_categories?.name || 'Uncategorized'}
+          <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
+            <Receipt size={18} className="text-primary" />
+            Recent Expenses
+          </h2>
+          {expenses.length === 0 ? (
+            <EmptyState
+              icon={Receipt}
+              title="No expenses yet"
+              description="Record your first expense to start tracking."
+            />
+          ) : (
+            <div className="space-y-3">
+              {expenses.map((expense) => (
+                <div key={expense.id} className="bg-card p-4 lg:p-5 rounded-2xl border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200 group">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-foreground group-hover:text-primary transition-colors">
+                        {expense.expense_categories?.name || 'Uncategorized'}
+                      </div>
+                      {expense.description && (
+                        <p className="text-sm text-muted-foreground mt-1 truncate">{expense.description}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="text-sm">{expense.wallets?.type === 'cash' ? '💵' : '🏦'}</span>
+                          {expense.wallets?.person_name}
+                        </span>
+                        <span>•</span>
+                        <span>{new Date(expense.created_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                    {expense.description && (
-                      <p className="text-sm text-muted-foreground">{expense.description}</p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      From: {expense.wallets?.person_name} ({expense.wallets?.type})
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(expense.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-red-600">
-                      -{expense.currency} {expense.amount.toFixed(2)}
+                    <div className="text-lg font-bold text-destructive ml-4">
+                      -{formatCurrency(expense.amount, expense.currency as Currency)}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </PageContainer>
+
+      {/* Create Category Modal */}
+      <Modal isOpen={showCategoryForm} onClose={() => setShowCategoryForm(false)} title="New Category">
+        <form onSubmit={handleCreateCategory} className="space-y-4">
+          <Input
+            label="Category Name"
+            type="text"
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+            placeholder="Enter category name"
+            required
+          />
+          <div className="flex gap-3">
+            <Button type="submit" variant="primary" fullWidth loading={submitting}>
+              Create
+            </Button>
+            <Button type="button" variant="secondary" fullWidth onClick={() => setShowCategoryForm(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Create Expense Modal */}
+      <Modal isOpen={showExpenseForm} onClose={() => setShowExpenseForm(false)} title="Record Expense">
+        <form onSubmit={handleCreateExpense} className="space-y-4">
+          <Select
+            label="Category"
+            value={expenseForm.category_id}
+            onChange={(e) => setExpenseForm({ ...expenseForm, category_id: e.target.value })}
+          >
+            <option value="">No Category</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </Select>
+          <Select
+            label="Wallet"
+            value={expenseForm.wallet_id}
+            onChange={(e) => {
+              const wallet = wallets.find(w => w.id === e.target.value)
+              setExpenseForm({ 
+                ...expenseForm, 
+                wallet_id: e.target.value,
+                currency: (wallet?.currency as Currency) || 'SRD'
+              })
+            }}
+            required
+          >
+            <option value="">Select Wallet</option>
+            {wallets.map((wallet) => (
+              <option key={wallet.id} value={wallet.id}>
+                {wallet.person_name} - {wallet.type} ({formatCurrency(wallet.balance, wallet.currency as Currency)})
+              </option>
+            ))}
+          </Select>
+          <Input
+            label="Amount"
+            type="number"
+            step="0.01"
+            min="0.01"
+            value={expenseForm.amount}
+            onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+            placeholder="0.00"
+            required
+          />
+          <Textarea
+            label="Description"
+            value={expenseForm.description}
+            onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
+            placeholder="Optional description"
+            rows={2}
+          />
+          <div className="flex gap-3">
+            <Button type="submit" variant="danger" fullWidth loading={submitting}>
+              Record Expense
+            </Button>
+            <Button type="button" variant="secondary" fullWidth onClick={() => setShowExpenseForm(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

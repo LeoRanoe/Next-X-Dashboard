@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
 import { Plus, Target, TrendingUp, Calendar, Wallet } from 'lucide-react'
-import { PageHeader, Button, Badge } from '@/components/UI'
+import { PageHeader, PageContainer, Button, Badge, Input, Select, StatBox, LoadingSpinner, EmptyState } from '@/components/UI'
+import { Modal } from '@/components/PageCards'
 
 type BudgetCategory = Database['public']['Tables']['budget_categories']['Row']
 type Budget = Database['public']['Tables']['budgets']['Row']
@@ -21,6 +22,8 @@ export default function BudgetsGoalsPage() {
   const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>([])
   const [budgets, setBudgets] = useState<BudgetWithCategory[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [showBudgetCategoryForm, setShowBudgetCategoryForm] = useState(false)
   const [showBudgetForm, setShowBudgetForm] = useState(false)
   const [showGoalForm, setShowGoalForm] = useState(false)
@@ -42,15 +45,22 @@ export default function BudgetsGoalsPage() {
   })
 
   const loadData = async () => {
-    const [categoriesRes, budgetsRes, goalsRes] = await Promise.all([
-      supabase.from('budget_categories').select('*').order('name'),
-      supabase.from('budgets').select('*, budget_categories(*)').order('created_at', { ascending: false }),
-      supabase.from('goals').select('*').order('created_at', { ascending: false })
-    ])
-    
-    if (categoriesRes.data) setBudgetCategories(categoriesRes.data)
-    if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetWithCategory[])
-    if (goalsRes.data) setGoals(goalsRes.data)
+    try {
+      setLoading(true)
+      const [categoriesRes, budgetsRes, goalsRes] = await Promise.all([
+        supabase.from('budget_categories').select('*').order('name'),
+        supabase.from('budgets').select('*, budget_categories(*)').order('created_at', { ascending: false }),
+        supabase.from('goals').select('*').order('created_at', { ascending: false })
+      ])
+      
+      if (categoriesRes.data) setBudgetCategories(categoriesRes.data)
+      if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetWithCategory[])
+      if (goalsRes.data) setGoals(goalsRes.data)
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -59,41 +69,62 @@ export default function BudgetsGoalsPage() {
 
   const handleCreateBudgetCategory = async (e: React.FormEvent) => {
     e.preventDefault()
-    await supabase.from('budget_categories').insert({
-      name: budgetCategoryForm.name,
-      type: budgetCategoryForm.type
-    })
-    setBudgetCategoryForm({ name: '', type: 'custom' })
-    setShowBudgetCategoryForm(false)
-    loadData()
+    try {
+      setSubmitting(true)
+      await supabase.from('budget_categories').insert({
+        name: budgetCategoryForm.name,
+        type: budgetCategoryForm.type
+      })
+      setBudgetCategoryForm({ name: '', type: 'custom' })
+      setShowBudgetCategoryForm(false)
+      loadData()
+    } catch (error) {
+      console.error('Error creating category:', error)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleCreateBudget = async (e: React.FormEvent) => {
     e.preventDefault()
-    await supabase.from('budgets').insert({
-      category_id: budgetForm.category_id,
-      amount_allowed: parseFloat(budgetForm.amount_allowed),
-      amount_spent: 0,
-      period: budgetForm.period,
-      start_date: budgetForm.start_date,
-      end_date: budgetForm.end_date || null
-    })
-    setBudgetForm({ category_id: '', amount_allowed: '', period: 'monthly', start_date: '', end_date: '' })
-    setShowBudgetForm(false)
-    loadData()
+    try {
+      setSubmitting(true)
+      await supabase.from('budgets').insert({
+        category_id: budgetForm.category_id,
+        amount_allowed: parseFloat(budgetForm.amount_allowed),
+        amount_spent: 0,
+        period: budgetForm.period,
+        start_date: budgetForm.start_date,
+        end_date: budgetForm.end_date || null
+      })
+      setBudgetForm({ category_id: '', amount_allowed: '', period: 'monthly', start_date: '', end_date: '' })
+      setShowBudgetForm(false)
+      loadData()
+    } catch (error) {
+      console.error('Error creating budget:', error)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleCreateGoal = async (e: React.FormEvent) => {
     e.preventDefault()
-    await supabase.from('goals').insert({
-      name: goalForm.name,
-      target_amount: parseFloat(goalForm.target_amount),
-      current_amount: 0,
-      deadline: goalForm.deadline || null
-    })
-    setGoalForm({ name: '', target_amount: '', deadline: '' })
-    setShowGoalForm(false)
-    loadData()
+    try {
+      setSubmitting(true)
+      await supabase.from('goals').insert({
+        name: goalForm.name,
+        target_amount: parseFloat(goalForm.target_amount),
+        current_amount: 0,
+        deadline: goalForm.deadline || null
+      })
+      setGoalForm({ name: '', target_amount: '', deadline: '' })
+      setShowGoalForm(false)
+      loadData()
+    } catch (error) {
+      console.error('Error creating goal:', error)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleUpdateGoalProgress = async (goalId: string, currentAmount: number) => {
@@ -128,6 +159,14 @@ export default function BudgetsGoalsPage() {
     return totalProgress / goals.length
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <PageHeader 
@@ -136,392 +175,353 @@ export default function BudgetsGoalsPage() {
         icon={<Wallet className="w-6 h-6" />}
       />
 
-      {/* Stats Overview */}
-      <div className="px-4 lg:px-6 pt-6">
+      <PageContainer>
+        {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="card-premium group">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-caption text-muted-foreground mb-1">Total Budget</p>
-                <p className="text-3xl lg:text-4xl font-bold tracking-tight">${getTotalBudget().toFixed(2)}</p>
-                <p className="text-caption text-gray-500 mt-1">Across all categories</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 flex items-center justify-center shadow-sm">
-                <Wallet className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="card-premium group">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-caption text-muted-foreground mb-1">Total Spent</p>
-                <p className="text-3xl lg:text-4xl font-bold tracking-tight">${getTotalSpent().toFixed(2)}</p>
-                <p className="text-caption text-gray-500 mt-1">This period</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 flex items-center justify-center shadow-sm">
-                <TrendingUp className="w-5 h-5 text-orange-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="card-premium group">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-caption text-muted-foreground mb-1">Goal Progress</p>
-                <p className="text-3xl lg:text-4xl font-bold tracking-tight">{getTotalGoalProgress().toFixed(0)}%</p>
-                <p className="text-caption text-gray-500 mt-1">Average completion</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-green-500/10 to-green-600/10 border border-green-500/20 flex items-center justify-center shadow-sm">
-                <Target className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </div>
+          <StatBox
+            label="Total Budget"
+            value={`$${getTotalBudget().toFixed(2)}`}
+            icon={Wallet}
+          />
+          <StatBox
+            label="Total Spent"
+            value={`$${getTotalSpent().toFixed(2)}`}
+            icon={TrendingUp}
+            variant="warning"
+          />
+          <StatBox
+            label="Goal Progress"
+            value={`${getTotalGoalProgress().toFixed(0)}%`}
+            icon={Target}
+            variant="success"
+          />
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 p-1 bg-card rounded-xl shadow-sm border border-border">
-          <button
-            onClick={() => setActiveTab('budgets')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeTab === 'budgets'
-                ? 'bg-linear-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <TrendingUp size={18} />
-              <span>Budgets</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('goals')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeTab === 'goals'
-                ? 'bg-linear-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Target size={18} />
-              <span>Goals</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('categories')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
-              activeTab === 'categories'
-                ? 'bg-linear-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Calendar size={18} />
-              <span>Categories</span>
-            </div>
-          </button>
+        <div className="flex gap-1 mb-6 p-1.5 bg-card rounded-2xl border border-border">
+          {[
+            { id: 'budgets', label: 'Budgets', icon: TrendingUp },
+            { id: 'goals', label: 'Goals', icon: Target },
+            { id: 'categories', label: 'Categories', icon: Calendar },
+          ].map((tab) => {
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-white shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                <Icon size={18} />
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
-      </div>
 
-      <div className="px-4 lg:px-6 space-y-6">
         {/* Categories Tab */}
         {activeTab === 'categories' && (
           <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-headline font-semibold tracking-tight">Budget Categories</h2>
-            <Button onClick={() => setShowBudgetCategoryForm(true)} className="px-4!">
-              <Plus size={18} />
-              <span>Add Category</span>
-            </Button>
-          </div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Calendar size={18} className="text-primary" />
+                Budget Categories
+              </h2>
+              <Button onClick={() => setShowBudgetCategoryForm(true)} variant="primary" size="sm">
+                <Plus size={18} />
+                Add Category
+              </Button>
+            </div>
 
-          {showBudgetCategoryForm && (
-            <form onSubmit={handleCreateBudgetCategory} className="card-premium mb-4">
-              <input
-                type="text"
-                value={budgetCategoryForm.name}
-                onChange={(e) => setBudgetCategoryForm({ ...budgetCategoryForm, name: e.target.value })}
-                placeholder="Category name"
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                required
+            {budgetCategories.length === 0 ? (
+              <EmptyState
+                icon={Calendar}
+                title="No categories yet"
+                description="Create budget categories to organize your spending."
               />
-              <select
-                value={budgetCategoryForm.type}
-                onChange={(e) => setBudgetCategoryForm({ ...budgetCategoryForm, type: e.target.value as 'marketing' | 'trips' | 'orders' | 'custom' })}
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-4 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-              >
-                <option value="marketing">Marketing</option>
-                <option value="trips">Trips</option>
-                <option value="orders">Orders</option>
-                <option value="custom">Custom</option>
-              </select>
-              <div className="flex gap-3">
-                <Button type="submit" className="flex-1">Save Category</Button>
-                <button
-                  type="button"
-                  onClick={() => setShowBudgetCategoryForm(false)}
-                  className="flex-1 px-4 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-medium transition-all active:scale-[0.98]"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {budgetCategories.map((category) => (
-              <div key={category.id} className="card-premium group hover:shadow-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-title font-semibold tracking-tight">{category.name}</h3>
-                    <Badge variant={category.type === 'custom' ? 'default' : 'orange'} className="mt-2">
-                      {category.type}
-                    </Badge>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {budgetCategories.map((category) => (
+                  <div key={category.id} className="bg-card p-5 rounded-2xl border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200 group">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">{category.name}</h3>
+                        <Badge variant={category.type === 'custom' ? 'default' : 'orange'} className="mt-2">
+                          {category.type}
+                        </Badge>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <Calendar className="w-5 h-5 text-primary" />
+                      </div>
+                    </div>
                   </div>
-                  <Calendar className="w-8 h-8 text-gray-400 group-hover:text-orange-500 transition-colors" />
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
           </div>
         )}
 
         {/* Budgets Tab */}
         {activeTab === 'budgets' && (
           <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-headline font-semibold tracking-tight">Active Budgets</h2>
-            <Button onClick={() => setShowBudgetForm(true)} className="px-4!">
-              <Plus size={18} />
-              <span>Add Budget</span>
-            </Button>
-          </div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <TrendingUp size={18} className="text-primary" />
+                Active Budgets
+              </h2>
+              <Button onClick={() => setShowBudgetForm(true)} variant="primary" size="sm">
+                <Plus size={18} />
+                Add Budget
+              </Button>
+            </div>
 
-          {showBudgetForm && (
-            <form onSubmit={handleCreateBudget} className="card-premium mb-4">
-              <select
-                value={budgetForm.category_id}
-                onChange={(e) => setBudgetForm({ ...budgetForm, category_id: e.target.value })}
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                required
-              >
-                <option value="">Select Category</option>
-                {budgetCategories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                step="0.01"
-                value={budgetForm.amount_allowed}
-                onChange={(e) => setBudgetForm({ ...budgetForm, amount_allowed: e.target.value })}
-                placeholder="Budget amount"
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                required
+            {budgets.length === 0 ? (
+              <EmptyState
+                icon={TrendingUp}
+                title="No budgets yet"
+                description="Create a budget to start tracking your spending."
               />
-              <select
-                value={budgetForm.period}
-                onChange={(e) => setBudgetForm({ ...budgetForm, period: e.target.value as 'monthly' | 'yearly' | 'custom' })}
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-                <option value="custom">Custom</option>
-              </select>
-              <input
-                type="date"
-                value={budgetForm.start_date}
-                onChange={(e) => setBudgetForm({ ...budgetForm, start_date: e.target.value })}
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                required
-              />
-              <input
-                type="date"
-                value={budgetForm.end_date}
-                onChange={(e) => setBudgetForm({ ...budgetForm, end_date: e.target.value })}
-                placeholder="End date (optional)"
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-              />
-              <div className="flex gap-3">
-                <Button type="submit" className="flex-1">Create Budget</Button>
-                <button
-                  type="button"
-                  onClick={() => setShowBudgetForm(false)}
-                  className="flex-1 px-4 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-medium transition-all active:scale-[0.98]"
-                >
-                  Cancel
-                </button>
+            ) : (
+              <div className="space-y-4">
+                {budgets.map((budget) => {
+                  const percentage = getProgressPercentage(budget.amount_spent, budget.amount_allowed)
+                  const isOverBudget = budget.amount_spent > budget.amount_allowed
+
+                  return (
+                    <div key={budget.id} className="bg-card p-5 lg:p-6 rounded-2xl border border-border hover:shadow-md transition-all duration-200">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-foreground mb-2">{budget.budget_categories?.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={budget.period === 'monthly' ? 'orange' : 'default'}>
+                              {budget.period}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(budget.start_date).toLocaleDateString()}
+                              {budget.end_date && ` - ${new Date(budget.end_date).toLocaleDateString()}`}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-2xl font-bold ${isOverBudget ? 'text-destructive' : 'text-foreground'}`}>
+                            ${budget.amount_spent.toFixed(2)}
+                          </div>
+                          <div className="text-sm text-muted-foreground">of ${budget.amount_allowed.toFixed(2)}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                            isOverBudget 
+                              ? 'bg-destructive' 
+                              : percentage > 80 
+                                ? 'bg-warning'
+                                : 'bg-success'
+                          }`}
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
+                      
+                      <div className="mt-3 flex justify-between items-center">
+                        <span className="text-sm font-medium text-muted-foreground">{percentage.toFixed(1)}% used</span>
+                        {isOverBudget && <Badge variant="danger">Over Budget</Badge>}
+                        {!isOverBudget && percentage > 80 && <Badge variant="warning">Warning</Badge>}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            </form>
-          )}
-
-          <div className="space-y-4">
-            {budgets.map((budget) => {
-              const percentage = getProgressPercentage(budget.amount_spent, budget.amount_allowed)
-              const isOverBudget = budget.amount_spent > budget.amount_allowed
-
-              return (
-                <div key={budget.id} className="card-premium group hover:shadow-xl">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-title font-semibold tracking-tight mb-1">{budget.budget_categories?.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={budget.period === 'monthly' ? 'orange' : 'default'}>
-                          {budget.period}
-                        </Badge>
-                        <span className="text-caption text-gray-500">
-                          {new Date(budget.start_date).toLocaleDateString()}
-                          {budget.end_date && ` - ${new Date(budget.end_date).toLocaleDateString()}`}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-2xl font-bold tracking-tight ${isOverBudget ? 'text-red-600' : 'text-foreground'}`}>
-                        ${budget.amount_spent.toFixed(2)}
-                      </div>
-                      <div className="text-caption text-gray-500">of ${budget.amount_allowed.toFixed(2)}</div>
-                    </div>
-                  </div>
-                  
-                  {/* Progress Bar with Glass Effect */}
-                  <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden shadow-inner">
-                    <div
-                      className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
-                        isOverBudget 
-                          ? 'bg-gradient-to-r from-red-500 via-red-600 to-red-700 shadow-lg shadow-red-500/30' 
-                          : percentage > 80 
-                            ? 'bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 shadow-lg shadow-yellow-500/30'
-                            : 'bg-gradient-to-r from-green-500 via-green-600 to-green-700 shadow-lg shadow-green-500/30'
-                      }`}
-                      style={{ width: `${Math.min(percentage, 100)}%` }}
-                    >
-                      <div className="absolute inset-0 bg-white/20"></div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-2 flex justify-between items-center">
-                    <span className="text-caption text-muted-foreground">{percentage.toFixed(1)}% used</span>
-                    {isOverBudget && (
-                      <Badge variant="danger">Over Budget</Badge>
-                    )}
-                    {!isOverBudget && percentage > 80 && (
-                      <Badge variant="warning">Warning</Badge>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+            )}
           </div>
         )}
 
         {/* Goals Tab */}
         {activeTab === 'goals' && (
           <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-headline font-semibold tracking-tight">Financial Goals</h2>
-            <Button onClick={() => setShowGoalForm(true)} className="px-4!">
-              <Plus size={18} />
-              <span>Add Goal</span>
-            </Button>
-          </div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Target size={18} className="text-primary" />
+                Financial Goals
+              </h2>
+              <Button onClick={() => setShowGoalForm(true)} variant="primary" size="sm">
+                <Plus size={18} />
+                Add Goal
+              </Button>
+            </div>
 
-          {showGoalForm && (
-            <form onSubmit={handleCreateGoal} className="card-premium mb-4">
-              <input
-                type="text"
-                value={goalForm.name}
-                onChange={(e) => setGoalForm({ ...goalForm, name: e.target.value })}
-                placeholder="Goal name"
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                required
+            {goals.length === 0 ? (
+              <EmptyState
+                icon={Target}
+                title="No goals yet"
+                description="Create a financial goal to start saving."
               />
-              <input
-                type="number"
-                step="0.01"
-                value={goalForm.target_amount}
-                onChange={(e) => setGoalForm({ ...goalForm, target_amount: e.target.value })}
-                placeholder="Target amount"
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-3 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                required
-              />
-              <input
-                type="date"
-                value={goalForm.deadline}
-                onChange={(e) => setGoalForm({ ...goalForm, deadline: e.target.value })}
-                className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl mb-4 text-body focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-              />
-              <div className="flex gap-3">
-                <Button type="submit" className="flex-1">Create Goal</Button>
-                <button
-                  type="button"
-                  onClick={() => setShowGoalForm(false)}
-                  className="flex-1 px-4 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-medium transition-all active:scale-[0.98]"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
+            ) : (
+              <div className="space-y-4">
+                {goals.map((goal) => {
+                  const percentage = getProgressPercentage(goal.current_amount, goal.target_amount)
+                  const isComplete = goal.current_amount >= goal.target_amount
 
-          <div className="space-y-4">
-            {goals.map((goal) => {
-              const percentage = getProgressPercentage(goal.current_amount, goal.target_amount)
-              const isComplete = goal.current_amount >= goal.target_amount
-
-              return (
-                <div
-                  key={goal.id}
-                  onClick={() => handleUpdateGoalProgress(goal.id, goal.current_amount)}
-                  className="card-premium group hover:shadow-xl cursor-pointer active:scale-[0.99] transition-transform"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-title font-semibold tracking-tight">{goal.name}</h3>
-                        {isComplete && <Badge variant="success">Complete</Badge>}
-                      </div>
-                      {goal.deadline && (
-                        <p className="text-caption text-muted-foreground">
-                          Deadline: {new Date(goal.deadline).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-2xl font-bold tracking-tight ${isComplete ? 'text-green-600' : 'text-foreground'}`}>
-                        ${goal.current_amount.toFixed(2)}
-                      </div>
-                      <div className="text-caption text-gray-500">of ${goal.target_amount.toFixed(2)}</div>
-                    </div>
-                  </div>
-                  
-                  {/* Progress Bar with Glass Effect */}
-                  <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden shadow-inner">
+                  return (
                     <div
-                      className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
-                        isComplete 
-                          ? 'bg-gradient-to-r from-green-500 via-green-600 to-green-700 shadow-lg shadow-green-500/30'
-                          : 'bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 shadow-lg shadow-orange-500/30'
-                      }`}
-                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                      key={goal.id}
+                      onClick={() => handleUpdateGoalProgress(goal.id, goal.current_amount)}
+                      className="bg-card p-5 lg:p-6 rounded-2xl border border-border hover:border-primary/30 hover:shadow-md cursor-pointer transition-all duration-200 group"
                     >
-                      <div className="absolute inset-0 bg-white/20"></div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">{goal.name}</h3>
+                            {isComplete && <Badge variant="success">Complete</Badge>}
+                          </div>
+                          {goal.deadline && (
+                            <p className="text-sm text-muted-foreground">
+                              Deadline: {new Date(goal.deadline).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-2xl font-bold ${isComplete ? 'text-success' : 'text-foreground'}`}>
+                            ${goal.current_amount.toFixed(2)}
+                          </div>
+                          <div className="text-sm text-muted-foreground">of ${goal.target_amount.toFixed(2)}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                            isComplete ? 'bg-success' : 'bg-primary'
+                          }`}
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
+                      
+                      <div className="mt-3 flex justify-between items-center">
+                        <span className="text-sm font-medium text-muted-foreground">{percentage.toFixed(1)}% complete</span>
+                        <span className="text-xs text-muted-foreground">Click to add progress</span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="mt-2 flex justify-between items-center">
-                    <span className="text-caption text-muted-foreground">{percentage.toFixed(1)}% complete</span>
-                    <span className="text-caption text-muted-foreground">Click to add progress</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </PageContainer>
+
+      {/* Category Modal */}
+      <Modal isOpen={showBudgetCategoryForm} onClose={() => setShowBudgetCategoryForm(false)} title="Add Category">
+        <form onSubmit={handleCreateBudgetCategory} className="space-y-4">
+          <Input
+            label="Category Name"
+            value={budgetCategoryForm.name}
+            onChange={(e) => setBudgetCategoryForm({ ...budgetCategoryForm, name: e.target.value })}
+            placeholder="Enter category name"
+            required
+          />
+          <Select
+            label="Type"
+            value={budgetCategoryForm.type}
+            onChange={(e) => setBudgetCategoryForm({ ...budgetCategoryForm, type: e.target.value as 'marketing' | 'trips' | 'orders' | 'custom' })}
+          >
+            <option value="marketing">Marketing</option>
+            <option value="trips">Trips</option>
+            <option value="orders">Orders</option>
+            <option value="custom">Custom</option>
+          </Select>
+          <Button type="submit" variant="primary" fullWidth size="lg" loading={submitting}>
+            Save Category
+          </Button>
+        </form>
+      </Modal>
+
+      {/* Budget Modal */}
+      <Modal isOpen={showBudgetForm} onClose={() => setShowBudgetForm(false)} title="Add Budget">
+        <form onSubmit={handleCreateBudget} className="space-y-4">
+          <Select
+            label="Category"
+            value={budgetForm.category_id}
+            onChange={(e) => setBudgetForm({ ...budgetForm, category_id: e.target.value })}
+            required
+          >
+            <option value="">Select Category</option>
+            {budgetCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </Select>
+          <Input
+            label="Budget Amount"
+            type="number"
+            step="0.01"
+            value={budgetForm.amount_allowed}
+            onChange={(e) => setBudgetForm({ ...budgetForm, amount_allowed: e.target.value })}
+            placeholder="Enter amount"
+            required
+          />
+          <Select
+            label="Period"
+            value={budgetForm.period}
+            onChange={(e) => setBudgetForm({ ...budgetForm, period: e.target.value as 'monthly' | 'yearly' | 'custom' })}
+          >
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+            <option value="custom">Custom</option>
+          </Select>
+          <Input
+            label="Start Date"
+            type="date"
+            value={budgetForm.start_date}
+            onChange={(e) => setBudgetForm({ ...budgetForm, start_date: e.target.value })}
+            required
+          />
+          <Input
+            label="End Date (Optional)"
+            type="date"
+            value={budgetForm.end_date}
+            onChange={(e) => setBudgetForm({ ...budgetForm, end_date: e.target.value })}
+          />
+          <Button type="submit" variant="primary" fullWidth size="lg" loading={submitting}>
+            Create Budget
+          </Button>
+        </form>
+      </Modal>
+
+      {/* Goal Modal */}
+      <Modal isOpen={showGoalForm} onClose={() => setShowGoalForm(false)} title="Add Goal">
+        <form onSubmit={handleCreateGoal} className="space-y-4">
+          <Input
+            label="Goal Name"
+            value={goalForm.name}
+            onChange={(e) => setGoalForm({ ...goalForm, name: e.target.value })}
+            placeholder="Enter goal name"
+            required
+          />
+          <Input
+            label="Target Amount"
+            type="number"
+            step="0.01"
+            value={goalForm.target_amount}
+            onChange={(e) => setGoalForm({ ...goalForm, target_amount: e.target.value })}
+            placeholder="Enter target amount"
+            required
+          />
+          <Input
+            label="Deadline (Optional)"
+            type="date"
+            value={goalForm.deadline}
+            onChange={(e) => setGoalForm({ ...goalForm, deadline: e.target.value })}
+          />
+          <Button type="submit" variant="primary" fullWidth size="lg" loading={submitting}>
+            Create Goal
+          </Button>
+        </form>
+      </Modal>
     </div>
   )
 }

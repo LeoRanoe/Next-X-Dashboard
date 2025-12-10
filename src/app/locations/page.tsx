@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
 import { Plus, MapPin } from 'lucide-react'
-import { PageHeader, PageContainer, Button } from '@/components/UI'
+import { PageHeader, PageContainer, Button, Input, EmptyState, LoadingSpinner } from '@/components/UI'
 import { LocationCard, Modal } from '@/components/PageCards'
 
 type Location = Database['public']['Tables']['locations']['Row']
@@ -15,24 +15,38 @@ export default function LocationsPage() {
   const [stock, setStock] = useState<Stock[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     address: ''
   })
 
   const loadLocations = async () => {
-    const { data } = await supabase.from('locations').select('*').order('name')
-    if (data) setLocations(data)
+    try {
+      const { data } = await supabase.from('locations').select('*').order('name')
+      if (data) setLocations(data)
+    } catch (error) {
+      console.error('Error loading locations:', error)
+    }
   }
 
   const loadStock = async () => {
-    const { data } = await supabase.from('stock').select('*')
-    if (data) setStock(data)
+    try {
+      const { data } = await supabase.from('stock').select('*')
+      if (data) setStock(data)
+    } catch (error) {
+      console.error('Error loading stock:', error)
+    }
   }
 
   useEffect(() => {
-    loadLocations()
-    loadStock()
+    const loadData = async () => {
+      setLoading(true)
+      await Promise.all([loadLocations(), loadStock()])
+      setLoading(false)
+    }
+    loadData()
   }, [])
 
   const getLocationItemCount = (locationId: string) => {
@@ -41,21 +55,28 @@ export default function LocationsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const data = {
-      name: formData.name,
-      address: formData.address || null
-    }
+    try {
+      setSubmitting(true)
+      const data = {
+        name: formData.name,
+        address: formData.address || null
+      }
 
-    if (editingLocation) {
-      await supabase.from('locations').update(data).eq('id', editingLocation.id)
-    } else {
-      await supabase.from('locations').insert(data)
-    }
+      if (editingLocation) {
+        await supabase.from('locations').update(data).eq('id', editingLocation.id)
+      } else {
+        await supabase.from('locations').insert(data)
+      }
 
-    setFormData({ name: '', address: '' })
-    setShowForm(false)
-    setEditingLocation(null)
-    loadLocations()
+      setFormData({ name: '', address: '' })
+      setShowForm(false)
+      setEditingLocation(null)
+      loadLocations()
+    } catch (error) {
+      console.error('Error saving location:', error)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleEdit = (location: Location) => {
@@ -72,6 +93,14 @@ export default function LocationsPage() {
       await supabase.from('locations').delete().eq('id', id)
       loadLocations()
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
   return (
@@ -96,10 +125,11 @@ export default function LocationsPage() {
 
       <PageContainer>
         {locations.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <MapPin size={48} className="mx-auto mb-4 opacity-50" />
-            <p>No locations yet. Create your first location!</p>
-          </div>
+          <EmptyState
+            icon={MapPin}
+            title="No locations yet"
+            description="Create your first location to get started!"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {locations.map((location) => (
@@ -126,28 +156,24 @@ export default function LocationsPage() {
         title={editingLocation ? 'Edit Location' : 'Create Location'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Location Name</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter location name"
-              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
-              required
-            />
-          </div>
+          <Input
+            label="Location Name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Enter location name"
+            required
+          />
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">Address (Optional)</label>
             <textarea
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="Enter full address"
-              className="w-full px-4 py-3 bg-input text-foreground border border-border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="form-input w-full"
               rows={3}
             />
           </div>
-          <Button type="submit" variant="primary" fullWidth size="lg">
+          <Button type="submit" variant="primary" fullWidth size="lg" loading={submitting}>
             {editingLocation ? 'Update Location' : 'Create Location'}
           </Button>
         </form>

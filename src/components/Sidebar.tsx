@@ -70,10 +70,9 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Navigation */}
       {/* Premium Navigation */}
-      <nav className="flex-1 overflow-y-auto py-6 px-4 scrollbar-thin">
-        <div className="space-y-1.5">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin">
+        <div className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.path
@@ -82,32 +81,32 @@ export default function Sidebar() {
               <button
                 key={item.path}
                 onClick={() => router.push(item.path)}
-                className={`relative w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group overflow-hidden ${
+                className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group overflow-hidden ${
                   isActive 
-                    ? 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30' 
+                    ? 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/25' 
                     : 'text-gray-400 hover:bg-gray-800/60 hover:text-white'
                 }`}
               >
                 {/* Active indicator bar */}
                 {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full shadow-lg" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full shadow-lg" />
                 )}
                 
                 {/* Icon with subtle animation */}
                 <div className={`flex items-center justify-center transition-transform duration-200 ${isActive ? '' : 'group-hover:scale-110'}`}>
-                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'} />
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'} />
                 </div>
                 
                 {/* Text with proper spacing */}
                 {!isCollapsed && (
-                  <span className={`font-semibold text-sm tracking-tight ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                  <span className={`font-medium text-sm tracking-tight ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
                     {item.name}
                   </span>
                 )}
                 
                 {/* Hover shine effect */}
                 {!isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-500" />
                 )}
               </button>
             )
@@ -116,13 +115,13 @@ export default function Sidebar() {
       </nav>
 
       {/* Collapse Toggle */}
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-3 border-t border-gray-800/50">
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-gray-800/60 hover:text-white transition-all"
         >
-          {isCollapsed ? <Menu size={20} /> : <X size={20} />}
-          {!isCollapsed && <span className="text-sm">Collapse</span>}
+          {isCollapsed ? <Menu size={18} /> : <X size={18} />}
+          {!isCollapsed && <span className="text-sm font-medium">Collapse</span>}
         </button>
       </div>
     </aside>

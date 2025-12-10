@@ -172,15 +172,15 @@ export default function ReportsPage() {
       <div className="px-4 lg:px-6 pt-6 space-y-6">
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex gap-2 overflow-x-auto p-1 bg-card rounded-xl shadow-sm border border-border">
+          <div className="flex gap-1 overflow-x-auto p-1.5 bg-card rounded-2xl shadow-sm border border-border">
             {['daily', 'weekly', 'monthly', 'yearly'].map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p as 'daily' | 'weekly' | 'monthly' | 'yearly')}
-                className={`px-4 py-2.5 rounded-lg font-medium whitespace-nowrap text-sm transition-all duration-300 ${
+                className={`px-5 py-2.5 rounded-xl font-semibold whitespace-nowrap text-sm transition-all duration-200 ${
                   period === p
-                    ? 'bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    ? 'bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/25'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               >
                 {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -191,7 +191,7 @@ export default function ReportsPage() {
           <select
             value={selectedLocation}
             onChange={(e) => setSelectedLocation(e.target.value)}
-            className="flex-1 px-4 py-3 border border-border rounded-xl text-body bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
+            className="flex-1 px-4 py-3 border border-border rounded-xl text-body bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm cursor-pointer"
           >
             <option value="">All Locations</option>
             {locations.map((loc) => (
@@ -269,28 +269,28 @@ export default function ReportsPage() {
         <ChartCard title="Top Selling Items" icon={<Award size={20} />}>
           <div className="space-y-3">
             {topItems.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-[hsl(var(--muted))]/20 to-transparent rounded-xl border border-border/60 hover:border-orange-300 hover:shadow-md transition-all group">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 font-bold text-sm text-orange-600">
+              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-muted/30 to-transparent rounded-xl border border-border/60 hover:border-primary/30 hover:shadow-md transition-all duration-200 group">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 font-bold text-sm text-primary">
                     #{index + 1}
                   </div>
-                  <div className="flex-1">
-                    <div className="text-title font-semibold tracking-tight group-hover:text-orange-600 transition-colors">{item.name}</div>
-                    <div className="text-caption text-muted-foreground">Sold: {item.quantity} units</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-foreground group-hover:text-primary transition-colors truncate">{item.name}</div>
+                    <div className="text-sm text-muted-foreground">Sold: <span className="font-medium text-foreground">{item.quantity}</span> units</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xl font-bold text-green-600">
+                <div className="text-right ml-4">
+                  <div className="text-xl font-bold text-[hsl(var(--success))]">
                     ${item.revenue.toFixed(2)}
                   </div>
-                  <div className="text-caption text-gray-500">revenue</div>
+                  <div className="text-xs text-muted-foreground">revenue</div>
                 </div>
               </div>
             ))}
             {topItems.length === 0 && (
               <div className="text-center py-12">
-                <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No sales data for this period</p>
+                <Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground">No sales data for this period</p>
               </div>
             )}
           </div>
@@ -298,22 +298,22 @@ export default function ReportsPage() {
 
         {/* Location Performance */}
         <ChartCard title="Location Performance" icon={<MapPin size={20} />}>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {locationStats.map((stat, index) => (
-              <div key={index} className="card-premium group hover:shadow-xl">
+              <div key={index} className="bg-muted/30 rounded-xl p-5 border border-border/50 hover:border-primary/30 hover:shadow-md transition-all duration-200 group">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-title font-semibold tracking-tight">{stat.name}</h4>
+                  <h4 className="font-bold text-foreground group-hover:text-primary transition-colors">{stat.name}</h4>
                   <Badge variant="orange">{stat.sales} sales</Badge>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-caption text-muted-foreground mb-1">Profit</div>
-                    <div className="text-2xl font-bold text-green-600">
+                  <div className="bg-[hsl(var(--success-muted))] rounded-xl p-3.5 border border-[hsl(var(--success))]/20">
+                    <div className="text-xs text-muted-foreground mb-1 font-medium">Profit</div>
+                    <div className="text-2xl font-bold text-[hsl(var(--success))]">
                       ${stat.profit.toFixed(2)}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-caption text-muted-foreground mb-1">Stock Value</div>
+                  <div className="bg-muted/50 rounded-xl p-3.5 border border-border/50">
+                    <div className="text-xs text-muted-foreground mb-1 font-medium">Stock Value</div>
                     <div className="text-2xl font-bold text-foreground">
                       ${stat.stockValue.toFixed(2)}
                     </div>
