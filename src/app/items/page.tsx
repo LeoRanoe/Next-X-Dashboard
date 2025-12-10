@@ -117,7 +117,7 @@ export default function ItemsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <PageHeader 
         title="Items & Categories" 
         subtitle="Manage products and categories"
@@ -150,16 +150,16 @@ export default function ItemsPage() {
               placeholder="Search items or categories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full pl-12 pr-4 py-3 rounded-xl bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
             />
           </div>
-          <div className="flex gap-2 border-b border-gray-200">
+          <div className="flex gap-2 border-b border-[hsl(var(--border))]">
             <button
               onClick={() => setActiveTab('items')}
               className={`px-4 py-3 font-semibold transition relative ${
                 activeTab === 'items'
                   ? 'text-orange-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-[hsl(var(--foreground))]'
               }`}
             >
               <Package size={20} className="inline mr-2" />
@@ -173,7 +173,7 @@ export default function ItemsPage() {
               className={`px-4 py-3 font-semibold transition relative ${
                 activeTab === 'categories'
                   ? 'text-orange-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-[hsl(var(--foreground))]'
               }`}
             >
               <Tag size={20} className="inline mr-2" />
@@ -226,12 +226,12 @@ export default function ItemsPage() {
                 {filteredCategories.map((category) => {
                   const itemCount = items.filter(i => i.category_id === category.id).length
                   return (
-                    <div key={category.id} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100">
+                    <div key={category.id} className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-[hsl(var(--border))]">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <Tag className="text-orange-600" size={20} />
-                            <h3 className="text-lg font-bold text-gray-900">{category.name}</h3>
+                            <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">{category.name}</h3>
                           </div>
                           <p className="text-sm text-gray-500">
                             {itemCount} {itemCount === 1 ? 'item' : 'items'}
@@ -259,13 +259,13 @@ export default function ItemsPage() {
       <Modal isOpen={showCategoryForm} onClose={() => setShowCategoryForm(false)} title="Create Category">
         <form onSubmit={handleCreateCategory} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Category Name</label>
             <input
               type="text"
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
               placeholder="Enter category name"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
             />
           </div>
@@ -291,22 +291,22 @@ export default function ItemsPage() {
       >
         <form onSubmit={handleSubmitItem} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Item Name</label>
+            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Item Name</label>
             <input
               type="text"
               value={itemForm.name}
               onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
               placeholder="Enter item name"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Category</label>
             <select
               value={itemForm.category_id}
               onChange={(e) => setItemForm({ ...itemForm, category_id: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
             >
               <option value="">No Category</option>
               {categories.map((cat) => (
@@ -317,49 +317,49 @@ export default function ItemsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Purchase Price (USD)</label>
+            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Purchase Price (USD)</label>
             <input
               type="number"
               step="0.01"
               value={itemForm.purchase_price_usd}
               onChange={(e) => setItemForm({ ...itemForm, purchase_price_usd: e.target.value })}
               placeholder="0.00"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               required
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Selling Price (SRD)</label>
+              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Selling Price (SRD)</label>
               <input
                 type="number"
                 step="0.01"
                 value={itemForm.selling_price_srd}
                 onChange={(e) => setItemForm({ ...itemForm, selling_price_srd: e.target.value })}
                 placeholder="0.00"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Selling Price (USD)</label>
+              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Selling Price (USD)</label>
               <input
                 type="number"
                 step="0.01"
                 value={itemForm.selling_price_usd}
                 onChange={(e) => setItemForm({ ...itemForm, selling_price_usd: e.target.value })}
                 placeholder="0.00"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
+            <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Image URL</label>
             <input
               type="text"
               value={itemForm.image_url}
               onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })}
               placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+              className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
             />
           </div>
           <Button type="submit" variant="primary" fullWidth size="lg">

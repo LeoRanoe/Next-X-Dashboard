@@ -90,7 +90,7 @@ export default function ReservationsPage() {
       case 'pending': return 'bg-yellow-100 text-yellow-800'
       case 'completed': return 'bg-green-100 text-green-800'
       case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-[hsl(var(--muted))] text-gray-800'
     }
   }
 
@@ -98,7 +98,7 @@ export default function ReservationsPage() {
   const completedCount = reservations.filter(r => r.status === 'completed').length
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <PageHeader 
         title="Reservations" 
         subtitle="Manage client reservations"
@@ -119,21 +119,21 @@ export default function ReservationsPage() {
       <PageContainer>
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-sm text-gray-600 mb-1">Total</div>
-            <div className="text-3xl font-bold text-gray-900">{reservations.length}</div>
+          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
+            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Total</div>
+            <div className="text-3xl font-bold text-[hsl(var(--foreground))]">{reservations.length}</div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-sm text-gray-600 mb-1">Pending</div>
+          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
+            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Pending</div>
             <div className="text-3xl font-bold text-orange-600">{pendingCount}</div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-sm text-gray-600 mb-1">Completed</div>
+          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
+            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Completed</div>
             <div className="text-3xl font-bold text-green-600">{completedCount}</div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-sm text-gray-600 mb-1">Clients</div>
-            <div className="text-3xl font-bold text-gray-900">{clients.length}</div>
+          <div className="bg-[hsl(var(--card))] p-6 rounded-2xl shadow-sm border border-[hsl(var(--border))]">
+            <div className="text-sm text-[hsl(var(--muted-foreground))] mb-1">Clients</div>
+            <div className="text-3xl font-bold text-[hsl(var(--foreground))]">{clients.length}</div>
           </div>
         </div>
 
@@ -142,14 +142,14 @@ export default function ReservationsPage() {
             <h2 className="text-lg font-semibold">Clients</h2>
             <button
               onClick={() => setShowClientForm(true)}
-              className="bg-blue-500 text-white p-3 rounded-full shadow-lg active:scale-95 transition"
+              className="bg-orange-500 text-white p-3 rounded-full shadow-lg active:scale-95 transition"
             >
               <Plus size={24} />
             </button>
           </div>
 
           {showClientForm && (
-            <form onSubmit={handleCreateClient} className="bg-white p-4 rounded-lg shadow mb-4">
+            <form onSubmit={handleCreateClient} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
               <input
                 type="text"
                 value={clientForm.name}
@@ -180,13 +180,13 @@ export default function ReservationsPage() {
                 rows={2}
               />
               <div className="flex gap-2">
-                <button type="submit" className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium">
+                <button type="submit" className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium">
                   Save
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowClientForm(false)}
-                  className="flex-1 bg-gray-200 py-3 rounded-lg font-medium"
+                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -196,12 +196,12 @@ export default function ReservationsPage() {
 
           <div className="grid grid-cols-2 gap-2">
             {clients.slice(0, 4).map((client) => (
-              <div key={client.id} className="bg-white p-3 rounded-lg shadow">
+              <div key={client.id} className="bg-[hsl(var(--card))] p-3 rounded-lg shadow border border-[hsl(var(--border))]">
                 <div className="flex items-center gap-2 mb-1">
-                  <User size={16} className="text-blue-500" />
+                  <User size={16} className="text-orange-500" />
                   <span className="font-semibold text-sm">{client.name}</span>
                 </div>
-                {client.phone && <p className="text-xs text-gray-600">{client.phone}</p>}
+                {client.phone && <p className="text-xs text-[hsl(var(--muted-foreground))]">{client.phone}</p>}
               </div>
             ))}
           </div>
@@ -219,7 +219,7 @@ export default function ReservationsPage() {
           </div>
 
           {showReservationForm && (
-            <form onSubmit={handleCreateReservation} className="bg-white p-4 rounded-lg shadow mb-4">
+            <form onSubmit={handleCreateReservation} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
               <select
                 value={reservationForm.client_id}
                 onChange={(e) => setReservationForm({ ...reservationForm, client_id: e.target.value })}
@@ -282,7 +282,7 @@ export default function ReservationsPage() {
                 <button
                   type="button"
                   onClick={() => setShowReservationForm(false)}
-                  className="flex-1 bg-gray-200 py-3 rounded-lg font-medium"
+                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -292,14 +292,14 @@ export default function ReservationsPage() {
 
           <div className="space-y-2">
             {reservations.map((reservation) => (
-              <div key={reservation.id} className="bg-white p-4 rounded-lg shadow">
+              <div key={reservation.id} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
                     <h3 className="font-semibold">{reservation.items?.name}</h3>
-                    <p className="text-sm text-gray-600">Client: {reservation.clients?.name}</p>
-                    <p className="text-sm text-gray-600">Location: {reservation.locations?.name}</p>
-                    <p className="text-sm text-gray-600">Quantity: {reservation.quantity}</p>
-                    {reservation.notes && <p className="text-sm text-gray-600 mt-1">{reservation.notes}</p>}
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">Client: {reservation.clients?.name}</p>
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">Location: {reservation.locations?.name}</p>
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">Quantity: {reservation.quantity}</p>
+                    {reservation.notes && <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{reservation.notes}</p>}
                   </div>
                   <span className={`text-xs px-2 py-1 rounded ${getStatusColor(reservation.status)}`}>
                     {reservation.status}

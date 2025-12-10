@@ -10,15 +10,15 @@ export function PageHeader({
   icon?: React.ReactNode 
 }) {
   return (
-    <div className="bg-gradient-to-b from-white to-gray-50/30 border-b border-gray-200/60 backdrop-blur-sm sticky top-0 z-10">
+    <div className="bg-gradient-to-b from-[hsl(var(--card))] to-[hsl(var(--background))] border-b border-[hsl(var(--border))] backdrop-blur-sm sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            {icon && <div className="text-orange-600">{icon}</div>}
+            {icon && <div className="text-orange-500">{icon}</div>}
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight">{title}</h1>
+              <h1 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))] tracking-tight">{title}</h1>
               {subtitle && (
-                <p className="text-sm lg:text-base text-gray-600 mt-2 font-medium">{subtitle}</p>
+                <p className="text-sm lg:text-base text-[hsl(var(--muted-foreground))] mt-2 font-medium">{subtitle}</p>
               )}
             </div>
           </div>
@@ -52,13 +52,13 @@ export function EmptyState({
     <div className="flex flex-col items-center justify-center py-16 lg:py-24 px-4">
       <div className="relative mb-6">
         <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-3xl blur-2xl" />
-        <div className="relative w-20 h-20 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl flex items-center justify-center border border-gray-200 shadow-lg">
-          <Icon size={36} className="text-gray-400" />
+        <div className="relative w-20 h-20 bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--card))] rounded-3xl flex items-center justify-center border border-[hsl(var(--border))] shadow-lg">
+          <Icon size={36} className="text-[hsl(var(--muted-foreground))]" />
         </div>
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{title}</h3>
+      <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2 tracking-tight">{title}</h3>
       {description && (
-        <p className="text-sm text-gray-600 text-center max-w-md mb-8 leading-relaxed">
+        <p className="text-sm text-[hsl(var(--muted-foreground))] text-center max-w-md mb-8 leading-relaxed">
           {description}
         </p>
       )}
@@ -70,7 +70,7 @@ export function EmptyState({
 export function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-12">
-      <div className="w-12 h-12 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+      <div className="w-12 h-12 border-4 border-[hsl(var(--border))] border-t-orange-500 rounded-full animate-spin" />
     </div>
   )
 }
@@ -85,12 +85,12 @@ export function Badge({
   className?: string
 }) {
   const variants = {
-    default: 'bg-gray-100 text-gray-700 border-gray-200',
-    success: 'bg-green-50 text-green-700 border-green-200',
-    warning: 'bg-amber-50 text-amber-700 border-amber-200',
-    danger: 'bg-red-50 text-red-700 border-red-200',
-    info: 'bg-blue-50 text-blue-700 border-blue-200',
-    orange: 'bg-orange-50 text-orange-700 border-orange-200',
+    default: 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]',
+    success: 'bg-green-950/50 text-green-400 border-green-800',
+    warning: 'bg-amber-950/50 text-amber-400 border-amber-800',
+    danger: 'bg-red-950/50 text-red-400 border-red-800',
+    info: 'bg-blue-950/50 text-blue-400 border-blue-800',
+    orange: 'bg-orange-950/50 text-orange-400 border-orange-800',
   }
 
   return (
@@ -121,9 +121,9 @@ export function Button({
 }) {
   const variants = {
     primary: 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 border border-orange-600/20',
-    secondary: 'bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300',
-    outline: 'border-2 border-orange-500/70 text-orange-600 hover:bg-orange-50 hover:border-orange-600 shadow-sm',
-    ghost: 'hover:bg-gray-100/80 text-gray-700 hover:text-gray-900',
+    secondary: 'bg-[hsl(var(--card))] hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] shadow-sm hover:shadow-md',
+    outline: 'border-2 border-orange-500/70 text-orange-500 hover:bg-orange-500/10 hover:border-orange-500 shadow-sm',
+    ghost: 'hover:bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:text-[hsl(var(--foreground))]',
     danger: 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/30',
   }
 

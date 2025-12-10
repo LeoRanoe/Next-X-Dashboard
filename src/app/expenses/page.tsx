@@ -101,7 +101,7 @@ export default function ExpensesPage() {
   })).sort((a, b) => b.total - a.total)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <PageHeader 
         title="Expenses" 
         subtitle="Track business expenses and categories"
@@ -149,14 +149,14 @@ export default function ExpensesPage() {
             </h2>
             <button
               onClick={() => setShowCategoryForm(true)}
-              className="bg-blue-500 text-white p-3 rounded-full shadow-lg active:scale-95 transition"
+              className="bg-orange-500 text-white p-3 rounded-full shadow-lg active:scale-95 transition"
             >
               <Plus size={24} />
             </button>
           </div>
 
           {showCategoryForm && (
-            <form onSubmit={handleCreateCategory} className="bg-white p-4 rounded-lg shadow mb-4">
+            <form onSubmit={handleCreateCategory} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
               <input
                 type="text"
                 value={categoryName}
@@ -166,13 +166,13 @@ export default function ExpensesPage() {
                 required
               />
               <div className="flex gap-2">
-                <button type="submit" className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium">
+                <button type="submit" className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium">
                   Save
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCategoryForm(false)}
-                  className="flex-1 bg-gray-200 py-3 rounded-lg font-medium"
+                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -182,7 +182,7 @@ export default function ExpensesPage() {
 
           <div className="flex gap-2 flex-wrap">
             {categories.map((category) => (
-              <div key={category.id} className="bg-white px-3 py-2 rounded-full shadow text-sm">
+              <div key={category.id} className="bg-[hsl(var(--card))] px-3 py-2 rounded-full shadow text-sm border border-[hsl(var(--border))]">
                 {category.name}
               </div>
             ))}
@@ -199,14 +199,14 @@ export default function ExpensesPage() {
 
           <button
             onClick={() => setShowExpenseForm(true)}
-            className="w-full bg-red-500 text-white py-4 rounded-lg font-medium flex items-center justify-center gap-2 active:scale-95 transition mb-4"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-lg font-medium flex items-center justify-center gap-2 active:scale-95 transition mb-4"
           >
             <Plus size={20} />
             Record Expense
           </button>
 
           {showExpenseForm && (
-            <form onSubmit={handleCreateExpense} className="bg-white p-4 rounded-lg shadow mb-4">
+            <form onSubmit={handleCreateExpense} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
               <select
                 value={expenseForm.category_id}
                 onChange={(e) => setExpenseForm({ ...expenseForm, category_id: e.target.value })}
@@ -263,7 +263,7 @@ export default function ExpensesPage() {
                 <button
                   type="button"
                   onClick={() => setShowExpenseForm(false)}
-                  className="flex-1 bg-gray-200 py-3 rounded-lg font-medium"
+                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -274,14 +274,14 @@ export default function ExpensesPage() {
           <div className="space-y-2">
             <h3 className="font-semibold">Recent Expenses</h3>
             {expenses.map((expense) => (
-              <div key={expense.id} className="bg-white p-4 rounded-lg shadow">
+              <div key={expense.id} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
                 <div className="flex justify-between items-start mb-1">
                   <div className="flex-1">
                     <div className="font-semibold">
                       {expense.expense_categories?.name || 'Uncategorized'}
                     </div>
                     {expense.description && (
-                      <p className="text-sm text-gray-600">{expense.description}</p>
+                      <p className="text-sm text-[hsl(var(--muted-foreground))]">{expense.description}</p>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
                       From: {expense.wallets?.person_name} ({expense.wallets?.type})

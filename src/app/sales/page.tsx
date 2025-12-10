@@ -204,8 +204,8 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white border-b sticky top-0 z-10">
+    <div className="min-h-screen pb-20">
+      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] sticky top-0 z-10 backdrop-blur-md">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold">Sales</h1>
         </div>
@@ -232,8 +232,8 @@ export default function SalesPage() {
                 onClick={() => setCurrency('SRD')}
                 className={`flex-1 py-3 rounded-lg font-medium ${
                   currency === 'SRD'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
                 }`}
               >
                 SRD
@@ -242,8 +242,8 @@ export default function SalesPage() {
                 onClick={() => setCurrency('USD')}
                 className={`flex-1 py-3 rounded-lg font-medium ${
                   currency === 'USD'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
                 }`}
               >
                 USD
@@ -256,7 +256,7 @@ export default function SalesPage() {
                 className={`flex-1 py-3 rounded-lg font-medium ${
                   paymentMethod === 'cash'
                     ? 'bg-green-500 text-white'
-                    : 'bg-gray-200'
+                    : 'bg-[hsl(var(--muted))]'
                 }`}
               >
                 Cash
@@ -266,14 +266,14 @@ export default function SalesPage() {
                 className={`flex-1 py-3 rounded-lg font-medium ${
                   paymentMethod === 'bank'
                     ? 'bg-green-500 text-white'
-                    : 'bg-gray-200'
+                    : 'bg-[hsl(var(--muted))]'
                 }`}
               >
                 Bank
               </button>
             </div>
 
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
               <h3 className="font-semibold mb-3">Available Items</h3>
               <div className="space-y-2">
                 {items.map((item) => {
@@ -288,16 +288,16 @@ export default function SalesPage() {
                     <div
                       key={item.id}
                       onClick={() => addToCart(item)}
-                      className="p-3 border rounded-lg active:bg-gray-50 transition"
+                      className="p-3 border border-[hsl(var(--border))] rounded-lg hover:bg-[hsl(var(--muted))]/50 active:bg-[hsl(var(--muted))] transition"
                     >
                       <div className="flex justify-between items-center">
                         <div>
                           <div className="font-semibold">{item.name}</div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-[hsl(var(--muted-foreground))]">
                             Stock: {stock} | {currency} {price}
                           </div>
                         </div>
-                        <Plus size={20} className="text-blue-500" />
+                        <Plus size={20} className="text-orange-500" />
                       </div>
                     </div>
                   )
@@ -306,7 +306,7 @@ export default function SalesPage() {
             </div>
 
             {cart.length > 0 && (
-              <div className="bg-white p-4 rounded-lg shadow">
+              <div className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <ShoppingCart size={20} />
                   Cart ({cart.length})
@@ -322,7 +322,7 @@ export default function SalesPage() {
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1">
                             <div className="font-semibold">{cartItem.item.name}</div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-[hsl(var(--muted-foreground))]">
                               {currency} {price} × {cartItem.quantity}
                             </div>
                           </div>
@@ -333,14 +333,14 @@ export default function SalesPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => updateQuantity(cartItem.item.id, -1)}
-                            className="bg-gray-200 px-3 py-1 rounded active:scale-95 transition"
+                            className="bg-[hsl(var(--muted))] px-3 py-1 rounded active:scale-95 transition"
                           >
                             <Minus size={16} />
                           </button>
                           <span className="px-3 py-1 font-semibold">{cartItem.quantity}</span>
                           <button
                             onClick={() => updateQuantity(cartItem.item.id, 1)}
-                            className="bg-gray-200 px-3 py-1 rounded active:scale-95 transition"
+                            className="bg-[hsl(var(--muted))] px-3 py-1 rounded active:scale-95 transition"
                           >
                             <Plus size={16} />
                           </button>

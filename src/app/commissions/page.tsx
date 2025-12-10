@@ -71,7 +71,7 @@ export default function CommissionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <PageHeader 
         title="Commissions" 
         subtitle="Track sales commissions and payouts"
@@ -90,14 +90,14 @@ export default function CommissionsPage() {
             <h2 className="text-lg font-semibold">Sellers</h2>
             <button
               onClick={() => setShowSellerForm(true)}
-              className="bg-blue-500 text-white p-3 rounded-full shadow-lg active:scale-95 transition"
+              className="bg-orange-500 text-white p-3 rounded-full shadow-lg active:scale-95 transition"
             >
               <Plus size={24} />
             </button>
           </div>
 
           {showSellerForm && (
-            <form onSubmit={handleCreateSeller} className="bg-white p-4 rounded-lg shadow mb-4">
+            <form onSubmit={handleCreateSeller} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow mb-4 border border-[hsl(var(--border))]">
               <input
                 type="text"
                 value={sellerForm.name}
@@ -118,13 +118,13 @@ export default function CommissionsPage() {
                 max="100"
               />
               <div className="flex gap-2">
-                <button type="submit" className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium">
+                <button type="submit" className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium">
                   Save
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowSellerForm(false)}
-                  className="flex-1 bg-gray-200 py-3 rounded-lg font-medium"
+                  className="flex-1 bg-[hsl(var(--muted))] py-3 rounded-lg font-medium"
                 >
                   Cancel
                 </button>
@@ -139,27 +139,27 @@ export default function CommissionsPage() {
               const totalSales = getTotalSales(seller.id)
 
               return (
-                <div key={seller.id} className="bg-white p-4 rounded-lg shadow">
+                <div key={seller.id} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="text-lg font-semibold">{seller.name}</h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
                         Commission: {seller.commission_rate}%
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
                         Total Sales: {totalSales}
                       </p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                      <div className="text-xs text-gray-600 mb-1">Unpaid</div>
+                      <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Unpaid</div>
                       <div className="text-lg font-bold text-yellow-700">
                         ${unpaid.toFixed(2)}
                       </div>
                     </div>
                     <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                      <div className="text-xs text-gray-600 mb-1">Paid</div>
+                      <div className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Paid</div>
                       <div className="text-lg font-bold text-green-700">
                         ${paid.toFixed(2)}
                       </div>
@@ -175,11 +175,11 @@ export default function CommissionsPage() {
           <h2 className="text-lg font-semibold mb-3">Commission History</h2>
           <div className="space-y-2">
             {commissions.map((commission) => (
-              <div key={commission.id} className="bg-white p-4 rounded-lg shadow">
+              <div key={commission.id} className="bg-[hsl(var(--card))] p-4 rounded-lg shadow border border-[hsl(var(--border))]">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
                     <div className="font-semibold">{commission.sellers?.name}</div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">
                       Sale Amount: ${commission.sales?.total_amount.toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500">
@@ -198,7 +198,7 @@ export default function CommissionsPage() {
                     ) : (
                       <button
                         onClick={() => handleMarkPaid(commission.id)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded mt-1 text-sm active:scale-95 transition"
+                        className="bg-orange-500 text-white px-3 py-1 rounded mt-1 text-sm active:scale-95 transition"
                       >
                         Mark Paid
                       </button>

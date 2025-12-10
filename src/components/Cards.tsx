@@ -38,20 +38,20 @@ export function StatCard({ title, value, icon: Icon, trend, color = 'orange' }: 
   }
 
   return (
-    <div className="group relative bg-white rounded-2xl p-6 border border-gray-200/60 hover:border-gray-300 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+    <div className="group relative bg-[hsl(var(--card))] rounded-2xl p-6 border border-[hsl(var(--border))] hover:border-[hsl(var(--border-hover))] shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
       {/* Subtle gradient overlay on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300 bg-gradient-to-br from-gray-900 to-transparent" />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300 bg-gradient-to-br from-orange-500 to-transparent" />
       
       <div className="relative flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-600 font-semibold mb-2 tracking-wide uppercase">{title}</p>
-          <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 tracking-tight">{value}</h3>
+          <p className="text-sm text-[hsl(var(--muted-foreground))] font-semibold mb-2 tracking-wide uppercase">{title}</p>
+          <h3 className="text-3xl lg:text-4xl font-bold text-[hsl(var(--foreground))] mb-3 tracking-tight">{value}</h3>
           {trend && (
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold ${trend.isPositive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold ${trend.isPositive ? 'bg-green-950/50 text-green-400 border border-green-800' : 'bg-red-950/50 text-red-400 border border-red-800'}`}>
                 {trend.isPositive ? '↑' : '↓'} {trend.value}
               </span>
-              <span className="text-xs text-gray-500 font-medium">vs last month</span>
+              <span className="text-xs text-[hsl(var(--muted-foreground))] font-medium">vs last month</span>
             </div>
           )}
         </div>
@@ -73,14 +73,14 @@ interface ChartCardProps {
 
 export function ChartCard({ title, subtitle, children, action, icon }: ChartCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-200/60 hover:border-gray-300 shadow-sm hover:shadow-xl transition-all duration-300">
+    <div className="bg-[hsl(var(--card))] rounded-2xl p-6 lg:p-8 border border-[hsl(var(--border))] hover:border-[hsl(var(--border-hover))] shadow-sm hover:shadow-xl transition-all duration-300">
       <div className="flex items-start justify-between mb-8">
         <div>
           <div className="flex items-center gap-2">
-            {icon && <div className="text-orange-600">{icon}</div>}
-            <h3 className="text-xl font-bold text-gray-900 tracking-tight">{title}</h3>
+            {icon && <div className="text-orange-500">{icon}</div>}
+            <h3 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tight">{title}</h3>
           </div>
-          {subtitle && <p className="text-sm text-gray-600 mt-2 font-medium">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2 font-medium">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -134,20 +134,20 @@ interface ActivityItemProps {
 
 export function ActivityItem({ icon: Icon, title, time, color = 'orange' }: ActivityItemProps) {
   const colorClasses = {
-    orange: 'bg-orange-100 text-orange-600',
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    purple: 'bg-purple-100 text-purple-600',
+    orange: 'bg-orange-950/50 text-orange-400 border border-orange-800',
+    blue: 'bg-blue-950/50 text-blue-400 border border-blue-800',
+    green: 'bg-green-950/50 text-green-400 border border-green-800',
+    purple: 'bg-purple-950/50 text-purple-400 border border-purple-800',
   }
 
   return (
-    <div className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-lg transition">
+    <div className="flex items-center gap-4 p-4 hover:bg-[hsl(var(--muted))] rounded-lg transition">
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
-        <p className="text-xs text-gray-500">{time}</p>
+        <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">{title}</p>
+        <p className="text-xs text-[hsl(var(--muted-foreground))]">{time}</p>
       </div>
     </div>
   )

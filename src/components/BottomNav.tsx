@@ -22,7 +22,7 @@ export default function BottomNav() {
   ]
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl z-50 safe-area-bottom">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[hsl(var(--card))] border-t border-[hsl(var(--border))] shadow-2xl z-50 safe-area-bottom backdrop-blur-md">
       <div className="flex justify-around items-center h-16">
         {navItems.map((item) => {
           const Icon = item.icon
@@ -32,7 +32,7 @@ export default function BottomNav() {
               key={item.path}
               href={item.path}
               className={`flex flex-col items-center justify-center flex-1 h-full transition-all relative ${
-                isActive ? 'text-orange-600' : 'text-gray-500'
+                isActive ? 'text-orange-500' : 'text-[hsl(var(--muted-foreground))]'
               }`}
             >
               {isActive && (

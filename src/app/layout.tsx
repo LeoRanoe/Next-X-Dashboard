@@ -23,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased bg-gray-50">
+      <body className="antialiased">
         <div className="flex h-screen overflow-hidden">
           {/* Desktop Sidebar */}
           <Sidebar />

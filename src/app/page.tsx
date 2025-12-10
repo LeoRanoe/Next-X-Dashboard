@@ -164,15 +164,15 @@ export default function Home() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen">
       {/* Premium Welcome Section */}
       <div className="relative overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700" />
+        {/* Gradient Background - Dark Theme */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-600 via-orange-700 to-orange-900" />
         
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-400/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-700/20 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-900/30 rounded-full blur-3xl" />
         
         {/* Content */}
         <div className="relative max-w-7xl mx-auto px-4 lg:px-8 py-10 lg:py-16">
@@ -247,8 +247,8 @@ export default function Home() {
         <div className="mb-8 lg:mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Quick Actions</h2>
-              <p className="text-sm text-gray-600 mt-1">Common tasks and shortcuts</p>
+              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">Quick Actions</h2>
+              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Common tasks and shortcuts</p>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -307,36 +307,36 @@ export default function Home() {
             <div className="hidden lg:block">
               <ChartCard title="Quick Stats" subtitle="Overview of key metrics">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-orange-50 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-orange-500/10 rounded-xl border border-[hsl(var(--border))]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
                         <DollarSign className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Total Sales (USD)</p>
-                        <p className="text-xl font-bold text-gray-900">${stats.totalSalesUSD.toFixed(2)}</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">Total Sales (USD)</p>
+                        <p className="text-xl font-bold text-[hsl(var(--foreground))]">${stats.totalSalesUSD.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-blue-500/10 rounded-xl border border-[hsl(var(--border))]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
                         <Package className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Stock Items</p>
-                        <p className="text-xl font-bold text-gray-900">{stats.stockItems}</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">Stock Items</p>
+                        <p className="text-xl font-bold text-[hsl(var(--foreground))]">{stats.stockItems}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-xl border border-[hsl(var(--border))]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
                         <ShoppingCart className="text-white" size={20} />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Pending Reservations</p>
-                        <p className="text-xl font-bold text-gray-900">{stats.activeOrders}</p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">Pending Reservations</p>
+                        <p className="text-xl font-bold text-[hsl(var(--foreground))]">{stats.activeOrders}</p>
                       </div>
                     </div>
                   </div>
@@ -365,7 +365,7 @@ export default function Home() {
 
         {/* Mobile: All Modules Grid */}
         <div className="lg:hidden mt-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">All Modules</h2>
+          <h2 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4">All Modules</h2>
           <div className="grid grid-cols-3 gap-3">
             {[
               { name: 'Items', icon: Package, path: '/items' },
@@ -380,10 +380,10 @@ export default function Home() {
                 <button
                   key={item.name}
                   onClick={() => router.push(item.path)}
-                  className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-2"
+                  className="bg-[hsl(var(--card))] p-4 rounded-xl shadow-sm border border-[hsl(var(--border))] hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-2"
                 >
                   <Icon size={24} className="text-orange-500" />
-                  <span className="text-xs font-medium text-gray-700">{item.name}</span>
+                  <span className="text-xs font-medium text-[hsl(var(--foreground))]">{item.name}</span>
                 </button>
               )
             })}

@@ -171,7 +171,7 @@ export default function ReportsPage() {
       <div className="px-4 lg:px-6 pt-6 space-y-6">
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex gap-2 overflow-x-auto p-1 bg-white rounded-xl shadow-sm border border-gray-200/60">
+          <div className="flex gap-2 overflow-x-auto p-1 bg-[hsl(var(--card))] rounded-xl shadow-sm border border-[hsl(var(--border))]">
             {['daily', 'weekly', 'monthly', 'yearly'].map((p) => (
               <button
                 key={p}
@@ -179,7 +179,7 @@ export default function ReportsPage() {
                 className={`px-4 py-2.5 rounded-lg font-medium whitespace-nowrap text-sm transition-all duration-300 ${
                   period === p
                     ? 'bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]/50'
                 }`}
               >
                 {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -190,7 +190,7 @@ export default function ReportsPage() {
           <select
             value={selectedLocation}
             onChange={(e) => setSelectedLocation(e.target.value)}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-body bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
+            className="flex-1 px-4 py-3 border border-[hsl(var(--border))] rounded-xl text-body bg-[hsl(var(--card))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
           >
             <option value="">All Locations</option>
             {locations.map((loc) => (
@@ -210,7 +210,7 @@ export default function ReportsPage() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-blue-600" />
                 </div>
-                <span className="text-caption text-gray-600">Sales (SRD)</span>
+                <span className="text-caption text-[hsl(var(--muted-foreground))]">Sales (SRD)</span>
               </div>
               <div className="text-3xl font-bold tracking-tight">
                 {getTotalSales('SRD').toFixed(2)}
@@ -225,7 +225,7 @@ export default function ReportsPage() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-green-600" />
                 </div>
-                <span className="text-caption text-gray-600">Sales (USD)</span>
+                <span className="text-caption text-[hsl(var(--muted-foreground))]">Sales (USD)</span>
               </div>
               <div className="text-3xl font-bold tracking-tight">
                 ${getTotalSales('USD').toFixed(2)}
@@ -240,7 +240,7 @@ export default function ReportsPage() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-purple-600" />
                 </div>
-                <span className="text-caption text-gray-600">Est. Profit</span>
+                <span className="text-caption text-[hsl(var(--muted-foreground))]">Est. Profit</span>
               </div>
               <div className="text-3xl font-bold tracking-tight">
                 ${getTotalProfit().toFixed(2)}
@@ -255,7 +255,7 @@ export default function ReportsPage() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 flex items-center justify-center">
                   <Package className="w-5 h-5 text-orange-600" />
                 </div>
-                <span className="text-caption text-gray-600">Total Sales</span>
+                <span className="text-caption text-[hsl(var(--muted-foreground))]">Total Sales</span>
               </div>
               <div className="text-3xl font-bold tracking-tight">
                 {sales.filter(s => !selectedLocation || s.location_id === selectedLocation).length}
@@ -268,14 +268,14 @@ export default function ReportsPage() {
         <ChartCard title="Top Selling Items" icon={<Award size={20} />}>
           <div className="space-y-3">
             {topItems.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-transparent rounded-xl border border-gray-200/60 hover:border-orange-300 hover:shadow-md transition-all group">
+              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-[hsl(var(--muted))]/20 to-transparent rounded-xl border border-[hsl(var(--border))]/60 hover:border-orange-300 hover:shadow-md transition-all group">
                 <div className="flex items-center gap-4 flex-1">
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 font-bold text-sm text-orange-600">
                     #{index + 1}
                   </div>
                   <div className="flex-1">
                     <div className="text-title font-semibold tracking-tight group-hover:text-orange-600 transition-colors">{item.name}</div>
-                    <div className="text-caption text-gray-600">Sold: {item.quantity} units</div>
+                    <div className="text-caption text-[hsl(var(--muted-foreground))]">Sold: {item.quantity} units</div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -306,14 +306,14 @@ export default function ReportsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-caption text-gray-600 mb-1">Profit</div>
+                    <div className="text-caption text-[hsl(var(--muted-foreground))] mb-1">Profit</div>
                     <div className="text-2xl font-bold text-green-600">
                       ${stat.profit.toFixed(2)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-caption text-gray-600 mb-1">Stock Value</div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-caption text-[hsl(var(--muted-foreground))] mb-1">Stock Value</div>
+                    <div className="text-2xl font-bold text-[hsl(var(--foreground))]">
                       ${stat.stockValue.toFixed(2)}
                     </div>
                   </div>
@@ -334,7 +334,7 @@ export default function ReportsPage() {
             <div className="text-5xl font-bold tracking-tight bg-gradient-to-r from-blue-600 via-purple-600 to-orange-600 bg-clip-text text-transparent mb-2">
               ${getStockValue().toFixed(2)}
             </div>
-            <div className="text-caption text-gray-600">
+            <div className="text-caption text-[hsl(var(--muted-foreground))]">
               Across all locations
             </div>
           </div>

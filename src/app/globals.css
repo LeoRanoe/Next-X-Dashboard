@@ -1,72 +1,72 @@
 @import "tailwindcss";
 
-/* NextX Dashboard - Premium Design System */
+/* NextX Dashboard - Premium Dark Design System */
 :root {
-  /* Backgrounds with subtle depth */
-  --background: 0 0% 98%;
-  --background-elevated: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  /* Dark Backgrounds with depth */
+  --background: 222 47% 11%;
+  --background-elevated: 222 40% 13%;
+  --foreground: 0 0% 98%;
   
-  /* Card system with elevation */
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-hover: 0 0% 99%;
+  /* Card system with elevation - Dark theme */
+  --card: 222 40% 13%;
+  --card-foreground: 0 0% 98%;
+  --card-hover: 222 40% 15%;
   
-  /* Popover & Modals */
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  /* Popover & Modals - Dark */
+  --popover: 222 40% 13%;
+  --popover-foreground: 0 0% 98%;
   
-  /* NextX Brand - Refined Orange Palette */
+  /* NextX Brand - Refined Orange Palette (stays vibrant on dark) */
   --primary: 24 95% 53%;
-  --primary-hover: 24 95% 48%;
-  --primary-active: 24 95% 43%;
+  --primary-hover: 24 95% 58%;
+  --primary-active: 24 95% 63%;
   --primary-foreground: 0 0% 100%;
-  --primary-light: 24 95% 96%;
-  --primary-medium: 24 95% 88%;
+  --primary-light: 24 95% 20%;
+  --primary-medium: 24 95% 25%;
   
-  /* Secondary & Neutral Tones */
-  --secondary: 220 13% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --secondary-hover: 220 13% 92%;
+  /* Secondary & Neutral Tones - Dark */
+  --secondary: 222 40% 18%;
+  --secondary-foreground: 0 0% 98%;
+  --secondary-hover: 222 40% 22%;
   
-  /* Muted for subtle UI elements */
-  --muted: 220 13% 95%;
-  --muted-foreground: 220 9% 46%;
-  --muted-hover: 220 13% 91%;
+  /* Muted for subtle UI elements - Dark */
+  --muted: 222 40% 18%;
+  --muted-foreground: 220 9% 65%;
+  --muted-hover: 222 40% 20%;
   
   /* Accent (Same as primary for brand consistency) */
   --accent: 24 95% 53%;
   --accent-foreground: 0 0% 100%;
   
-  /* Semantic Colors - Professional Palette */
-  --success: 142 76% 36%;
-  --success-light: 142 76% 95%;
+  /* Semantic Colors - Professional Dark Palette */
+  --success: 142 76% 45%;
+  --success-light: 142 76% 18%;
   --success-foreground: 0 0% 100%;
   
-  --warning: 38 92% 50%;
-  --warning-light: 38 92% 95%;
+  --warning: 38 92% 55%;
+  --warning-light: 38 92% 20%;
   --warning-foreground: 0 0% 100%;
   
-  --destructive: 0 72% 51%;
-  --destructive-light: 0 72% 96%;
+  --destructive: 0 72% 55%;
+  --destructive-light: 0 72% 20%;
   --destructive-foreground: 0 0% 100%;
   
-  --info: 217 91% 60%;
-  --info-light: 217 91% 95%;
+  --info: 217 91% 65%;
+  --info-light: 217 91% 20%;
   --info-foreground: 0 0% 100%;
   
-  /* Borders with subtle contrast */
-  --border: 220 13% 91%;
-  --border-hover: 220 13% 82%;
-  --input: 220 13% 91%;
+  /* Borders with subtle contrast - Dark */
+  --border: 222 40% 22%;
+  --border-hover: 222 40% 30%;
+  --input: 222 40% 18%;
   --ring: 24 95% 53%;
   
-  /* Shadows for depth */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  /* Shadows for depth - Darker shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.6);
   
   /* Radius - Modern and consistent */
   --radius-sm: 0.5rem;
@@ -252,12 +252,12 @@ body {
   background: linear-gradient(135deg, hsl(var(--background-elevated)) 0%, hsl(var(--secondary)) 100%);
 }
 
-/* Glass Effect */
+/* Glass Effect - Dark Theme */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(10px) saturate(180%);
   -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Elevated Elements */
@@ -301,13 +301,13 @@ body {
   animation: shimmer 2s infinite linear;
 }
 
-/* Selection Colors */
+/* Selection Colors - Dark Theme */
 ::selection {
-  background: hsl(var(--primary-light));
-  color: hsl(var(--primary-active));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 ::-moz-selection {
-  background: hsl(var(--primary-light));
-  color: hsl(var(--primary-active));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }

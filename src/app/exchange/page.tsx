@@ -71,14 +71,14 @@ export default function ExchangeRatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Page Header */}
-      <div className="bg-white border-b px-4 lg:px-8 py-6">
+      <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] px-4 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Exchange Rate</h1>
-              <p className="text-sm text-gray-500 mt-1">Manage currency exchange rates</p>
+              <h1 className="text-2xl lg:text-3xl font-bold text-[hsl(var(--foreground))]">Exchange Rate</h1>
+              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Manage currency exchange rates</p>
             </div>
             <button 
               onClick={loadRates}
@@ -124,19 +124,19 @@ export default function ExchangeRatePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
           {/* Set New Rate */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-[hsl(var(--card))] rounded-2xl shadow-sm border border-[hsl(var(--border))] p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
                 <TrendingUp size={20} className="text-orange-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Set New Rate</h3>
-                <p className="text-sm text-gray-500">Update exchange rate</p>
+                <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Set New Rate</h3>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">Update exchange rate</p>
               </div>
             </div>
             <form onSubmit={handleSetRate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                   Exchange Rate (1 USD equals)
                 </label>
                 <div className="relative">
@@ -146,10 +146,10 @@ export default function ExchangeRatePage() {
                     value={newRate}
                     onChange={(e) => setNewRate(e.target.value)}
                     placeholder="0.0000"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                    className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-lg font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
                     required
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] font-medium">
                     SRD
                   </span>
                 </div>
@@ -164,19 +164,19 @@ export default function ExchangeRatePage() {
           </div>
 
           {/* Quick Converter */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-[hsl(var(--card))] rounded-2xl shadow-sm border border-[hsl(var(--border))] p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <ArrowRightLeft size={20} className="text-blue-600" />
+              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                <ArrowRightLeft size={20} className="text-orange-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Quick Converter</h3>
-                <p className="text-sm text-gray-500">Convert currencies instantly</p>
+                <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Quick Converter</h3>
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">Convert currencies instantly</p>
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">USD Amount</label>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">USD Amount</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -184,20 +184,20 @@ export default function ExchangeRatePage() {
                     value={usdAmount}
                     onChange={(e) => handleUsdChange(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                    className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-lg font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                   />
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] font-medium">
                     $
                   </span>
                 </div>
               </div>
               <div className="flex justify-center">
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                  <ArrowRightLeft size={18} className="text-gray-600" />
+                <div className="w-10 h-10 bg-[hsl(var(--muted))] rounded-full flex items-center justify-center">
+                  <ArrowRightLeft size={18} className="text-[hsl(var(--muted-foreground))]" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">SRD Amount</label>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">SRD Amount</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -205,7 +205,7 @@ export default function ExchangeRatePage() {
                     value={srdAmount}
                     onChange={(e) => handleSrdChange(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg font-semibold focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                    className="w-full px-4 py-3 bg-[hsl(var(--input))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-lg font-semibold focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                     SRD
@@ -217,14 +217,14 @@ export default function ExchangeRatePage() {
         </div>
 
         {/* Rate History */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-[hsl(var(--card))] rounded-2xl shadow-sm border border-[hsl(var(--border))] p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
               <History size={20} className="text-purple-600" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Rate History</h3>
-              <p className="text-sm text-gray-500">Previous exchange rates</p>
+              <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Rate History</h3>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">Previous exchange rates</p>
             </div>
           </div>
           <div className="space-y-3">
@@ -234,14 +234,14 @@ export default function ExchangeRatePage() {
                   key={rate.id}
                   className={`p-4 rounded-xl border-2 transition-all ${
                     rate.is_active 
-                      ? 'border-orange-500 bg-orange-50' 
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      ? 'border-orange-500 bg-orange-500/10' 
+                      : 'border-[hsl(var(--border))] bg-[hsl(var(--card))]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg font-bold text-gray-900">
+                        <span className="text-lg font-bold text-[hsl(var(--foreground))]">
                           1 USD = {rate.usd_to_srd} SRD
                         </span>
                         {rate.is_active && (
