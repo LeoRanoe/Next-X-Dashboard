@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
+import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
 
 export const metadata: Metadata = {
-  title: "Next-X-Dashboard",
-  description: "Mobile-first inventory and sales management system",
+  title: "NextX Dashboard - Inventory & Sales Management",
+  description: "Professional inventory and sales management system built with Next.js",
 };
 
 export const viewport: Viewport = {
@@ -21,8 +23,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
-        {children}
+      <body className="antialiased bg-gray-50">
+        <div className="flex h-screen overflow-hidden">
+          {/* Desktop Sidebar */}
+          <Sidebar />
+          
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Top Bar */}
+            <TopBar />
+            
+            {/* Page Content */}
+            <main className="flex-1 overflow-y-auto pb-20 lg:pb-8">
+              <div className="h-full">
+                {children}
+              </div>
+            </main>
+          </div>
+        </div>
+        
+        {/* Mobile Bottom Navigation */}
         <BottomNav />
       </body>
     </html>

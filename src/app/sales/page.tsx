@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { ShoppingCart, Plus, Minus, Check } from 'lucide-react'
+import { ShoppingCart, Plus, Minus, Check, Trash2, MapPin } from 'lucide-react'
+import { PageHeader, PageContainer, Button, Badge, LoadingSpinner } from '@/components/UI'
 
 type Item = Database['public']['Tables']['items']['Row']
 type Location = Database['public']['Tables']['locations']['Row']
