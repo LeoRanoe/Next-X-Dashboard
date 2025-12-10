@@ -6,6 +6,7 @@ import { Database } from '@/types/database.types'
 import { Plus, Trash2, Package, Tag, Search } from 'lucide-react'
 import { PageHeader, PageContainer, Button, Input, Select, EmptyState, LoadingSpinner } from '@/components/UI'
 import { ItemCard, Modal } from '@/components/PageCards'
+import { ImageUpload } from '@/components/ImageUpload'
 
 type Category = Database['public']['Tables']['categories']['Row']
 type Item = Database['public']['Tables']['items']['Row']
@@ -359,12 +360,11 @@ export default function ItemsPage() {
               prefix="$"
             />
           </div>
-          <Input
-            label="Image URL"
-            type="text"
+          <ImageUpload
             value={itemForm.image_url}
-            onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })}
-            placeholder="https://example.com/image.jpg"
+            onChange={(url) => setItemForm({ ...itemForm, image_url: url || '' })}
+            folder="items"
+            label="Product Image"
           />
           <Button type="submit" variant="primary" fullWidth size="lg" loading={submitting}>
             {editingItem ? 'Update Item' : 'Create Item'}
