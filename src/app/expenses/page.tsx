@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Plus, Tag, Receipt } from 'lucide-react'
+import { Plus, Tag, Receipt, TrendingUp } from 'lucide-react'
+import { PageHeader, PageContainer, Button, Badge } from '@/components/UI'
+import { Modal } from '@/components/PageCards'
 
 type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row']
 type Expense = Database['public']['Tables']['expenses']['Row']
@@ -92,15 +94,38 @@ export default function ExpensesPage() {
       .reduce((sum, e) => sum + e.amount, 0)
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold">Expenses</h1>
-        </div>
-      </div>
+  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
+  const expensesByCategory = categories.map(cat => ({
+    category: cat,
+    total: expenses.filter(e => e.category_id === cat.id).reduce((sum, e) => sum + e.amount, 0)
+  })).sort((a, b) => b.total - a.total)
 
-      <div className="p-4 space-y-6">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <PageHeader 
+        title="Expenses" 
+        subtitle="Track business expenses and categories"
+        action={
+          <Button onClick={() => setShowExpenseForm(true)} variant="primary">
+            <Plus size={20} />
+            <span className="hidden sm:inline">New Expense</span>
+          </Button>
+        }
+      />
+
+      <PageContainer>
+        {/* Summary Card */}
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-8 rounded-2xl shadow-lg mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Receipt size={32} />
+            <div>
+              <div className="text-sm opacity-90">Total Expenses</div>
+              <div className="text-4xl font-bold">SRD {totalExpenses.toFixed(2)}</div>
+            </div>
+          </div>
+          <div className="mt-4 text-sm opacity-90">{expenses.length} total transactions</div>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-4 rounded-lg shadow">
             <div className="text-sm opacity-90 mb-1">Total SRD</div>
@@ -275,7 +300,7 @@ export default function ExpensesPage() {
             ))}
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   )
 }

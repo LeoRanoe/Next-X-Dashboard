@@ -41,33 +41,40 @@ export default function Sidebar() {
 
   return (
     <aside 
-      className={`hidden lg:flex flex-col bg-[#1a1a1a] text-white transition-all duration-300 h-screen sticky top-0 ${
-        isCollapsed ? 'w-20' : 'w-64'
+      className={`hidden lg:flex flex-col bg-gradient-to-b from-gray-900 via-gray-900 to-black text-white transition-all duration-300 h-screen sticky top-0 border-r border-gray-800/50 ${
+        isCollapsed ? 'w-20' : 'w-72'
       }`}
     >
-      {/* Logo Section */}
-      <div className="p-6 border-b border-gray-800 flex items-center justify-between">
+      {/* Premium Logo Section */}
+      <div className="p-6 border-b border-gray-800/50 flex items-center justify-between backdrop-blur-sm">
         {!isCollapsed && (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center font-bold text-xl">
-              NX
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl blur-md opacity-50" />
+              <div className="relative w-12 h-12 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl flex items-center justify-center font-bold text-xl shadow-lg border border-orange-400/20">
+                NX
+              </div>
             </div>
             <div>
-              <h1 className="font-bold text-lg">NextX</h1>
-              <p className="text-xs text-gray-400">Dashboard</p>
+              <h1 className="font-bold text-xl tracking-tight">NextX</h1>
+              <p className="text-xs text-gray-400 font-medium">Business Dashboard</p>
             </div>
           </div>
         )}
         {isCollapsed && (
-          <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center font-bold text-xl mx-auto">
-            NX
+          <div className="relative mx-auto">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl blur-md opacity-50" />
+            <div className="relative w-12 h-12 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl flex items-center justify-center font-bold text-xl shadow-lg border border-orange-400/20">
+              NX
+            </div>
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-6 px-3">
-        <div className="space-y-1">
+      {/* Premium Navigation */}
+      <nav className="flex-1 overflow-y-auto py-6 px-4 scrollbar-thin">
+        <div className="space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.path
@@ -76,15 +83,32 @@ export default function Sidebar() {
               <button
                 key={item.path}
                 onClick={() => router.push(item.path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all group ${
+                className={`relative w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group overflow-hidden ${
                   isActive 
-                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/20' 
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30' 
+                    : 'text-gray-400 hover:bg-gray-800/60 hover:text-white'
                 }`}
               >
-                <Icon size={20} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'} />
+                {/* Active indicator bar */}
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full shadow-lg" />
+                )}
+                
+                {/* Icon with subtle animation */}
+                <div className={`flex items-center justify-center transition-transform duration-200 ${isActive ? '' : 'group-hover:scale-110'}`}>
+                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'} />
+                </div>
+                
+                {/* Text with proper spacing */}
                 {!isCollapsed && (
-                  <span className="font-medium text-sm">{item.name}</span>
+                  <span className={`font-semibold text-sm tracking-tight ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                    {item.name}
+                  </span>
+                )}
+                
+                {/* Hover shine effect */}
+                {!isActive && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                 )}
               </button>
             )

@@ -141,8 +141,8 @@ export default function WalletsPage() {
                 <WalletCard
                   key={wallet.id}
                   personName={wallet.person_name}
-                  type={wallet.type}
-                  currency={wallet.currency}
+                  type={wallet.type as 'cash' | 'bank'}
+                  currency={wallet.currency as 'SRD' | 'USD'}
                   balance={wallet.balance}
                   onClick={() => {
                     setSelectedWallet(wallet)

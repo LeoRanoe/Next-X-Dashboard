@@ -169,9 +169,10 @@ interface StockCardProps {
   locationName: string
   quantity: number
   imageUrl?: string | null
+  onRemove?: () => void
 }
 
-export function StockCard({ itemName, locationName, quantity, imageUrl }: StockCardProps) {
+export function StockCard({ itemName, locationName, quantity, imageUrl, onRemove }: StockCardProps) {
   const isLowStock = quantity < 10
   
   return (
@@ -204,6 +205,14 @@ export function StockCard({ itemName, locationName, quantity, imageUrl }: StockC
             </span>
           )}
         </div>
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition"
+          >
+            Remove
+          </button>
+        )}
       </div>
     </div>
   )

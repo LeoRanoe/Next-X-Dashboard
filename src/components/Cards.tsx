@@ -14,30 +14,49 @@ interface StatCardProps {
 
 export function StatCard({ title, value, icon: Icon, trend, color = 'orange' }: StatCardProps) {
   const colorClasses = {
-    orange: 'from-orange-500 to-orange-600',
-    blue: 'from-blue-500 to-blue-600',
-    green: 'from-green-500 to-green-600',
-    purple: 'from-purple-500 to-purple-600',
-    red: 'from-red-500 to-red-600',
+    orange: 'from-orange-500 via-orange-600 to-orange-700 shadow-orange-500/20',
+    blue: 'from-blue-500 via-blue-600 to-blue-700 shadow-blue-500/20',
+    green: 'from-green-500 via-green-600 to-green-700 shadow-green-500/20',
+    purple: 'from-purple-500 via-purple-600 to-purple-700 shadow-purple-500/20',
+    red: 'from-red-500 via-red-600 to-red-700 shadow-red-500/20',
+  }
+
+  const iconBgClasses = {
+    orange: 'bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20',
+    blue: 'bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20',
+    green: 'bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20',
+    purple: 'bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20',
+    red: 'bg-gradient-to-br from-red-500/10 to-red-600/10 border border-red-500/20',
+  }
+
+  const iconColorClasses = {
+    orange: 'text-orange-600',
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    purple: 'text-purple-600',
+    red: 'text-red-600',
   }
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
-      <div className="flex items-start justify-between">
+    <div className="group relative bg-white rounded-2xl p-6 border border-gray-200/60 hover:border-gray-300 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
+      {/* Subtle gradient overlay on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300 bg-gradient-to-br from-gray-900 to-transparent" />
+      
+      <div className="relative flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-600 font-medium mb-1">{title}</p>
-          <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{value}</h3>
+          <p className="text-sm text-gray-600 font-semibold mb-2 tracking-wide uppercase">{title}</p>
+          <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 tracking-tight">{value}</h3>
           {trend && (
-            <div className="flex items-center gap-1">
-              <span className={`text-sm font-semibold ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold ${trend.isPositive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                 {trend.isPositive ? '↑' : '↓'} {trend.value}
               </span>
-              <span className="text-xs text-gray-500">vs last month</span>
+              <span className="text-xs text-gray-500 font-medium">vs last month</span>
             </div>
           )}
         </div>
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center`}>
-          <Icon size={24} className="text-white" />
+        <div className={`w-14 h-14 rounded-2xl ${iconBgClasses[color]} flex items-center justify-center shadow-sm`}>
+          <Icon size={26} className={iconColorClasses[color]} strokeWidth={2.5} />
         </div>
       </div>
     </div>
@@ -49,15 +68,19 @@ interface ChartCardProps {
   subtitle?: string
   children: ReactNode
   action?: ReactNode
+  icon?: ReactNode
 }
 
-export function ChartCard({ title, subtitle, children, action }: ChartCardProps) {
+export function ChartCard({ title, subtitle, children, action, icon }: ChartCardProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
-      <div className="flex items-start justify-between mb-6">
+    <div className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-200/60 hover:border-gray-300 shadow-sm hover:shadow-xl transition-all duration-300">
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+          <div className="flex items-center gap-2">
+            {icon && <div className="text-orange-600">{icon}</div>}
+            <h3 className="text-xl font-bold text-gray-900 tracking-tight">{title}</h3>
+          </div>
+          {subtitle && <p className="text-sm text-gray-600 mt-2 font-medium">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -75,25 +98,28 @@ interface QuickActionCardProps {
 
 export function QuickActionCard({ title, icon: Icon, onClick, color = 'orange' }: QuickActionCardProps) {
   const colorClasses = {
-    orange: 'from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700',
-    blue: 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700',
-    green: 'from-green-500 to-green-600 hover:from-green-600 hover:to-green-700',
-    purple: 'from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700',
-    red: 'from-red-500 to-red-600 hover:from-red-600 hover:to-red-700',
-    teal: 'from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700',
-    indigo: 'from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700',
+    orange: 'from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 shadow-orange-500/30',
+    blue: 'from-blue-500 via-blue-600 to-blue-700 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 shadow-blue-500/30',
+    green: 'from-green-500 via-green-600 to-green-700 hover:from-green-600 hover:via-green-700 hover:to-green-800 shadow-green-500/30',
+    purple: 'from-purple-500 via-purple-600 to-purple-700 hover:from-purple-600 hover:via-purple-700 hover:to-purple-800 shadow-purple-500/30',
+    red: 'from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 shadow-red-500/30',
+    teal: 'from-teal-500 via-teal-600 to-teal-700 hover:from-teal-600 hover:via-teal-700 hover:to-teal-800 shadow-teal-500/30',
+    indigo: 'from-indigo-500 via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:via-indigo-700 hover:to-indigo-800 shadow-indigo-500/30',
   }
 
   return (
     <button
       onClick={onClick}
-      className={`bg-gradient-to-br ${colorClasses[color]} text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all active:scale-95 w-full text-left group`}
+      className={`relative overflow-hidden bg-gradient-to-br ${colorClasses[color]} text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 active:scale-[0.98] w-full text-left group border border-white/10`}
     >
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-          <Icon size={24} className="text-white" />
+      {/* Shine effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+      
+      <div className="relative flex flex-col gap-3">
+        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 border border-white/30">
+          <Icon size={22} className="text-white" strokeWidth={2.5} />
         </div>
-        <span className="font-semibold text-lg">{title}</span>
+        <span className="font-bold text-base tracking-tight">{title}</span>
       </div>
     </button>
   )

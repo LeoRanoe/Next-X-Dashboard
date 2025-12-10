@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Plus, Check, X, User } from 'lucide-react'
+import { Plus, Check, X, User, Calendar, Users } from 'lucide-react'
+import { PageHeader, PageContainer, Button, Badge } from '@/components/UI'
+import { Modal } from '@/components/PageCards'
 
 type Client = Database['public']['Tables']['clients']['Row']
 type Item = Database['public']['Tables']['items']['Row']
@@ -92,15 +94,49 @@ export default function ReservationsPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold">Reservations</h1>
-        </div>
-      </div>
+  const pendingCount = reservations.filter(r => r.status === 'pending').length
+  const completedCount = reservations.filter(r => r.status === 'completed').length
 
-      <div className="p-4 space-y-6">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <PageHeader 
+        title="Reservations" 
+        subtitle="Manage client reservations"
+        action={
+          <div className="flex gap-2">
+            <Button onClick={() => setShowClientForm(true)} variant="secondary">
+              <User size={20} />
+              <span className="hidden sm:inline">New Client</span>
+            </Button>
+            <Button onClick={() => setShowReservationForm(true)} variant="primary">
+              <Plus size={20} />
+              <span className="hidden sm:inline">New Reservation</span>
+            </Button>
+          </div>
+        }
+      />
+
+      <PageContainer>
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="text-sm text-gray-600 mb-1">Total</div>
+            <div className="text-3xl font-bold text-gray-900">{reservations.length}</div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="text-sm text-gray-600 mb-1">Pending</div>
+            <div className="text-3xl font-bold text-orange-600">{pendingCount}</div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="text-sm text-gray-600 mb-1">Completed</div>
+            <div className="text-3xl font-bold text-green-600">{completedCount}</div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="text-sm text-gray-600 mb-1">Clients</div>
+            <div className="text-3xl font-bold text-gray-900">{clients.length}</div>
+          </div>
+        </div>
+
         <div>
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-semibold">Clients</h2>
@@ -291,7 +327,7 @@ export default function ReservationsPage() {
             ))}
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   )
 }

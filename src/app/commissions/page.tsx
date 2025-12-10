@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Plus, DollarSign, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, DollarSign, CheckCircle, Users, TrendingUp } from 'lucide-react'
+import { PageHeader, PageContainer, Button, Badge } from '@/components/UI'
+import { Modal } from '@/components/PageCards'
 
 type Seller = Database['public']['Tables']['sellers']['Row']
 type Commission = Database['public']['Tables']['commissions']['Row']
@@ -69,14 +71,20 @@ export default function CommissionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold">Commissions</h1>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <PageHeader 
+        title="Commissions" 
+        subtitle="Track sales commissions and payouts"
+        action={
+          <Button onClick={() => setShowSellerForm(true)} variant="primary">
+            <Plus size={20} />
+            <span className="hidden sm:inline">New Seller</span>
+          </Button>
+        }
+      />
 
-      <div className="p-4 space-y-6">
+      <PageContainer>
+        <div className="space-y-6">
         <div>
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-semibold">Sellers</h2>
@@ -201,7 +209,8 @@ export default function CommissionsPage() {
             ))}
           </div>
         </div>
-      </div>
+        </div>
+      </PageContainer>
     </div>
   )
 }

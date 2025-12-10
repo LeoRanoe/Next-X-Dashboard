@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { BarChart3, TrendingUp, Package, DollarSign } from 'lucide-react'
+import { BarChart3, TrendingUp, Package, DollarSign, MapPin, Award } from 'lucide-react'
+import { PageHeader, Badge } from '@/components/UI'
+import { ChartCard } from '@/components/Cards'
 
 type Sale = Database['public']['Tables']['sales']['Row']
 type Item = Database['public']['Tables']['items']['Row']
@@ -159,127 +161,159 @@ export default function ReportsPage() {
   const locationStats = getProfitByLocation()
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold">Reports & Insights</h1>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[var(--background)] pb-20">
+      <PageHeader 
+        title="Reports & Insights" 
+        subtitle="Analytics and performance metrics"
+        icon={<BarChart3 className="w-6 h-6" />}
+      />
 
-      <div className="p-4 space-y-4">
-        <div className="flex gap-2 overflow-x-auto">
-          {['daily', 'weekly', 'monthly', 'yearly'].map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p as any)}
-              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
-                period === p
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-700'
-              }`}
-            >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </button>
-          ))}
-        </div>
+      <div className="px-4 lg:px-6 pt-6 space-y-6">
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex gap-2 overflow-x-auto p-1 bg-white rounded-xl shadow-sm border border-gray-200/60">
+            {['daily', 'weekly', 'monthly', 'yearly'].map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p as any)}
+                className={`px-4 py-2.5 rounded-lg font-medium whitespace-nowrap text-sm transition-all duration-300 ${
+                  period === p
+                    ? 'bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/30'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </button>
+            ))}
+          </div>
 
-        <select
-          value={selectedLocation}
-          onChange={(e) => setSelectedLocation(e.target.value)}
-          className="w-full p-3 border rounded-lg text-lg bg-white"
-        >
-          <option value="">All Locations</option>
-          {locations.map((loc) => (
-            <option key={loc.id} value={loc.id}>
-              {loc.name}
-            </option>
-          ))}
-        </select>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign size={18} />
-              <span className="text-sm opacity-90">Sales (SRD)</span>
-            </div>
-            <div className="text-2xl font-bold">
-              {getTotalSales('SRD').toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-lg shadow">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign size={18} />
-              <span className="text-sm opacity-90">Sales (USD)</span>
-            </div>
-            <div className="text-2xl font-bold">
-              ${getTotalSales('USD').toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp size={18} />
-              <span className="text-sm opacity-90">Est. Profit</span>
-            </div>
-            <div className="text-2xl font-bold">
-              ${getTotalProfit().toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-lg shadow">
-            <div className="flex items-center gap-2 mb-1">
-              <Package size={18} />
-              <span className="text-sm opacity-90">Total Sales</span>
-            </div>
-            <div className="text-2xl font-bold">
-              {sales.filter(s => !selectedLocation || s.location_id === selectedLocation).length}
-            </div>
-          </div>
+          <select
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-body bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-sm"
+          >
+            <option value="">All Locations</option>
+            {locations.map((loc) => (
+              <option key={loc.id} value={loc.id}>
+                {loc.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <BarChart3 size={20} />
-            Top Selling Items
-          </h3>
-          <div className="space-y-2">
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="card-premium group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-blue-600" />
+                </div>
+                <span className="text-caption text-gray-600">Sales (SRD)</span>
+              </div>
+              <div className="text-3xl font-bold tracking-tight">
+                {getTotalSales('SRD').toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          <div className="card-premium group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                </div>
+                <span className="text-caption text-gray-600">Sales (USD)</span>
+              </div>
+              <div className="text-3xl font-bold tracking-tight">
+                ${getTotalSales('USD').toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          <div className="card-premium group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                </div>
+                <span className="text-caption text-gray-600">Est. Profit</span>
+              </div>
+              <div className="text-3xl font-bold tracking-tight">
+                ${getTotalProfit().toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          <div className="card-premium group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent blur-2xl"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-orange-600" />
+                </div>
+                <span className="text-caption text-gray-600">Total Sales</span>
+              </div>
+              <div className="text-3xl font-bold tracking-tight">
+                {sales.filter(s => !selectedLocation || s.location_id === selectedLocation).length}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Selling Items */}
+        <ChartCard title="Top Selling Items" icon={<Award size={20} />}>
+          <div className="space-y-3">
             {topItems.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <div className="font-semibold">{item.name}</div>
-                  <div className="text-sm text-gray-600">Sold: {item.quantity}</div>
+              <div key={index} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-transparent rounded-xl border border-gray-200/60 hover:border-orange-300 hover:shadow-md transition-all group">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 font-bold text-sm text-orange-600">
+                    #{index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-title font-semibold tracking-tight group-hover:text-orange-600 transition-colors">{item.name}</div>
+                    <div className="text-caption text-gray-600">Sold: {item.quantity} units</div>
+                  </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-green-600">
+                  <div className="text-xl font-bold text-green-600">
                     ${item.revenue.toFixed(2)}
                   </div>
+                  <div className="text-caption text-gray-500">revenue</div>
                 </div>
               </div>
             ))}
             {topItems.length === 0 && (
-              <p className="text-center text-gray-500 py-4">No sales data</p>
+              <div className="text-center py-12">
+                <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No sales data for this period</p>
+              </div>
             )}
           </div>
-        </div>
+        </ChartCard>
 
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="font-semibold mb-3">Location Performance</h3>
-          <div className="space-y-2">
+        {/* Location Performance */}
+        <ChartCard title="Location Performance" icon={<MapPin size={20} />}>
+          <div className="space-y-3">
             {locationStats.map((stat, index) => (
-              <div key={index} className="p-3 border rounded-lg">
-                <div className="font-semibold mb-2">{stat.name}</div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
+              <div key={index} className="card-premium group hover:shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-title font-semibold tracking-tight">{stat.name}</h4>
+                  <Badge variant="orange">{stat.sales} sales</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-gray-600">Sales</div>
-                    <div className="font-semibold">{stat.sales}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-600">Profit</div>
-                    <div className="font-semibold text-green-600">
+                    <div className="text-caption text-gray-600 mb-1">Profit</div>
+                    <div className="text-2xl font-bold text-green-600">
                       ${stat.profit.toFixed(2)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-gray-600">Stock Value</div>
-                    <div className="font-semibold">
+                    <div className="text-caption text-gray-600 mb-1">Stock Value</div>
+                    <div className="text-2xl font-bold text-gray-900">
                       ${stat.stockValue.toFixed(2)}
                     </div>
                   </div>
@@ -287,15 +321,20 @@ export default function ReportsPage() {
               </div>
             ))}
           </div>
-        </div>
+        </ChartCard>
 
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="font-semibold mb-3">Total Stock Value</h3>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-blue-600">
+        {/* Total Stock Value */}
+        <div className="card-premium text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-orange-500/5"></div>
+          <div className="relative">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 mb-4">
+              <Package className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="text-headline font-semibold tracking-tight mb-2">Total Stock Value</h3>
+            <div className="text-5xl font-bold tracking-tight bg-gradient-to-r from-blue-600 via-purple-600 to-orange-600 bg-clip-text text-transparent mb-2">
               ${getStockValue().toFixed(2)}
             </div>
-            <div className="text-sm text-gray-600 mt-1">
+            <div className="text-caption text-gray-600">
               Across all locations
             </div>
           </div>

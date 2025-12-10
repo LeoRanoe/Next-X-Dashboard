@@ -199,7 +199,7 @@ export default function ItemsPage() {
                   <ItemCard
                     key={item.id}
                     name={item.name}
-                    category={getCategoryName(item.category_id)}
+                    categoryName={getCategoryName(item.category_id)}
                     purchasePrice={item.purchase_price_usd}
                     sellingPriceSRD={item.selling_price_srd}
                     sellingPriceUSD={item.selling_price_usd}
