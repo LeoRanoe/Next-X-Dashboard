@@ -201,7 +201,7 @@ export default function ExpensesPage() {
                   setExpenseForm({ 
                     ...expenseForm, 
                     wallet_id: e.target.value,
-                    currency: wallet?.currency || 'SRD'
+                    currency: (wallet?.currency as 'SRD' | 'USD') || 'SRD'
                   })
                 }}
                 className="w-full p-3 border rounded-lg mb-3 text-lg"
