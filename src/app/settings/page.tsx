@@ -423,7 +423,7 @@ export default function SettingsPage() {
                     value={settings.hero_subtitle}
                     onChange={(e) => setSettings({ ...settings, hero_subtitle: e.target.value })}
                     placeholder="Ontdek ons assortiment van premium producten"
-                    className="input-field min-h-[80px] resize-y"
+                    className="input-field min-h-20 resize-y"
                     rows={3}
                   />
                 </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { MapPin, Phone, MessageCircle } from 'lucide-react'
+import { MapPin, Phone, MessageCircle, Zap, Heart } from 'lucide-react'
 
 interface FooterSectionProps {
   storeName: string
@@ -22,48 +22,62 @@ export function FooterSection({
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-white/[0.04] bg-neutral-950">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16">
-          {/* Brand column */}
-          <div className="md:col-span-5 lg:col-span-4">
-            {logoUrl ? (
-              <Image 
-                src={logoUrl} 
-                alt={storeName} 
-                width={120} 
-                height={40} 
-                className="h-8 w-auto object-contain mb-6"
-                unoptimized
-              />
-            ) : (
-              <div className="text-2xl font-semibold tracking-tight mb-6">
-                <span className="text-white">Next</span>
-                <span className="text-orange-500">X</span>
-              </div>
-            )}
-            {storeDescription && (
-              <p className="text-sm text-neutral-500 leading-relaxed max-w-sm">
-                {storeDescription}
-              </p>
-            )}
-          </div>
+    <footer className="relative overflow-hidden">
+      {/* Background with gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950 to-neutral-900" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500/[0.03] rounded-full blur-3xl" />
+      
+      <div className="relative border-t border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-24">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16">
+            {/* Brand column */}
+            <div className="md:col-span-5 lg:col-span-4">
+              {logoUrl ? (
+                <Image 
+                  src={logoUrl} 
+                  alt={storeName} 
+                  width={140} 
+                  height={48} 
+                  className="h-10 w-auto object-contain mb-6"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex items-center gap-2.5 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                    <Zap size={20} className="text-white" strokeWidth={2.5} />
+                  </div>
+                  <span className="text-2xl font-black tracking-tight">
+                    <span className="text-white">Next</span>
+                    <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">X</span>
+                  </span>
+                </div>
+              )}
+              {storeDescription && (
+                <p className="text-sm text-neutral-400 leading-relaxed max-w-sm">
+                  {storeDescription}
+                </p>
+              )}
+            </div>
           
           {/* Contact column */}
           <div className="md:col-span-3 lg:col-span-4">
-            <h4 className="text-xs font-semibold tracking-widest uppercase text-neutral-400 mb-6">
+            <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-orange-500 mb-6">
               Contact
             </h4>
-            <ul className="space-y-4">
+            <ul className="space-y-5">
               <li>
-                <div className="flex items-start gap-3 text-sm text-neutral-400">
-                  <MapPin size={16} className="text-orange-500/60 mt-0.5 flex-shrink-0" />
-                  <span className="leading-relaxed">{storeAddress}</span>
+                <div className="flex items-start gap-4 text-sm text-neutral-300 group">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center flex-shrink-0 group-hover:border-orange-500/30 group-hover:bg-orange-500/10 transition-all">
+                    <MapPin size={16} className="text-orange-500" />
+                  </div>
+                  <span className="leading-relaxed pt-2.5">{storeAddress}</span>
                 </div>
               </li>
               <li>
-                <div className="flex items-center gap-3 text-sm text-neutral-400">
-                  <Phone size={16} className="text-orange-500/60 flex-shrink-0" />
+                <div className="flex items-center gap-4 text-sm text-neutral-300 group">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center flex-shrink-0 group-hover:border-orange-500/30 group-hover:bg-orange-500/10 transition-all">
+                    <Phone size={16} className="text-orange-500" />
+                  </div>
                   <span>{whatsappNumber}</span>
                 </div>
               </li>
@@ -72,34 +86,37 @@ export function FooterSection({
           
           {/* CTA column */}
           <div className="md:col-span-4 lg:col-span-4">
-            <h4 className="text-xs font-semibold tracking-widest uppercase text-neutral-400 mb-6">
+            <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-orange-500 mb-6">
               Bestellen
             </h4>
-            <p className="text-sm text-neutral-500 mb-6 leading-relaxed">
+            <p className="text-sm text-neutral-400 mb-8 leading-relaxed">
               Neem contact op via WhatsApp om je bestelling te plaatsen.
             </p>
             <a
               href={`https://wa.me/${whatsappClean}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-[#25D366] hover:bg-[#22c55e] text-white text-sm font-medium transition-all duration-200 shadow-lg shadow-[#25D366]/20 hover:shadow-[#25D366]/30"
+              className="inline-flex items-center gap-3 px-7 py-4 rounded-2xl bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:from-[#22c55e] hover:to-[#0ea271] text-white text-sm font-bold transition-all duration-300 shadow-xl shadow-[#25D366]/30 hover:shadow-[#25D366]/50 hover:scale-105"
             >
-              <MessageCircle size={16} strokeWidth={2} />
+              <MessageCircle size={18} strokeWidth={2.5} />
               <span>Start een chat</span>
             </a>
           </div>
         </div>
         
         {/* Bottom bar */}
-        <div className="mt-16 pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-neutral-600">
+        <div className="mt-20 pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-neutral-500">
             © {currentYear} {storeName}. Alle rechten voorbehouden.
           </p>
-          <p className="text-xs text-neutral-700">
-            Powered by NextX
+          <p className="flex items-center gap-2 text-sm text-neutral-600">
+            <span>Made with</span>
+            <Heart size={14} className="text-red-500 fill-red-500" />
+            <span>by NextX</span>
           </p>
         </div>
       </div>
+    </div>
     </footer>
   )
 }

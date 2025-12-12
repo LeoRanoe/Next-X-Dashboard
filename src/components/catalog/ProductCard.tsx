@@ -32,13 +32,16 @@ export function ProductCard({
 }: ProductCardProps) {
   return (
     <article className="group relative flex flex-col">
+      {/* Card glow effect */}
+      <div className="absolute -inset-2 bg-gradient-to-r from-orange-500/0 via-orange-500/0 to-orange-500/0 rounded-3xl blur-xl group-hover:from-orange-500/20 group-hover:via-amber-500/10 group-hover:to-orange-500/20 transition-all duration-500 opacity-0 group-hover:opacity-100" />
+      
       {/* Image container with 1:1 ratio */}
       <div 
-        className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-900 cursor-pointer mb-3.5"
+        className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-800 cursor-pointer mb-4 border border-white/[0.08] group-hover:border-orange-500/40 transition-all duration-500 shadow-lg group-hover:shadow-2xl group-hover:shadow-orange-500/20"
         onClick={onViewDetail}
       >
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10" />
+        {/* Shimmer overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] via-transparent to-transparent" />
         
         {imageUrl ? (
           <Image
@@ -60,31 +63,28 @@ export function ProductCard({
         
         {/* Category badge */}
         {categoryName && (
-          <div className="absolute top-4 left-4">
-            <span className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.06] text-[11px] font-medium text-white/90 tracking-wide">
+          <div className="absolute top-4 left-4 z-10">
+            <span className="px-3.5 py-1.5 rounded-xl bg-black/70 backdrop-blur-xl border border-white/[0.15] text-[11px] font-bold text-white tracking-wide shadow-xl">
               {categoryName}
             </span>
           </div>
         )}
         
         {/* Hover overlay with add button */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="absolute bottom-4 left-4 right-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500">
+          <div className="absolute bottom-5 left-5 right-5">
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 onAddToCart()
               }}
-              className="w-full py-3 px-4 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 shadow-lg shadow-orange-500/25"
+              className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-orange-500 via-orange-500 to-amber-500 hover:from-orange-400 hover:via-orange-400 hover:to-amber-400 text-white text-sm font-bold flex items-center justify-center gap-2.5 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 shadow-2xl shadow-orange-500/50"
             >
-              <Plus size={16} strokeWidth={2} />
-              <span>Toevoegen</span>
+              <Plus size={18} strokeWidth={2.5} />
+              <span>Add to Cart</span>
             </button>
           </div>
         </div>
-        
-        {/* Floating shadow on hover */}
-        <div className="absolute -inset-2 rounded-3xl bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl" />
       </div>
       
       {/* Product info */}
@@ -105,8 +105,8 @@ export function ProductCard({
         )}
         
         {/* Price and cart controls */}
-        <div className="mt-auto flex items-center justify-between gap-2">
-          <span className="text-sm font-semibold text-white">
+        <div className="mt-auto flex items-center justify-between gap-3">
+          <span className="text-lg font-black bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
             {formatCurrency(price, currency)}
           </span>
           
@@ -131,9 +131,9 @@ export function ProductCard({
           ) : (
             <button
               onClick={onAddToCart}
-              className="w-10 h-10 rounded-xl bg-orange-500 hover:bg-orange-400 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg shadow-orange-500/20"
+              className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-90 shadow-lg shadow-orange-500/40"
             >
-              <Plus size={18} className="text-white" strokeWidth={2} />
+              <Plus size={18} className="text-white" strokeWidth={2.5} />
             </button>
           )}
         </div>
