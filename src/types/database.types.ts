@@ -9,6 +9,41 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      users: {
+        Row: {
+          id: string
+          email: string
+          password_hash: string
+          name: string | null
+          role: string
+          is_active: boolean
+          last_login_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          password_hash: string
+          name?: string | null
+          role?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          password_hash?: string
+          name?: string | null
+          role?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       categories: {
         Row: {
           id: string
@@ -33,33 +68,39 @@ export interface Database {
         Row: {
           id: string
           name: string
+          description: string | null
           category_id: string | null
           purchase_price_usd: number
           selling_price_srd: number | null
           selling_price_usd: number | null
           image_url: string | null
+          is_public: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
+          description?: string | null
           category_id?: string | null
           purchase_price_usd: number
           selling_price_srd?: number | null
           selling_price_usd?: number | null
           image_url?: string | null
+          is_public?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
+          description?: string | null
           category_id?: string | null
           purchase_price_usd?: number
           selling_price_srd?: number | null
           selling_price_usd?: number | null
           image_url?: string | null
+          is_public?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -630,6 +671,29 @@ export interface Database {
           subtotal?: number
           quantity_received?: number
           created_at?: string
+        }
+      }
+      store_settings: {
+        Row: {
+          id: string
+          key: string
+          value: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: string
+          created_at?: string
+          updated_at?: string
         }
       }
     }

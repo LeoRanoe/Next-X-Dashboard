@@ -6,6 +6,7 @@ import { Database } from '@/types/database.types'
 import { Package, Plus, ArrowRightLeft, AlertTriangle, Filter, Search, X, ArrowUpDown } from 'lucide-react'
 import { PageHeader, PageContainer, Button, Select, Input, EmptyState, LoadingSpinner, StatBox } from '@/components/UI'
 import { StockCard, Modal } from '@/components/PageCards'
+import { logActivity } from '@/lib/activityLog'
 
 type Item = Database['public']['Tables']['items']['Row']
 type Location = Database['public']['Tables']['locations']['Row']
@@ -115,6 +116,8 @@ export default function StockPage() {
     
     try {
       const { item_id, location_id, quantity } = addForm
+      const item = items.find(i => i.id === item_id)
+      const location = locations.find(l => l.id === location_id)
       
       const { data: existing } = await supabase
         .from('stock')
@@ -135,6 +138,14 @@ export default function StockPage() {
           quantity: parseInt(quantity)
         })
       }
+
+      await logActivity({
+        action: 'create',
+        entityType: 'stock',
+        entityId: item_id,
+        entityName: item?.name,
+        details: `Added ${quantity} units of ${item?.name} to ${location?.name}`
+      })
 
       setAddForm({ item_id: '', location_id: '', quantity: '' })
       setShowAddForm(false)
@@ -172,6 +183,10 @@ export default function StockPage() {
       return
     }
 
+    const item = items.find(i => i.id === item_id)
+    const fromLocation = locations.find(l => l.id === from_location_id)
+    const toLocation = locations.find(l => l.id === to_location_id)
+
     setSubmitting(true)
     try {
       await supabase
@@ -204,6 +219,14 @@ export default function StockPage() {
         from_location_id,
         to_location_id,
         quantity: qty
+      })
+
+      await logActivity({
+        action: 'transfer',
+        entityType: 'stock',
+        entityId: item_id,
+        entityName: item?.name,
+        details: `Transferred ${qty} units of ${item?.name} from ${fromLocation?.name} to ${toLocation?.name}`
       })
 
       setTransferForm({ item_id: '', from_location_id: '', to_location_id: '', quantity: '' })

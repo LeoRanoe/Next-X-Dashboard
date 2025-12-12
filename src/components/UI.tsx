@@ -197,13 +197,13 @@ export function Input({
       {hasAdornment ? (
         <div className="relative">
           {prefix && (
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-xs font-medium pointer-events-none">
               {prefix}
             </span>
           )}
           <input
             {...props}
-            className={`input-field ${prefix ? 'pl-8' : ''} ${suffix ? 'pr-14' : ''} ${error ? 'border-destructive focus:border-destructive focus:ring-destructive/15' : ''}`}
+            className={`input-field ${prefix ? 'pl-16' : ''} ${suffix ? 'pr-14' : ''} ${error ? 'border-destructive focus:border-destructive focus:ring-destructive/15' : ''}`}
           />
           {suffix && (
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">

@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { 
   Package, 
   MapPin, 
@@ -61,13 +62,16 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       <div className="lg:hidden fixed top-0 left-0 h-full w-[280px] bg-gray-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto">
         {/* Header */}
         <div className="p-5 border-b border-gray-800/50 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg">
-              NX
-            </div>
-            <div>
-              <h1 className="font-bold text-base">NextX</h1>
-              <p className="text-xs text-gray-400">Dashboard</p>
+          <div className="flex items-center gap-3 flex-1">
+            <div className="relative h-10 w-32">
+              <Image
+                src="/nextx-logo-dark.png"
+                alt="NextX Logo"
+                width={128}
+                height={40}
+                className="object-contain"
+                priority
+              />
             </div>
           </div>
           <button 

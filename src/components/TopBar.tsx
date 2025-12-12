@@ -1,14 +1,25 @@
 'use client'
 
-import { Bell, Search, Menu, DollarSign } from 'lucide-react'
+import { Bell, Search, Menu, DollarSign, LogOut } from 'lucide-react'
 import { useState } from 'react'
+import Image from 'next/image'
 import MobileMenu from './MobileMenu'
 import { useCurrency } from '@/lib/CurrencyContext'
+import { useAuth } from '@/lib/AuthContext'
+import { useRouter } from 'next/navigation'
 
 export default function TopBar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const { displayCurrency, setDisplayCurrency, exchangeRate } = useCurrency()
+  const { user, logout } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/login')
+  }
 
   return (
     <>
@@ -25,10 +36,24 @@ export default function TopBar() {
           
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-1.5">
-            <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center font-bold text-xs text-white shadow-sm">
-              NX
+            <div className="relative h-7 w-20">
+              <Image
+                src="/nextx-logo-light.png"
+                alt="NextX Logo"
+                width={80}
+                height={28}
+                className="object-contain dark:hidden"
+                priority
+              />
+              <Image
+                src="/nextx-logo-dark.png"
+                alt="NextX Logo"
+                width={80}
+                height={28}
+                className="object-contain hidden dark:block"
+                priority
+              />
             </div>
-            <span className="font-bold text-sm text-foreground">NextX</span>
           </div>
 
           {/* Search Bar - Desktop */}
@@ -89,15 +114,37 @@ export default function TopBar() {
           </button>
 
           {/* User Profile */}
-          <button className="flex items-center gap-2 px-1.5 lg:px-2 py-1 lg:py-1.5 hover:bg-muted rounded-lg lg:rounded-xl transition-colors">
-            <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-semibold text-foreground">Admin User</span>
-              <span className="text-xs text-muted-foreground">Administrator</span>
-            </div>
-            <div className="w-7 h-7 lg:w-9 lg:h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg lg:rounded-xl flex items-center justify-center text-white font-semibold text-xs lg:text-sm shadow-sm">
-              A
-            </div>
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 px-1.5 lg:px-2 py-1 lg:py-1.5 hover:bg-muted rounded-lg lg:rounded-xl transition-colors"
+            >
+              <div className="hidden md:flex flex-col items-end">
+                <span className="text-sm font-semibold text-foreground">{user?.name || user?.email || 'User'}</span>
+                <span className="text-xs text-muted-foreground capitalize">{user?.role || 'Admin'}</span>
+              </div>
+              <div className="w-7 h-7 lg:w-9 lg:h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg lg:rounded-xl flex items-center justify-center text-white font-semibold text-xs lg:text-sm shadow-sm">
+                {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+              </div>
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-card rounded-xl shadow-lg border border-border py-2 z-50">
+                <div className="px-4 py-2 border-b border-border">
+                  <p className="text-sm font-medium text-foreground">{user?.email}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

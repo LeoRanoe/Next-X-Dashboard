@@ -7,6 +7,7 @@ import { Plus, Trash2, Package, Tag, Search } from 'lucide-react'
 import { PageHeader, PageContainer, Button, Input, Select, EmptyState, LoadingSpinner } from '@/components/UI'
 import { ItemCard, Modal } from '@/components/PageCards'
 import { ImageUpload } from '@/components/ImageUpload'
+import { logActivity } from '@/lib/activityLog'
 
 type Category = Database['public']['Tables']['categories']['Row']
 type Item = Database['public']['Tables']['items']['Row']
@@ -24,11 +25,13 @@ export default function ItemsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [itemForm, setItemForm] = useState({
     name: '',
+    description: '',
     category_id: '',
     purchase_price_usd: '',
     selling_price_srd: '',
     selling_price_usd: '',
-    image_url: ''
+    image_url: '',
+    is_public: true
   })
 
   const loadData = async () => {
@@ -51,7 +54,16 @@ export default function ItemsPage() {
     if (submitting) return
     setSubmitting(true)
     try {
-      await supabase.from('categories').insert({ name: categoryName })
+      const { data } = await supabase.from('categories').insert({ name: categoryName }).select().single()
+      if (data) {
+        await logActivity({
+          action: 'create',
+          entityType: 'category',
+          entityId: data.id,
+          entityName: categoryName,
+          details: `Created category: ${categoryName}`
+        })
+      }
       setCategoryName('')
       setShowCategoryForm(false)
       loadData()
@@ -61,8 +73,16 @@ export default function ItemsPage() {
   }
 
   const handleDeleteCategory = async (id: string) => {
+    const category = categories.find(c => c.id === id)
     if (confirm('Delete this category?')) {
       await supabase.from('categories').delete().eq('id', id)
+      await logActivity({
+        action: 'delete',
+        entityType: 'category',
+        entityId: id,
+        entityName: category?.name,
+        details: `Deleted category: ${category?.name}`
+      })
       loadData()
     }
   }
@@ -74,20 +94,38 @@ export default function ItemsPage() {
     try {
       const data = {
         name: itemForm.name,
+        description: itemForm.description || null,
         category_id: itemForm.category_id || null,
         purchase_price_usd: parseFloat(itemForm.purchase_price_usd),
         selling_price_srd: itemForm.selling_price_srd ? parseFloat(itemForm.selling_price_srd) : null,
         selling_price_usd: itemForm.selling_price_usd ? parseFloat(itemForm.selling_price_usd) : null,
-        image_url: itemForm.image_url || null
+        image_url: itemForm.image_url || null,
+        is_public: itemForm.is_public
       }
 
       if (editingItem) {
         await supabase.from('items').update(data).eq('id', editingItem.id)
+        await logActivity({
+          action: 'update',
+          entityType: 'item',
+          entityId: editingItem.id,
+          entityName: itemForm.name,
+          details: `Updated item: ${itemForm.name}`
+        })
       } else {
-        await supabase.from('items').insert(data)
+        const { data: newItem } = await supabase.from('items').insert(data).select().single()
+        if (newItem) {
+          await logActivity({
+            action: 'create',
+            entityType: 'item',
+            entityId: newItem.id,
+            entityName: itemForm.name,
+            details: `Created item: ${itemForm.name} - $${itemForm.purchase_price_usd} USD`
+          })
+        }
       }
 
-      setItemForm({ name: '', category_id: '', purchase_price_usd: '', selling_price_srd: '', selling_price_usd: '', image_url: '' })
+      setItemForm({ name: '', description: '', category_id: '', purchase_price_usd: '', selling_price_srd: '', selling_price_usd: '', image_url: '', is_public: true })
       setShowItemForm(false)
       setEditingItem(null)
       loadData()
@@ -100,18 +138,28 @@ export default function ItemsPage() {
     setEditingItem(item)
     setItemForm({
       name: item.name,
+      description: item.description || '',
       category_id: item.category_id || '',
       purchase_price_usd: item.purchase_price_usd.toString(),
       selling_price_srd: item.selling_price_srd?.toString() || '',
       selling_price_usd: item.selling_price_usd?.toString() || '',
-      image_url: item.image_url || ''
+      image_url: item.image_url || '',
+      is_public: item.is_public ?? true
     })
     setShowItemForm(true)
   }
 
   const handleDeleteItem = async (id: string) => {
+    const item = items.find(i => i.id === id)
     if (confirm('Delete this item?')) {
       await supabase.from('items').delete().eq('id', id)
+      await logActivity({
+        action: 'delete',
+        entityType: 'item',
+        entityId: id,
+        entityName: item?.name,
+        details: `Deleted item: ${item?.name}`
+      })
       loadData()
     }
   }
@@ -151,7 +199,7 @@ export default function ItemsPage() {
             onClick={() => {
               if (activeTab === 'items') {
                 setEditingItem(null)
-                setItemForm({ name: '', category_id: '', purchase_price_usd: '', selling_price_srd: '', selling_price_usd: '', image_url: '' })
+                setItemForm({ name: '', description: '', category_id: '', purchase_price_usd: '', selling_price_srd: '', selling_price_usd: '', image_url: '', is_public: true })
                 setShowItemForm(true)
               } else {
                 setShowCategoryForm(true)
@@ -320,6 +368,16 @@ export default function ItemsPage() {
             placeholder="Enter item name"
             required
           />
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">Description</label>
+            <textarea
+              value={itemForm.description}
+              onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
+              placeholder="Enter product description for the catalog..."
+              className="input-field min-h-[80px] resize-none"
+              rows={3}
+            />
+          </div>
           <Select
             label="Category"
             value={itemForm.category_id}
@@ -366,6 +424,18 @@ export default function ItemsPage() {
             folder="items"
             label="Product Image"
           />
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="is_public"
+              checked={itemForm.is_public}
+              onChange={(e) => setItemForm({ ...itemForm, is_public: e.target.checked })}
+              className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+            />
+            <label htmlFor="is_public" className="text-sm font-medium text-foreground">
+              Show in public catalog (webshop)
+            </label>
+          </div>
           <Button type="submit" variant="primary" fullWidth size="lg" loading={submitting}>
             {editingItem ? 'Update Item' : 'Create Item'}
           </Button>

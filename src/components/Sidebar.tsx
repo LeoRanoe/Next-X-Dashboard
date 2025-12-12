@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { 
   Package, 
   MapPin, 
@@ -16,7 +17,9 @@ import {
   Menu,
   X,
   Activity,
-  ClipboardList
+  ClipboardList,
+  Settings,
+  Store
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -27,6 +30,7 @@ export default function Sidebar() {
 
   const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { name: 'Catalog', icon: Store, path: '/catalog', external: true },
     { name: 'Items', icon: Package, path: '/items' },
     { name: 'Locations', icon: MapPin, path: '/locations' },
     { name: 'Stock', icon: Package, path: '/stock' },
@@ -40,6 +44,7 @@ export default function Sidebar() {
     { name: 'Budgets', icon: Target, path: '/budgets' },
     { name: 'Reports', icon: BarChart3, path: '/reports' },
     { name: 'Activity Log', icon: Activity, path: '/activity' },
+    { name: 'Settings', icon: Settings, path: '/settings' },
   ]
 
   return (
@@ -51,25 +56,29 @@ export default function Sidebar() {
       {/* Premium Logo Section */}
       <div className="p-6 border-b border-gray-800/50 flex items-center justify-between backdrop-blur-sm">
         {!isCollapsed && (
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl blur-md opacity-50" />
-              <div className="relative w-12 h-12 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl flex items-center justify-center font-bold text-xl shadow-lg border border-orange-400/20">
-                NX
-              </div>
-            </div>
-            <div>
-              <h1 className="font-bold text-xl tracking-tight">NextX</h1>
-              <p className="text-xs text-gray-400 font-medium">Business Dashboard</p>
+          <div className="flex items-center gap-3 w-full">
+            <div className="relative w-full h-12">
+              <Image
+                src="/nextx-logo-dark.png"
+                alt="NextX Logo"
+                width={200}
+                height={48}
+                className="object-contain"
+                priority
+              />
             </div>
           </div>
         )}
         {isCollapsed && (
-          <div className="relative mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl blur-md opacity-50" />
-            <div className="relative w-12 h-12 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl flex items-center justify-center font-bold text-xl shadow-lg border border-orange-400/20">
-              NX
-            </div>
+          <div className="relative mx-auto w-12 h-12">
+            <Image
+              src="/nextx-logo-dark.png"
+              alt="NextX"
+              width={48}
+              height={48}
+              className="object-contain"
+              priority
+            />
           </div>
         )}
       </div>

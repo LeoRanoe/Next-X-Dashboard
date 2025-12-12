@@ -6,6 +6,7 @@ import { Database } from '@/types/database.types'
 import { Plus, MapPin } from 'lucide-react'
 import { PageHeader, PageContainer, Button, Input, EmptyState, LoadingSpinner } from '@/components/UI'
 import { LocationCard, Modal } from '@/components/PageCards'
+import { logActivity } from '@/lib/activityLog'
 
 type Location = Database['public']['Tables']['locations']['Row']
 type Stock = Database['public']['Tables']['stock']['Row']
@@ -64,8 +65,24 @@ export default function LocationsPage() {
 
       if (editingLocation) {
         await supabase.from('locations').update(data).eq('id', editingLocation.id)
+        await logActivity({
+          action: 'update',
+          entityType: 'location',
+          entityId: editingLocation.id,
+          entityName: formData.name,
+          details: `Updated location: ${formData.name}`
+        })
       } else {
-        await supabase.from('locations').insert(data)
+        const { data: newLocation } = await supabase.from('locations').insert(data).select().single()
+        if (newLocation) {
+          await logActivity({
+            action: 'create',
+            entityType: 'location',
+            entityId: newLocation.id,
+            entityName: formData.name,
+            details: `Created location: ${formData.name}${formData.address ? ` at ${formData.address}` : ''}`
+          })
+        }
       }
 
       setFormData({ name: '', address: '' })
@@ -89,8 +106,16 @@ export default function LocationsPage() {
   }
 
   const handleDelete = async (id: string) => {
+    const location = locations.find(l => l.id === id)
     if (confirm('Delete this location? This will also delete all associated stock.')) {
       await supabase.from('locations').delete().eq('id', id)
+      await logActivity({
+        action: 'delete',
+        entityType: 'location',
+        entityId: id,
+        entityName: location?.name,
+        details: `Deleted location: ${location?.name}`
+      })
       loadLocations()
     }
   }

@@ -311,18 +311,19 @@ export default function Home() {
                 </button>
               }
             >
-              <div className="h-64 lg:h-80 flex items-end justify-between gap-2 lg:gap-4">
+              <div className="h-64 lg:h-80 flex items-end justify-between gap-2 lg:gap-4 px-2">
                 {monthlySales.map((amount, i) => {
                   const displayAmount = displayCurrency === 'USD' ? amount : amount * exchangeRate
                   const displayAmounts = monthlySales.map(a => displayCurrency === 'USD' ? a : a * exchangeRate)
-                  const maxSale = Math.max(...displayAmounts, 1)
-                  const height = (displayAmount / maxSale) * 100 || 5
+                  const maxSale = Math.max(...displayAmounts, 100)
+                  const heightPercent = maxSale > 0 ? (displayAmount / maxSale) * 100 : 5
+                  const height = Math.max(heightPercent, 2)
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                      <div className="relative">
+                      <div className="relative w-full">
                         <div 
                           className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-t-lg hover:from-orange-600 hover:to-orange-500 transition-all cursor-pointer"
-                          style={{ height: `${Math.max(height, 5)}px`, minHeight: '5px' }}
+                          style={{ height: `${height}%`, minHeight: '8px' }}
                           title={`${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}: ${formatCurrency(displayAmount, displayCurrency)}`}
                         ></div>
                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card text-foreground text-xs font-bold px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-lg border border-border">

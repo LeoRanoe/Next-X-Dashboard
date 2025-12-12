@@ -8,6 +8,46 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// User model for authentication
+model User {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String?
+  role          String    @default("admin") // admin, staff
+  isActive      Boolean   @default(true) @map("is_active")
+  lastLoginAt   DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("users")
+}
+
+// Activity log for tracking all changes
+model ActivityLog {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  action      String   // create, update, delete, transfer, complete, cancel, pay
+  entityType  String   @map("entity_type")
+  entityId    String?  @map("entity_id")
+  entityName  String?  @map("entity_name")
+  details     String?
+  userId      String?  @map("user_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("activity_logs")
+}
+
+// Store settings for webshop and store configuration
+model StoreSetting {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("store_settings")
+}
+
 model Category {
   id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name       String
@@ -21,11 +61,13 @@ model Category {
 model Item {
   id                  String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name                String
+  description         String?
   categoryId          String?             @map("category_id") @db.Uuid
   purchasePriceUsd    Decimal             @map("purchase_price_usd") @db.Decimal(10, 2)
   sellingPriceSrd     Decimal?            @map("selling_price_srd") @db.Decimal(10, 2)
   sellingPriceUsd     Decimal?            @map("selling_price_usd") @db.Decimal(10, 2)
   imageUrl            String?             @map("image_url")
+  isPublic            Boolean             @default(true) @map("is_public")
   createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   category            Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)

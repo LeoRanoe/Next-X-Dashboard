@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
 import { Plus, Check, X, User, Calendar, ClipboardList, MapPin, Package, Minus, CheckCircle, Clock, History, Undo2, ShoppingCart, Receipt, Printer, FileText, Search, Filter, ArrowUpDown } from 'lucide-react'
 import { PageHeader, PageContainer, Button, Input, Select, Badge, StatBox, LoadingSpinner, EmptyState, CurrencyToggle } from '@/components/UI'
 import { Modal } from '@/components/PageCards'
 import { formatCurrency, type Currency } from '@/lib/currency'
+import { logActivity } from '@/lib/activityLog'
 
 type Client = Database['public']['Tables']['clients']['Row']
 type Item = Database['public']['Tables']['items']['Row']
@@ -225,13 +227,22 @@ export default function ReservationsPage() {
     e.preventDefault()
     try {
       setSubmitting(true)
-      await supabase.from('clients').insert({
+      const { data } = await supabase.from('clients').insert({
         name: clientForm.name,
         phone: clientForm.phone || null,
         email: clientForm.email || null,
         notes: clientForm.notes || null,
         location_id: clientForm.location_id || null
+      }).select().single()
+      
+      await logActivity({
+        action: 'create',
+        entityType: 'client',
+        entityId: data?.id,
+        entityName: clientForm.name,
+        details: `Created client: ${clientForm.name}${clientForm.phone ? ` (${clientForm.phone})` : ''}`
       })
+      
       setClientForm({ name: '', phone: '', email: '', notes: '', location_id: '' })
       setShowClientForm(false)
       loadData()
@@ -298,6 +309,15 @@ export default function ReservationsPage() {
       })
       const total = invoiceItems.reduce((sum, item) => sum + item.subtotal, 0)
 
+      // Log activity
+      await logActivity({
+        action: 'create',
+        entityType: 'reservation',
+        entityId: reservationIds[0],
+        entityName: invoiceNumber,
+        details: `Reservation created for ${client?.name} at ${location?.name}: ${formatCurrency(total, currency)} (${cart.length} items)`
+      })
+
       // Create invoice data
       setInvoiceData({
         reservationIds: reservationIds,
@@ -338,6 +358,14 @@ export default function ReservationsPage() {
         .from('reservations')
         .update({ status: 'cancelled' })
         .eq('id', reservation.id)
+
+      await logActivity({
+        action: 'cancel',
+        entityType: 'reservation',
+        entityId: reservation.id,
+        entityName: reservation.items?.name || 'Unknown item',
+        details: `Cancelled reservation for ${reservation.clients?.name}: ${reservation.quantity}x ${reservation.items?.name}`
+      })
 
       await loadData()
       if (selectedLocation) {
@@ -456,6 +484,14 @@ export default function ReservationsPage() {
         invoiceNumber: `RES-COMP-${reservation.id.substring(0, 8).toUpperCase()}`,
         isPaid: true
       }
+
+      await logActivity({
+        action: 'complete',
+        entityType: 'reservation',
+        entityId: reservation.id,
+        entityName: reservation.items?.name || 'Unknown item',
+        details: `Completed reservation for ${reservation.clients?.name}: ${reservation.quantity}x ${reservation.items?.name} - ${formatCurrency(totalAmount, 'SRD')}`
+      })
 
       await loadData()
       if (selectedLocation) {
@@ -900,79 +936,131 @@ export default function ReservationsPage() {
       <Modal isOpen={showInvoice} onClose={() => setShowInvoice(false)} title={invoiceData?.isPaid ? "Payment Receipt" : "Reservation Invoice"}>
         {invoiceData && (
           <div className="space-y-4">
-            <div ref={invoiceRef}>
-              <div className="invoice-header text-center mb-6">
-                <h1 className="text-2xl font-bold text-primary">NextX Business</h1>
-                <p className="text-muted-foreground text-sm mt-1">
-                  {invoiceData.isPaid ? 'Payment Receipt' : 'Reservation Invoice'}
-                </p>
+            <div ref={invoiceRef} id="printable-invoice" className="bg-white p-6 rounded-lg" style={{ backgroundColor: 'white', color: 'black' }}>
+              <div className="invoice-header text-center mb-6 pb-4 border-b-2 border-orange-500" style={{ borderBottomColor: '#f97316', borderBottomWidth: '2px', borderBottomStyle: 'solid' }}>
+                <div className="flex justify-center mb-4">
+                  <img
+                    src="/nextx-logo-light.png"
+                    alt="NextX Business"
+                    style={{ 
+                      width: '200px', 
+                      height: 'auto',
+                      display: 'block',
+                      margin: '0 auto'
+                    }}
+                  />
+                </div>
+                <div className="text-gray-700 text-sm space-y-1" style={{ color: '#374151' }}>
+                  <p className="font-semibold text-orange-600 text-base" style={{ color: '#ea580c', fontWeight: '600' }}>NextX</p>
+                  <p>Telefoon: +597 831-8508</p>
+                  <p>Suriname</p>
+                </div>
+                <div className="mt-4">
+                  <p className="text-xl font-bold text-gray-800">
+                    {invoiceData.isPaid ? 'BETALINGSBEWIJS' : 'RESERVERINGSFACTUUR'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {invoiceData.isPaid ? 'Payment Receipt' : 'Reservation Invoice'}
+                  </p>
+                </div>
                 {invoiceData.isPaid ? (
-                  <p className="paid-stamp text-success font-bold mt-2">✓ PAID</p>
+                  <div className="mt-3 inline-block bg-green-100 border-2 border-green-600 px-6 py-2 rounded-lg">
+                    <p className="text-green-700 font-bold text-lg">✓ BETAALD / PAID</p>
+                  </div>
                 ) : (
-                  <p className="unpaid-stamp text-primary font-bold mt-2">⏳ PAYMENT PENDING</p>
+                  <div className="mt-3 inline-block bg-orange-100 border-2 border-orange-600 px-6 py-2 rounded-lg">
+                    <p className="text-orange-700 font-bold text-lg">⏳ WACHT OP BETALING / PENDING</p>
+                  </div>
                 )}
               </div>
               
-              <div className="invoice-details bg-muted/50 rounded-xl p-4 mb-4">
-                <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="invoice-details bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-muted-foreground">{invoiceData.isPaid ? 'Receipt' : 'Invoice'} #:</span>
-                    <span className="font-bold text-foreground ml-2">{invoiceData.invoiceNumber}</span>
+                    <span className="text-gray-600 font-medium">{invoiceData.isPaid ? 'Bon' : 'Factuur'} #:</span>
+                    <span className="font-bold text-gray-800 ml-2">{invoiceData.invoiceNumber}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Date:</span>
-                    <span className="font-medium text-foreground ml-2">{invoiceData.date}</span>
+                    <span className="text-gray-600 font-medium">Datum / Date:</span>
+                    <span className="font-medium text-gray-800 ml-2">{invoiceData.date}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Client:</span>
-                    <span className="font-medium text-foreground ml-2">{invoiceData.client}</span>
+                    <span className="text-gray-600 font-medium">Klant / Client:</span>
+                    <span className="font-medium text-gray-800 ml-2">{invoiceData.client}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Location:</span>
-                    <span className="font-medium text-foreground ml-2">{invoiceData.location}</span>
+                    <span className="text-gray-600 font-medium">Locatie / Location:</span>
+                    <span className="font-medium text-gray-800 ml-2">{invoiceData.location}</span>
                   </div>
                 </div>
               </div>
 
               <table className="w-full text-sm mb-4">
                 <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-2 text-muted-foreground font-medium">Item</th>
-                    <th className="text-center py-2 text-muted-foreground font-medium">Quantity</th>
-                    <th className="text-right py-2 text-muted-foreground font-medium">Unit Price</th>
-                    <th className="text-right py-2 text-muted-foreground font-medium">Subtotal</th>
+                  <tr className="border-b-2 border-gray-300">
+                    <th className="text-left py-3 text-gray-700 font-semibold">Artikel</th>
+                    <th className="text-center py-3 text-gray-700 font-semibold">Aantal</th>
+                    <th className="text-right py-3 text-gray-700 font-semibold">Prijs</th>
+                    <th className="text-right py-3 text-gray-700 font-semibold">Subtotaal</th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoiceData.items.map((item, index) => (
-                    <tr key={index} className="border-b border-border/50">
-                      <td className="py-3 font-medium text-foreground">{item.name}</td>
-                      <td className="py-3 text-center text-foreground">{item.quantity}</td>
-                      <td className="py-3 text-right text-foreground">{formatCurrency(item.unitPrice, invoiceData.currency)}</td>
-                      <td className="py-3 text-right text-foreground">{formatCurrency(item.subtotal, invoiceData.currency)}</td>
+                    <tr key={index} className="border-b border-gray-200">
+                      <td className="py-3 font-medium text-gray-800">{item.name}</td>
+                      <td className="py-3 text-center text-gray-800">{item.quantity}</td>
+                      <td className="py-3 text-right text-gray-600">{formatCurrency(item.unitPrice, invoiceData.currency)}</td>
+                      <td className="py-3 text-right font-medium text-gray-800">{formatCurrency(item.subtotal, invoiceData.currency)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-border">
-                    <td colSpan={3} className="py-3 text-right font-bold text-foreground">Total:</td>
-                    <td className="py-3 text-right font-bold text-primary text-lg">{formatCurrency(invoiceData.total, invoiceData.currency)}</td>
+                  <tr className="border-t-2 border-gray-400">
+                    <td colSpan={3} className="py-4 text-right font-bold text-gray-800 text-base">Totaal / Total:</td>
+                    <td className="py-4 text-right font-bold text-orange-600 text-xl">{formatCurrency(invoiceData.total, invoiceData.currency)}</td>
                   </tr>
                 </tfoot>
               </table>
 
-              <div className="footer text-center text-sm text-muted-foreground pt-4 border-t border-border">
-                {invoiceData.isPaid ? (
-                  <>
-                    <p>Thank you for your payment!</p>
-                    <p className="mt-1">This receipt confirms your transaction and item pickup.</p>
-                  </>
-                ) : (
-                  <>
-                    <p>Please present this invoice when making payment.</p>
-                    <p className="mt-1">Items will be ready for pickup after payment confirmation.</p>
-                  </>
-                )}
+              <div className="footer mt-6 pt-4 border-t-2 border-gray-300">
+                <div className="text-center mb-4">
+                  {invoiceData.isPaid ? (
+                    <>
+                      <p className="text-lg font-bold text-gray-800">Bedankt voor uw betaling!</p>
+                      <p className="text-sm text-gray-600">Thank you for your payment!</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-lg font-bold text-gray-800">Gelieve deze factuur te tonen bij betaling</p>
+                      <p className="text-sm text-gray-600">Please present this invoice when making payment</p>
+                    </>
+                  )}
+                </div>
+                
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-xs text-gray-700 space-y-2">
+                  <p className="font-semibold text-orange-800">RESERVERINGSVOORWAARDEN / RESERVATION TERMS:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    {invoiceData.isPaid ? (
+                      <>
+                        <li>Dit bewijs bevestigt uw betaling en reservering / This receipt confirms your payment and reservation</li>
+                        <li>Producten kunnen opgehaald worden met dit bewijs / Products can be picked up with this receipt</li>
+                        <li>Neem dit bewijs mee bij ophaling / Bring this receipt when picking up</li>
+                        <li>Contacteer ons bij vragen: +597 8677657 / Contact us with questions: +597 8677657</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Reservering is 7 dagen geldig na factuurdatum / Reservation valid for 7 days after invoice date</li>
+                        <li>Betaling verplicht binnen 3 werkdagen / Payment required within 3 working days</li>
+                        <li>Na betaling zijn artikelen beschikbaar voor ophaling / After payment items available for pickup</li>
+                        <li>Betaling mogelijk via cash of bankoverschrijving / Payment via cash or bank transfer</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+                
+                <div className="text-center mt-4 text-xs text-gray-500">
+                  <p>NextX | Tel: +597 831-8508</p>
+                </div>
               </div>
             </div>
 
