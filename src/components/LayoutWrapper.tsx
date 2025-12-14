@@ -8,9 +8,6 @@ import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import { Loader2 } from 'lucide-react'
 
-// Routes that don't need the admin layout
-const noLayoutRoutes = ['/login', '/catalog']
-
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { loading } = useAuth()
@@ -24,8 +21,9 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // For public routes like login and catalog, don't show admin layout
-  if (noLayoutRoutes.includes(pathname)) {
+  // For public routes like login and catalog (including dynamic product pages), don't show admin layout
+  const isPublicRoute = pathname === '/login' || pathname.startsWith('/catalog')
+  if (isPublicRoute) {
     return <>{children}</>
   }
 

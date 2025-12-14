@@ -3,21 +3,20 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, Search, X } from 'lucide-react'
 import { formatCurrency, type Currency } from '@/lib/currency'
 
 import {
   Header,
   HeroSection,
-  FeatureIconsRow,
-  SearchBar,
-  FilterBar,
   ProductCard,
   ProductGrid,
   ProductGridHeader,
   CartDrawer,
   ProductDetailModal,
-  FooterSection
+  FooterSection,
+  CategorySlider,
+  ProductCarousel
 } from '@/components/catalog'
 
 type Category = Database['public']['Tables']['categories']['Row']
@@ -53,12 +52,11 @@ export default function CatalogPage() {
   })
   const [exchangeRate, setExchangeRate] = useState<number>(1)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Filter state
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState<string>('name')
-  const [gridView, setGridView] = useState<'comfortable' | 'compact'>('comfortable')
   const [currency, setCurrency] = useState<Currency>('SRD')
 
   // Cart state
@@ -71,35 +69,94 @@ export default function CatalogPage() {
   // Modal state
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
 
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('nextx-cart')
+    if (savedCart) {
+      try {
+        const parsed = JSON.parse(savedCart)
+        // We'll sync with items once they load
+        setCart(parsed)
+      } catch (e) {
+        console.error('Failed to parse saved cart:', e)
+      }
+    }
+    const savedName = localStorage.getItem('nextx-customer-name')
+    const savedPhone = localStorage.getItem('nextx-customer-phone')
+    if (savedName) setCustomerName(savedName)
+    if (savedPhone) setCustomerPhone(savedPhone)
+  }, [])
+
+  // Save cart to localStorage when it changes
+  useEffect(() => {
+    if (cart.length > 0) {
+      localStorage.setItem('nextx-cart', JSON.stringify(cart))
+    } else {
+      localStorage.removeItem('nextx-cart')
+    }
+  }, [cart])
+
+  // Save customer info to localStorage
+  useEffect(() => {
+    if (customerName) localStorage.setItem('nextx-customer-name', customerName)
+    if (customerPhone) localStorage.setItem('nextx-customer-phone', customerPhone)
+  }, [customerName, customerPhone])
+
+  // Sync cart with items when items load (in case items have been updated/deleted)
+  useEffect(() => {
+    if (items.length > 0 && cart.length > 0) {
+      const validCart = cart.filter(c => items.some(i => i.id === c.item.id))
+      // Update cart items with latest item data
+      const syncedCart = validCart.map(c => {
+        const updatedItem = items.find(i => i.id === c.item.id)
+        return updatedItem ? { ...c, item: updatedItem } : c
+      }).filter(c => c.item !== undefined)
+      
+      if (syncedCart.length !== cart.length) {
+        setCart(syncedCart)
+      }
+    }
+  }, [items, cart])
+
   // Load data
   const loadData = async () => {
     setLoading(true)
-    const [categoriesRes, itemsRes, rateRes, settingsRes] = await Promise.all([
-      supabase.from('categories').select('*').order('name'),
-      supabase.from('items').select('*').eq('is_public', true).order('name'),
-      supabase.from('exchange_rates').select('*').eq('is_active', true).single(),
-      supabase.from('store_settings').select('*')
-    ])
-    
-    if (categoriesRes.data) setCategories(categoriesRes.data)
-    if (itemsRes.data) setItems(itemsRes.data)
-    if (rateRes.data) setExchangeRate(rateRes.data.usd_to_srd)
-    if (settingsRes.data) {
-      const settingsMap: Record<string, string> = {}
-      settingsRes.data.forEach((s: { key: string; value: string }) => {
-        settingsMap[s.key] = s.value
-      })
-      setSettings({
-        whatsapp_number: settingsMap.whatsapp_number || '+5978318508',
-        store_name: settingsMap.store_name || 'NextX',
-        store_description: settingsMap.store_description || '',
-        store_address: settingsMap.store_address || 'Commewijne, Noord',
-        store_logo_url: settingsMap.store_logo_url || '',
-        hero_title: settingsMap.hero_title || 'Welkom',
-        hero_subtitle: settingsMap.hero_subtitle || ''
-      })
+    setError(null)
+    try {
+      const [categoriesRes, itemsRes, rateRes, settingsRes] = await Promise.all([
+        supabase.from('categories').select('*').order('name'),
+        supabase.from('items').select('*').eq('is_public', true).order('created_at', { ascending: false }),
+        supabase.from('exchange_rates').select('*').eq('is_active', true).single(),
+        supabase.from('store_settings').select('*')
+      ])
+      
+      if (categoriesRes.error) throw categoriesRes.error
+      if (itemsRes.error) throw itemsRes.error
+      
+      if (categoriesRes.data) setCategories(categoriesRes.data)
+      if (itemsRes.data) setItems(itemsRes.data)
+      if (rateRes.data) setExchangeRate(rateRes.data.usd_to_srd)
+      if (settingsRes.data) {
+        const settingsMap: Record<string, string> = {}
+        settingsRes.data.forEach((s: { key: string; value: string }) => {
+          settingsMap[s.key] = s.value
+        })
+        setSettings({
+          whatsapp_number: settingsMap.whatsapp_number || '+5978318508',
+          store_name: settingsMap.store_name || 'NextX',
+          store_description: settingsMap.store_description || '',
+          store_address: settingsMap.store_address || 'Commewijne, Noord',
+          store_logo_url: settingsMap.store_logo_url || '',
+          hero_title: settingsMap.hero_title || 'Welkom',
+          hero_subtitle: settingsMap.hero_subtitle || ''
+        })
+      }
+    } catch (err) {
+      console.error('Error loading catalog data:', err)
+      setError('Er is een fout opgetreden bij het laden van de producten. Probeer het opnieuw.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -123,6 +180,11 @@ export default function CatalogPage() {
       }
       return [...prev, { item, quantity: 1 }]
     })
+  }
+
+  const addToCartById = (itemId: string) => {
+    const item = items.find(i => i.id === itemId)
+    if (item) addToCart(item)
   }
 
   const updateCartQuantity = (itemId: string, quantity: number) => {
@@ -156,35 +218,17 @@ export default function CatalogPage() {
     if (customerPhone) message += `Tel: ${customerPhone}\n`
     if (customerNotes) message += `Opmerking: ${customerNotes}\n`
     
+    message += `\n📍 Ophaallocatie: ${settings.store_address}\n`
+    
     const whatsappNumber = settings.whatsapp_number.replace(/[^0-9]/g, '')
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank')
+    
+    // Clear cart after order is sent
+    setCart([])
+    setCustomerNotes('')
+    setShowCart(false)
+    localStorage.removeItem('nextx-cart')
   }
-
-  // Filtered and sorted items
-  const filteredItems = useMemo(() => {
-    let result = items.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.description?.toLowerCase().includes(searchQuery.toLowerCase()))
-      const matchesCategory = !selectedCategory || item.category_id === selectedCategory
-      return matchesSearch && matchesCategory
-    })
-
-    switch (sortBy) {
-      case 'price-asc':
-        result.sort((a, b) => getPrice(a) - getPrice(b))
-        break
-      case 'price-desc':
-        result.sort((a, b) => getPrice(b) - getPrice(a))
-        break
-      case 'newest':
-        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        break
-      default:
-        result.sort((a, b) => a.name.localeCompare(b.name))
-    }
-
-    return result
-  }, [items, searchQuery, selectedCategory, sortBy, currency, exchangeRate])
 
   // Helper functions
   const getCategoryName = (categoryId: string | null) => {
@@ -198,6 +242,59 @@ export default function CatalogPage() {
     return cartItem?.quantity || 0
   }
 
+  // Get newest products (last 10)
+  const newestProducts = useMemo(() => {
+    return items.slice(0, 10).map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      image_url: item.image_url,
+      price: getPrice(item),
+      category_name: getCategoryName(item.category_id)
+    }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, currency, exchangeRate, categories])
+
+  // Get products grouped by category
+  const productsByCategory = useMemo(() => {
+    const grouped: { category: Category; products: Item[] }[] = []
+    
+    categories.forEach(cat => {
+      const categoryProducts = items.filter(item => item.category_id === cat.id)
+      if (categoryProducts.length > 0) {
+        grouped.push({ category: cat, products: categoryProducts })
+      }
+    })
+
+    // Also add uncategorized products if any
+    const uncategorized = items.filter(item => !item.category_id)
+    if (uncategorized.length > 0) {
+      grouped.push({ 
+        category: { id: 'uncategorized', name: 'Overige', created_at: '', updated_at: '' },
+        products: uncategorized 
+      })
+    }
+
+    return grouped
+  }, [items, categories])
+
+  // Search results
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    
+    return items.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+      return matchesSearch
+    })
+  }, [items, searchQuery])
+
+  // Filtered items when category is selected
+  const filteredItems = useMemo(() => {
+    if (!selectedCategory) return []
+    return items.filter(item => item.category_id === selectedCategory)
+  }, [items, selectedCategory])
+
   // Loading state
   if (loading) {
     return (
@@ -209,6 +306,32 @@ export default function CatalogPage() {
       </div>
     )
   }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+            <X size={32} className="text-red-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Er ging iets mis</h2>
+          <p className="text-neutral-400 mb-6">{error}</p>
+          <button
+            onClick={loadData}
+            className="px-6 py-3 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-medium transition-colors"
+          >
+            Opnieuw proberen
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Determine what view to show
+  const showSearchResults = searchQuery.trim().length > 0
+  const showCategoryProducts = selectedCategory !== '' && !showSearchResults
+  const showHomepage = !showSearchResults && !showCategoryProducts
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white antialiased">
@@ -223,75 +346,143 @@ export default function CatalogPage() {
         onCartClick={() => setShowCart(true)}
       />
 
-      {/* Hero Section */}
-      <HeroSection
-        storeName={settings.store_name}
-        heroTitle={settings.hero_title}
-        heroSubtitle={settings.hero_subtitle}
-        storeAddress={settings.store_address}
-        whatsappNumber={settings.whatsapp_number}
+      {/* Hero Section - Only show on homepage */}
+      {showHomepage && (
+        <HeroSection
+          storeName={settings.store_name}
+          heroTitle={settings.hero_title}
+          heroSubtitle={settings.hero_subtitle}
+          storeAddress={settings.store_address}
+          whatsappNumber={settings.whatsapp_number}
+        />
+      )}
+
+      {/* Category Navigation */}
+      <CategorySlider
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={(catId) => {
+          setSelectedCategory(catId)
+          setSearchQuery('')
+        }}
       />
 
-      {/* Features Row */}
-      <FeatureIconsRow />
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
-        {/* Search Bar */}
-        <div className="mb-6">
-          <SearchBar
+      {/* Search Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="relative">
+          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
+          <input
+            type="text"
+            placeholder="Zoek producten..."
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-12 pl-12 pr-12 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-neutral-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/[0.06] transition-all"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* Filter Bar */}
-        <div className="mb-8">
-          <FilterBar
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            gridView={gridView}
-            onGridViewChange={setGridView}
-            currency={currency}
-            onCurrencyChange={setCurrency}
+      {/* Search Results View */}
+      {showSearchResults && (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <ProductGridHeader 
+            count={searchResults.length}
+            categoryName={`Zoekresultaten voor "${searchQuery}"`}
           />
-        </div>
+          <ProductGrid 
+            isEmpty={searchResults.length === 0}
+            onClearFilters={() => setSearchQuery('')}
+          >
+            {searchResults.map((item) => (
+              <ProductCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                description={item.description}
+                imageUrl={item.image_url}
+                price={getPrice(item)}
+                currency={currency}
+                categoryName={getCategoryName(item.category_id)}
+                quantity={getCartItemQuantity(item.id)}
+                onAddToCart={() => addToCart(item)}
+                onUpdateQuantity={(qty) => updateCartQuantity(item.id, qty)}
+                onViewDetail={() => setSelectedItem(item)}
+              />
+            ))}
+          </ProductGrid>
+        </main>
+      )}
 
-        {/* Products Header */}
-        <ProductGridHeader 
-          count={filteredItems.length}
-          categoryName={getCategoryName(selectedCategory)}
-        />
+      {/* Category Products View */}
+      {showCategoryProducts && (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <ProductGridHeader 
+            count={filteredItems.length}
+            categoryName={getCategoryName(selectedCategory)}
+          />
+          <ProductGrid 
+            isEmpty={filteredItems.length === 0}
+            onClearFilters={() => setSelectedCategory('')}
+          >
+            {filteredItems.map((item) => (
+              <ProductCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                description={item.description}
+                imageUrl={item.image_url}
+                price={getPrice(item)}
+                currency={currency}
+                categoryName={getCategoryName(item.category_id)}
+                quantity={getCartItemQuantity(item.id)}
+                onAddToCart={() => addToCart(item)}
+                onUpdateQuantity={(qty) => updateCartQuantity(item.id, qty)}
+                onViewDetail={() => setSelectedItem(item)}
+              />
+            ))}
+          </ProductGrid>
+        </main>
+      )}
 
-        {/* Products Grid */}
-        <ProductGrid 
-          isEmpty={filteredItems.length === 0}
-          onClearFilters={() => {
-            setSearchQuery('')
-            setSelectedCategory('')
-          }}
-        >
-          {filteredItems.map((item) => (
-            <ProductCard
-              key={item.id}
-              id={item.id}
-              name={item.name}
-              description={item.description}
-              imageUrl={item.image_url}
-              price={getPrice(item)}
+      {/* Homepage View - Category Sections */}
+      {showHomepage && (
+        <main>
+          {/* New Products Section */}
+          {newestProducts.length > 0 && (
+            <ProductCarousel
+              title="Nieuwste producten"
+              products={newestProducts}
               currency={currency}
-              categoryName={getCategoryName(item.category_id)}
-              quantity={getCartItemQuantity(item.id)}
-              onAddToCart={() => addToCart(item)}
-              onUpdateQuantity={(qty) => updateCartQuantity(item.id, qty)}
-              onViewDetail={() => setSelectedItem(item)}
+              onAddToCart={addToCartById}
+            />
+          )}
+
+          {/* Products by Category */}
+          {productsByCategory.map(({ category, products }) => (
+            <ProductCarousel
+              key={category.id}
+              title={category.name}
+              products={products.slice(0, 10).map(item => ({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                image_url: item.image_url,
+                price: getPrice(item),
+                category_name: category.name
+              }))}
+              currency={currency}
+              onAddToCart={addToCartById}
             />
           ))}
-        </ProductGrid>
-      </main>
+        </main>
+      )}
 
       {/* Footer */}
       <FooterSection
@@ -326,6 +517,7 @@ export default function CatalogPage() {
         currency={currency}
         storeName={settings.store_name}
         whatsappNumber={settings.whatsapp_number}
+        storeAddress={settings.store_address}
         onUpdateQuantity={updateCartQuantity}
         onAddOne={(itemId) => {
           const cartItem = cart.find(c => c.item.id === itemId)
@@ -345,13 +537,26 @@ export default function CatalogPage() {
         <ProductDetailModal
           isOpen={!!selectedItem}
           onClose={() => setSelectedItem(null)}
+          id={selectedItem.id}
           name={selectedItem.name}
           description={selectedItem.description}
           imageUrl={selectedItem.image_url}
           price={getPrice(selectedItem)}
           currency={currency}
           categoryName={getCategoryName(selectedItem.category_id)}
-          onAddToCart={() => addToCart(selectedItem)}
+          storeAddress={settings.store_address}
+          whatsappNumber={settings.whatsapp_number}
+          storeName={settings.store_name}
+          onAddToCart={(quantity) => {
+            // Add item to cart with specified quantity
+            setCart(prev => {
+              const existing = prev.find(c => c.item.id === selectedItem.id)
+              if (existing) {
+                return prev.map(c => c.item.id === selectedItem.id ? { ...c, quantity: c.quantity + quantity } : c)
+              }
+              return [...prev, { item: selectedItem, quantity }]
+            })
+          }}
         />
       )}
     </div>

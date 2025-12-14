@@ -1,7 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { Plus, Minus, Package } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Minus, Package, ChevronRight } from 'lucide-react'
 import { formatCurrency, type Currency } from '@/lib/currency'
 
 interface ProductCardProps {
@@ -19,6 +20,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
+  id,
   name,
   description,
   imageUrl,
@@ -35,10 +37,10 @@ export function ProductCard({
       {/* Card glow effect */}
       <div className="absolute -inset-2 bg-gradient-to-r from-orange-500/0 via-orange-500/0 to-orange-500/0 rounded-3xl blur-xl group-hover:from-orange-500/20 group-hover:via-amber-500/10 group-hover:to-orange-500/20 transition-all duration-500 opacity-0 group-hover:opacity-100" />
       
-      {/* Image container with 1:1 ratio */}
-      <div 
-        className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-800 cursor-pointer mb-4 border border-white/[0.08] group-hover:border-orange-500/40 transition-all duration-500 shadow-lg group-hover:shadow-2xl group-hover:shadow-orange-500/20"
-        onClick={onViewDetail}
+      {/* Entire card is a link for navigation */}
+      <Link
+        href={`/catalog/${id}`}
+        className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-800 cursor-pointer mb-4 border border-white/[0.08] group-hover:border-orange-500/40 transition-all duration-500 shadow-lg group-hover:shadow-2xl group-hover:shadow-orange-500/20 block"
       >
         {/* Shimmer overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] via-transparent to-transparent" />
@@ -70,30 +72,35 @@ export function ProductCard({
           </div>
         )}
         
+        {/* View product indicator */}
+        <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+            <ChevronRight size={18} className="text-white" />
+          </div>
+        </div>
+        
         {/* Hover overlay with add button */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500">
           <div className="absolute bottom-5 left-5 right-5">
             <button
               onClick={(e) => {
+                e.preventDefault()
                 e.stopPropagation()
                 onAddToCart()
               }}
-              className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-orange-500 via-orange-500 to-amber-500 hover:from-orange-400 hover:via-orange-400 hover:to-amber-400 text-white text-sm font-bold flex items-center justify-center gap-2.5 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 shadow-2xl shadow-orange-500/50"
+              className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-orange-500 via-orange-500 to-amber-500 hover:from-orange-400 hover:via-orange-400 hover:to-amber-400 text-white text-sm font-bold flex items-center justify-center gap-2.5 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 shadow-2xl shadow-orange-500/50 min-h-[48px]"
             >
               <Plus size={18} strokeWidth={2.5} />
-              <span>Add to Cart</span>
+              <span>Toevoegen</span>
             </button>
           </div>
         </div>
-      </div>
+      </Link>
       
-      {/* Product info */}
-      <div className="flex flex-col flex-1">
+      {/* Product info - also clickable */}
+      <Link href={`/catalog/${id}`} className="flex flex-col flex-1 group/info">
         {/* Title */}
-        <h3 
-          className="text-sm font-medium text-white leading-tight mb-1 line-clamp-2 cursor-pointer transition-colors hover:text-orange-500"
-          onClick={onViewDetail}
-        >
+        <h3 className="text-sm font-medium text-white leading-tight mb-1 line-clamp-2 transition-colors group-hover/info:text-orange-500">
           {name}
         </h3>
         
@@ -103,40 +110,49 @@ export function ProductCard({
             {description}
           </p>
         )}
+      </Link>
         
-        {/* Price and cart controls */}
-        <div className="mt-auto flex items-center justify-between gap-3">
-          <span className="text-lg font-black bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
-            {formatCurrency(price, currency)}
-          </span>
-          
-          {quantity > 0 ? (
-            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-              <button
-                onClick={() => onUpdateQuantity(quantity - 1)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
-              >
-                <Minus size={14} strokeWidth={2} />
-              </button>
-              <span className="w-8 text-center text-sm font-medium text-white">
-                {quantity}
-              </span>
-              <button
-                onClick={onAddToCart}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
-              >
-                <Plus size={14} strokeWidth={2} />
-              </button>
-            </div>
-          ) : (
+      {/* Price and cart controls - separate from link */}
+      <div className="mt-auto flex items-center justify-between gap-3 pt-1">
+        <span className="text-lg font-black bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
+          {formatCurrency(price, currency)}
+        </span>
+        
+        {quantity > 0 ? (
+          <div className="flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
             <button
-              onClick={onAddToCart}
-              className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-90 shadow-lg shadow-orange-500/40"
+              onClick={(e) => {
+                e.preventDefault()
+                onUpdateQuantity(quantity - 1)
+              }}
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
             >
-              <Plus size={18} className="text-white" strokeWidth={2.5} />
+              <Minus size={16} strokeWidth={2} />
             </button>
-          )}
-        </div>
+            <span className="w-8 text-center text-sm font-medium text-white">
+              {quantity}
+            </span>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                onAddToCart()
+              }}
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+            >
+              <Plus size={16} strokeWidth={2} />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              onAddToCart()
+            }}
+            className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 flex items-center justify-center transition-all duration-300 hover:scale-105 shadow-lg shadow-orange-500/40"
+          >
+            <Plus size={20} className="text-white" strokeWidth={2.5} />
+          </button>
+        )}
       </div>
     </article>
   )

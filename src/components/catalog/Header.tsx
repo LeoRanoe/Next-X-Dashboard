@@ -85,6 +85,22 @@ export function Header({
               <span>WhatsApp</span>
             </a>
 
+            {/* Mobile currency toggle */}
+            <div className="sm:hidden flex p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+              <button
+                onClick={() => onCurrencyChange('SRD')}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 ${currency === 'SRD' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white' : 'text-neutral-400'}`}
+              >
+                SRD
+              </button>
+              <button
+                onClick={() => onCurrencyChange('USD')}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 ${currency === 'USD' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white' : 'text-neutral-400'}`}
+              >
+                USD
+              </button>
+            </div>
+
             {/* Cart button */}
             <button
               onClick={onCartClick}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/lib/AuthContext'
 import { Eye, EyeOff, Lock, Mail, Loader2 } from 'lucide-react'
 
@@ -127,12 +128,12 @@ export default function LoginPage() {
 
         {/* Public Catalog Link */}
         <div className="mt-6 text-center">
-          <a
+          <Link
             href="/catalog"
             className="text-primary hover:underline text-sm font-medium"
           >
             View Public Catalog →
-          </a>
+          </Link>
         </div>
       </div>
     </div>

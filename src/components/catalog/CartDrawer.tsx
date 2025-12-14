@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { X, Plus, Minus, Package, MessageCircle, ArrowRight, ShoppingBag } from 'lucide-react'
+import { X, Plus, Minus, Package, MessageCircle, ArrowRight, ShoppingBag, MapPin } from 'lucide-react'
 import { formatCurrency, type Currency } from '@/lib/currency'
 
 interface CartItem {
@@ -19,6 +19,7 @@ interface CartDrawerProps {
   currency: Currency
   storeName: string
   whatsappNumber: string
+  storeAddress?: string
   onUpdateQuantity: (itemId: string, quantity: number) => void
   onAddOne: (itemId: string) => void
   customerName: string
@@ -36,6 +37,7 @@ export function CartDrawer({
   items,
   currency,
   storeName,
+  storeAddress = 'Commewijne, Noord',
   onUpdateQuantity,
   onAddOne,
   customerName,
@@ -177,6 +179,15 @@ export function CartDrawer({
         {/* Checkout form */}
         {items.length > 0 && (
           <div className="shrink-0 border-t border-white/4 p-6 space-y-4 bg-neutral-950/80">
+            {/* Pickup location info */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+              <MapPin size={18} className="text-green-500 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-green-400 font-medium">Ophaallocatie</p>
+                <p className="text-sm text-white truncate">{storeAddress}</p>
+              </div>
+            </div>
+
             {/* Customer inputs */}
             <input
               type="text"

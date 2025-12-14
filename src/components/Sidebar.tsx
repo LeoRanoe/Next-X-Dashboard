@@ -19,7 +19,8 @@ import {
   Activity,
   ClipboardList,
   Settings,
-  Store
+  Store,
+  ExternalLink
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -89,11 +90,18 @@ export default function Sidebar() {
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.path
+            const isExternal = 'external' in item && item.external
             
             return (
               <button
                 key={item.path}
-                onClick={() => router.push(item.path)}
+                onClick={() => {
+                  if (isExternal) {
+                    window.open(item.path, '_blank')
+                  } else {
+                    router.push(item.path)
+                  }
+                }}
                 className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group overflow-hidden ${
                   isActive 
                     ? 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white shadow-lg shadow-orange-500/25' 
@@ -112,9 +120,14 @@ export default function Sidebar() {
                 
                 {/* Text with proper spacing */}
                 {!isCollapsed && (
-                  <span className={`font-medium text-sm tracking-tight ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                  <span className={`font-medium text-sm tracking-tight flex-1 ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
                     {item.name}
                   </span>
+                )}
+                
+                {/* External link indicator */}
+                {!isCollapsed && isExternal && (
+                  <ExternalLink size={14} className="text-gray-500 group-hover:text-gray-300" />
                 )}
                 
                 {/* Hover shine effect */}

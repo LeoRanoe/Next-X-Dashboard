@@ -29,9 +29,9 @@ export function FooterSection({
       
       <div className="relative border-t border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-24">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
             {/* Brand column */}
-            <div className="md:col-span-5 lg:col-span-4">
+            <div className="md:col-span-1">
               {logoUrl ? (
                 <Image 
                   src={logoUrl} 
@@ -60,7 +60,7 @@ export function FooterSection({
             </div>
           
           {/* Contact column */}
-          <div className="md:col-span-3 lg:col-span-4">
+          <div className="md:col-span-1">
             <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-orange-500 mb-6">
               Contact
             </h4>
@@ -85,7 +85,7 @@ export function FooterSection({
           </div>
           
           {/* CTA column */}
-          <div className="md:col-span-4 lg:col-span-4">
+          <div className="md:col-span-1">
             <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-orange-500 mb-6">
               Bestellen
             </h4>
