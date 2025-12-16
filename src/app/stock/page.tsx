@@ -265,7 +265,7 @@ export default function StockPage() {
   }
 
   const filteredStocks = showLowStock 
-    ? stocks.filter(s => s.quantity < 2)
+    ? stocks.filter(s => s.quantity < 5)
     : stocks
     
   // Search and sort filtered stocks
@@ -313,7 +313,7 @@ export default function StockPage() {
 
   const hasActiveFilters = searchQuery || selectedLocation || showLowStock
 
-  const lowStockCount = stocks.filter(s => s.quantity < 2).length
+  const lowStockCount = stocks.filter(s => s.quantity < 5).length
   const totalItems = stocks.length
   const totalQuantity = stocks.reduce((sum, s) => sum + s.quantity, 0)
 

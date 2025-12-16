@@ -21,6 +21,7 @@ import {
 
 type Category = Database['public']['Tables']['categories']['Row']
 type Item = Database['public']['Tables']['items']['Row']
+type Location = Database['public']['Tables']['locations']['Row']
 
 interface ComboItem {
   id: string
@@ -54,6 +55,7 @@ export default function CatalogPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [items, setItems] = useState<ItemWithCombo[]>([])
   const [comboItems, setComboItems] = useState<ItemWithCombo[]>([]) // Items that are combos
+  const [locations, setLocations] = useState<Location[]>([])
   const [settings, setSettings] = useState<StoreSettings>({
     whatsapp_number: '+5978318508',
     store_name: 'NextX',
@@ -78,6 +80,7 @@ export default function CatalogPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerNotes, setCustomerNotes] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState<string>('') // Location ID for pickup
 
   // Modal state
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
@@ -136,7 +139,7 @@ export default function CatalogPage() {
     setLoading(true)
     setError(null)
     try {
-      const [categoriesRes, itemsRes, rateRes, settingsRes, comboItemsRes] = await Promise.all([
+      const [categoriesRes, itemsRes, rateRes, settingsRes, comboItemsRes, locationsRes] = await Promise.all([
         supabase.from('categories').select('*').order('name'),
         supabase.from('items').select('*').eq('is_public', true).order('created_at', { ascending: false }),
         supabase.from('exchange_rates').select('*').eq('is_active', true).single(),
@@ -154,7 +157,8 @@ export default function CatalogPage() {
             )
           `)
           .eq('is_public', true)
-          .eq('is_combo', true)
+          .eq('is_combo', true),
+        supabase.from('locations').select('*').eq('is_active', true).order('name')
       ])
       
       if (categoriesRes.error) throw categoriesRes.error
@@ -169,6 +173,13 @@ export default function CatalogPage() {
       // Set combo items separately
       if (comboItemsRes.data) {
         setComboItems(comboItemsRes.data as ItemWithCombo[])
+      }
+      if (locationsRes.data) {
+        setLocations(locationsRes.data)
+        // Auto-select first location if none selected
+        if (!selectedLocation && locationsRes.data.length > 0) {
+          setSelectedLocation(locationsRes.data[0].id)
+        }
       }
       if (rateRes.data) setExchangeRate(rateRes.data.usd_to_srd)
       if (settingsRes.data) {
@@ -254,7 +265,11 @@ export default function CatalogPage() {
     if (customerPhone) message += `Tel: ${customerPhone}\n`
     if (customerNotes) message += `Opmerking: ${customerNotes}\n`
     
-    message += `\n📍 Ophaallocatie: ${settings.store_address}\n`
+    const pickupLocation = locations.find(l => l.id === selectedLocation)
+    message += `\n📍 Ophaallocatie: ${pickupLocation?.name || settings.store_address}\n`
+    if (pickupLocation?.address) {
+      message += `   ${pickupLocation.address}\n`
+    }
     
     const whatsappNumber = settings.whatsapp_number.replace(/[^0-9]/g, '')
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank')
@@ -656,6 +671,9 @@ export default function CatalogPage() {
         storeName={settings.store_name}
         whatsappNumber={settings.whatsapp_number}
         storeAddress={settings.store_address}
+        locations={locations}
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
         onUpdateQuantity={updateCartQuantity}
         onAddOne={(itemId) => {
           const cartItem = cart.find(c => c.item.id === itemId)

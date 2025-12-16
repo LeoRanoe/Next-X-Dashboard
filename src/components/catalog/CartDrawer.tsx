@@ -12,6 +12,12 @@ interface CartItem {
   quantity: number
 }
 
+interface Location {
+  id: string
+  name: string
+  address: string | null
+}
+
 interface CartDrawerProps {
   isOpen: boolean
   onClose: () => void
@@ -20,6 +26,9 @@ interface CartDrawerProps {
   storeName: string
   whatsappNumber: string
   storeAddress?: string
+  locations: Location[]
+  selectedLocation: string
+  onLocationChange: (locationId: string) => void
   onUpdateQuantity: (itemId: string, quantity: number) => void
   onAddOne: (itemId: string) => void
   customerName: string
@@ -38,6 +47,9 @@ export function CartDrawer({
   currency,
   storeName,
   storeAddress = 'Commewijne, Noord',
+  locations,
+  selectedLocation,
+  onLocationChange,
   onUpdateQuantity,
   onAddOne,
   customerName,
@@ -179,14 +191,39 @@ export function CartDrawer({
         {/* Checkout form */}
         {items.length > 0 && (
           <div className="shrink-0 border-t border-white/4 p-6 space-y-4 bg-neutral-950/80">
-            {/* Pickup location info */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
-              <MapPin size={18} className="text-green-500 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-green-400 font-medium">Ophaallocatie</p>
-                <p className="text-sm text-white truncate">{storeAddress}</p>
+            {/* Pickup location selector */}
+            {locations.length > 0 ? (
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-xs text-neutral-400 font-medium">
+                  <MapPin size={14} className="text-green-500" />
+                  Ophaallocatie
+                </label>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => onLocationChange(e.target.value)}
+                  className="w-full h-12 px-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white focus:outline-none focus:border-green-500/50 transition-colors appearance-none cursor-pointer hover:bg-white/[0.05]"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 1rem center'
+                  }}
+                >
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.id} className="bg-neutral-900 text-white">
+                      {loc.name} {loc.address && `- ${loc.address}`}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+                <MapPin size={18} className="text-green-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-green-400 font-medium">Ophaallocatie</p>
+                  <p className="text-sm text-white truncate">{storeAddress}</p>
+                </div>
+              </div>
+            )}
 
             {/* Customer inputs */}
             <input

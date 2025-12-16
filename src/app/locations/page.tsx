@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Plus, MapPin, User, Phone, Percent, Wallet, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, MapPin, User, Phone, Wallet, ToggleLeft, ToggleRight } from 'lucide-react'
 import { PageHeader, PageContainer, Button, Input, EmptyState, LoadingSpinner, Badge } from '@/components/UI'
 import { Modal } from '@/components/PageCards'
 import { logActivity } from '@/lib/activityLog'
@@ -31,7 +31,6 @@ export default function LocationsPage() {
     address: '',
     seller_name: '',
     seller_phone: '',
-    commission_rate: '',
     is_active: true
   })
   const [walletForm, setWalletForm] = useState({
@@ -97,7 +96,6 @@ export default function LocationsPage() {
       address: '',
       seller_name: '',
       seller_phone: '',
-      commission_rate: '',
       is_active: true
     })
     setEditingLocation(null)
@@ -113,7 +111,6 @@ export default function LocationsPage() {
         address: formData.address || null,
         seller_name: formData.seller_name || null,
         seller_phone: formData.seller_phone || null,
-        commission_rate: formData.commission_rate ? parseFloat(formData.commission_rate) : 0,
         is_active: formData.is_active
       }
 
@@ -155,7 +152,6 @@ export default function LocationsPage() {
       address: location.address || '',
       seller_name: location.seller_name || '',
       seller_phone: location.seller_phone || '',
-      commission_rate: location.commission_rate?.toString() || '',
       is_active: location.is_active ?? true
     })
     setShowForm(true)
@@ -321,10 +317,6 @@ export default function LocationsPage() {
                               <span>{location.seller_phone}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-2">
-                            <Percent size={16} className="text-primary" />
-                            <span>{location.commission_rate || 0}% commission</span>
-                          </div>
                         </div>
                       </div>
                     )}
@@ -459,17 +451,14 @@ export default function LocationsPage() {
                 onChange={(e) => setFormData({ ...formData, seller_phone: e.target.value })}
                 placeholder="+597 xxx xxxx"
               />
-              <Input
-                label="Commission Rate (%)"
-                type="number"
-                step="0.1"
-                min="0"
-                max="100"
-                value={formData.commission_rate}
-                onChange={(e) => setFormData({ ...formData, commission_rate: e.target.value })}
-                placeholder="e.g. 10"
-                suffix="%"
-              />
+            </div>
+            <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
+              <p className="text-sm text-foreground font-medium mb-1">
+                💡 Commission Rates
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Commission rates are now managed per seller per category. Go to the <strong>Commissions</strong> page to set category-specific rates.
+              </p>
             </div>
           </div>
 
