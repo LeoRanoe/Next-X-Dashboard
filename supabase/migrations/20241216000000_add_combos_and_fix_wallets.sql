@@ -1,115 +1,39 @@
--- Migration: Add combo products, fix seller/location/wallet relationships
+-- Migration: Add missing columns for unified financial model
 -- Date: 2024-12-16
--- This migration creates a UNIFIED FINANCIAL MODEL:
--- - Locations are the core entity (each location = seller/store)
--- - Each location has wallets (Cash SRD, Cash USD, Bank SRD, Bank USD)
--- - Sales credit wallets, Expenses debit wallets
--- - Commissions are calculated per location based on location's commission_rate
+-- This migration adds ONLY the missing pieces to complete the unified model:
+-- - Add location_id to expenses (for location-based expense tracking)
+-- - Add location_id and commission_rate to commissions (for location-based commissions)
+-- - Update wallet_transactions table structure to match application needs
 
 -- =====================================================
--- STEP 1: Add combo product support to items
+-- STEP 1: Add location_id to expenses
 -- =====================================================
 
--- Add is_combo and allow_custom_price flags to items
-ALTER TABLE items ADD COLUMN IF NOT EXISTS is_combo BOOLEAN DEFAULT false;
-ALTER TABLE items ADD COLUMN IF NOT EXISTS allow_custom_price BOOLEAN DEFAULT false;
-
--- Create combo_items table to track which items are in a combo
-CREATE TABLE IF NOT EXISTS combo_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  parent_item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-  child_item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-  quantity INTEGER NOT NULL DEFAULT 1,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(parent_item_id, child_item_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_combo_items_parent ON combo_items(parent_item_id);
-CREATE INDEX IF NOT EXISTS idx_combo_items_child ON combo_items(child_item_id);
-
--- =====================================================
--- STEP 2: Fix Location = Seller (unified concept)
--- Each location IS a seller with embedded seller info
--- =====================================================
-
--- Add seller fields directly to locations
-ALTER TABLE locations ADD COLUMN IF NOT EXISTS seller_name TEXT;
-ALTER TABLE locations ADD COLUMN IF NOT EXISTS seller_phone TEXT;
-ALTER TABLE locations ADD COLUMN IF NOT EXISTS commission_rate DECIMAL(5, 2) DEFAULT 0;
-ALTER TABLE locations ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
-
--- =====================================================
--- STEP 3: Fix Wallets - MUST belong to a location
--- Remove person_name concept, wallets are location-based
--- =====================================================
-
--- Add location_id to wallets (REQUIRED for new wallets)
-ALTER TABLE wallets ADD COLUMN IF NOT EXISTS location_id UUID REFERENCES locations(id) ON DELETE CASCADE;
-
--- Create index for location wallets
-CREATE INDEX IF NOT EXISTS idx_wallets_location ON wallets(location_id);
-
--- Make person_name nullable (for migration, will be removed later)
-ALTER TABLE wallets ALTER COLUMN person_name DROP NOT NULL;
-
--- =====================================================
--- STEP 4: Add wallet_id to sales and expenses
--- =====================================================
-
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS wallet_id UUID REFERENCES wallets(id) ON DELETE SET NULL;
 ALTER TABLE expenses ADD COLUMN IF NOT EXISTS location_id UUID REFERENCES locations(id) ON DELETE SET NULL;
 
--- =====================================================
--- STEP 5: Add custom_price to sale_items
--- =====================================================
-
-ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS is_custom_price BOOLEAN DEFAULT false;
-ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS original_price DECIMAL(10, 2);
-ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS discount_reason TEXT;
+CREATE INDEX IF NOT EXISTS idx_expenses_location ON expenses(location_id);
 
 -- =====================================================
--- STEP 6: Create wallet_transactions table for audit trail
--- Tracks all money in/out: sales, expenses, transfers, adjustments
--- =====================================================
-
-CREATE TABLE IF NOT EXISTS wallet_transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  wallet_id UUID NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
-  sale_id UUID REFERENCES sales(id) ON DELETE SET NULL,
-  expense_id UUID REFERENCES expenses(id) ON DELETE SET NULL,
-  transaction_type TEXT NOT NULL, -- 'credit' or 'debit'
-  amount DECIMAL(10, 2) NOT NULL,
-  previous_balance DECIMAL(10, 2) NOT NULL,
-  new_balance DECIMAL(10, 2) NOT NULL,
-  description TEXT,
-  reference_type TEXT, -- 'sale', 'expense', 'transfer', 'adjustment', 'commission_payout'
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_wallet_transactions_wallet ON wallet_transactions(wallet_id);
-CREATE INDEX IF NOT EXISTS idx_wallet_transactions_sale ON wallet_transactions(sale_id);
-CREATE INDEX IF NOT EXISTS idx_wallet_transactions_expense ON wallet_transactions(expense_id);
-CREATE INDEX IF NOT EXISTS idx_wallet_transactions_created ON wallet_transactions(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_wallet_transactions_type ON wallet_transactions(reference_type);
-
--- =====================================================
--- STEP 7: Add location_id and commission_rate to commissions (replace seller_id dependency)
+-- STEP 2: Add location_id and commission_rate to commissions
 -- =====================================================
 
 ALTER TABLE commissions ADD COLUMN IF NOT EXISTS location_id UUID REFERENCES locations(id) ON DELETE SET NULL;
-ALTER TABLE commissions ADD COLUMN IF NOT EXISTS commission_rate DECIMAL(5, 2) DEFAULT 0;
+ALTER TABLE commissions ADD COLUMN IF NOT EXISTS commission_rate NUMERIC(5, 2) DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS idx_commissions_location ON commissions(location_id);
 
 -- =====================================================
--- STEP 8: Update triggers
+-- STEP 3: Update wallet_transactions table structure
+-- Add missing columns needed by the application
 -- =====================================================
 
--- Add trigger for locations updated_at
-DROP TRIGGER IF EXISTS update_locations_updated_at ON locations;
-CREATE TRIGGER update_locations_updated_at BEFORE UPDATE ON locations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS expense_id UUID REFERENCES expenses(id) ON DELETE SET NULL;
+ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'SRD';
+ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS reference_type TEXT;
+ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS reference_id UUID;
 
--- Add trigger for items updated_at (if not exists)
-DROP TRIGGER IF EXISTS update_items_updated_at ON items;
-CREATE TRIGGER update_items_updated_at BEFORE UPDATE ON items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_expense ON wallet_transactions(expense_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_reference_type ON wallet_transactions(reference_type);
 
 -- =====================================================
 -- NOTES FOR DATA MIGRATION (run manually if needed):

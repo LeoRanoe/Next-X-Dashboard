@@ -474,8 +474,8 @@ export interface Database {
       commissions: {
         Row: {
           id: string
-          seller_id: string | null
-          location_id: string
+          seller_id: string
+          location_id: string | null
           sale_id: string
           commission_amount: number
           commission_rate: number
@@ -484,18 +484,18 @@ export interface Database {
         }
         Insert: {
           id?: string
-          seller_id?: string | null
-          location_id: string
+          seller_id: string
+          location_id?: string | null
           sale_id: string
           commission_amount: number
-          commission_rate: number
+          commission_rate?: number
           paid?: boolean
           created_at?: string
         }
         Update: {
           id?: string
-          seller_id?: string | null
-          location_id?: string
+          seller_id?: string
+          location_id?: string | null
           sale_id?: string
           commission_amount?: number
           commission_rate?: number
@@ -766,8 +766,11 @@ export interface Database {
           id: string
           wallet_id: string
           sale_id: string | null
+          expense_id: string | null
           type: string
           amount: number
+          balance_before: number
+          balance_after: number
           currency: string
           description: string | null
           reference_type: string | null
@@ -778,8 +781,11 @@ export interface Database {
           id?: string
           wallet_id: string
           sale_id?: string | null
+          expense_id?: string | null
           type: string
           amount: number
+          balance_before: number
+          balance_after: number
           currency?: string
           description?: string | null
           reference_type?: string | null
@@ -790,8 +796,11 @@ export interface Database {
           id?: string
           wallet_id?: string
           sale_id?: string | null
+          expense_id?: string | null
           type?: string
           amount?: number
+          balance_before?: number
+          balance_after?: number
           currency?: string
           description?: string | null
           reference_type?: string | null
