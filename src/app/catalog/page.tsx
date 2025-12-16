@@ -22,6 +22,18 @@ import {
 type Category = Database['public']['Tables']['categories']['Row']
 type Item = Database['public']['Tables']['items']['Row']
 
+interface ComboItem {
+  id: string
+  parent_item_id: string
+  child_item_id: string
+  quantity: number
+  items?: Item // child item details
+}
+
+interface ItemWithCombo extends Item {
+  combo_items?: ComboItem[]
+}
+
 interface CartItem {
   item: Item
   quantity: number
@@ -40,7 +52,8 @@ interface StoreSettings {
 export default function CatalogPage() {
   // Data state
   const [categories, setCategories] = useState<Category[]>([])
-  const [items, setItems] = useState<Item[]>([])
+  const [items, setItems] = useState<ItemWithCombo[]>([])
+  const [comboItems, setComboItems] = useState<ItemWithCombo[]>([]) // Items that are combos
   const [settings, setSettings] = useState<StoreSettings>({
     whatsapp_number: '+5978318508',
     store_name: 'NextX',
@@ -123,18 +136,40 @@ export default function CatalogPage() {
     setLoading(true)
     setError(null)
     try {
-      const [categoriesRes, itemsRes, rateRes, settingsRes] = await Promise.all([
+      const [categoriesRes, itemsRes, rateRes, settingsRes, comboItemsRes] = await Promise.all([
         supabase.from('categories').select('*').order('name'),
         supabase.from('items').select('*').eq('is_public', true).order('created_at', { ascending: false }),
         supabase.from('exchange_rates').select('*').eq('is_active', true).single(),
-        supabase.from('store_settings').select('*')
+        supabase.from('store_settings').select('*'),
+        // Load combo items with their child items
+        supabase.from('items')
+          .select(`
+            *,
+            combo_items!combo_items_parent_item_id_fkey (
+              id,
+              parent_item_id,
+              child_item_id,
+              quantity,
+              items:child_item_id (*)
+            )
+          `)
+          .eq('is_public', true)
+          .eq('is_combo', true)
       ])
       
       if (categoriesRes.error) throw categoriesRes.error
       if (itemsRes.error) throw itemsRes.error
       
       if (categoriesRes.data) setCategories(categoriesRes.data)
-      if (itemsRes.data) setItems(itemsRes.data)
+      // Filter out combo items from regular items list
+      if (itemsRes.data) {
+        const nonComboItems = itemsRes.data.filter((item: Item) => !item.is_combo)
+        setItems(nonComboItems)
+      }
+      // Set combo items separately
+      if (comboItemsRes.data) {
+        setComboItems(comboItemsRes.data as ItemWithCombo[])
+      }
       if (rateRes.data) setExchangeRate(rateRes.data.usd_to_srd)
       if (settingsRes.data) {
         const settingsMap: Record<string, string> = {}
@@ -172,18 +207,19 @@ export default function CatalogPage() {
   }
 
   // Cart functions
-  const addToCart = (item: Item) => {
+  const addToCart = (item: Item | ItemWithCombo) => {
     setCart(prev => {
       const existing = prev.find(c => c.item.id === item.id)
       if (existing) {
         return prev.map(c => c.item.id === item.id ? { ...c, quantity: c.quantity + 1 } : c)
       }
-      return [...prev, { item, quantity: 1 }]
+      return [...prev, { item: item as Item, quantity: 1 }]
     })
   }
 
   const addToCartById = (itemId: string) => {
-    const item = items.find(i => i.id === itemId)
+    // Check both regular items and combos
+    const item = items.find(i => i.id === itemId) || comboItems.find(i => i.id === itemId)
     if (item) addToCart(item)
   }
 
@@ -454,6 +490,108 @@ export default function CatalogPage() {
       {/* Homepage View - Category Sections */}
       {showHomepage && (
         <main>
+          {/* Combo Deals Section */}
+          {comboItems.length > 0 && (
+            <section className="py-8">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                      🎁 Combo Deals
+                    </h2>
+                    <p className="text-neutral-400 text-sm mt-1">Bespaar meer met onze speciale combinaties</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {comboItems.map((combo) => {
+                    const comboPrice = getPrice(combo)
+                    // Calculate original total price of all items in combo
+                    const originalPrice = combo.combo_items?.reduce((sum, ci) => {
+                      if (ci.items) {
+                        const itemPrice = currency === 'USD' 
+                          ? (ci.items.selling_price_usd || 0) 
+                          : (ci.items.selling_price_srd || 0)
+                        return sum + (itemPrice * ci.quantity)
+                      }
+                      return sum
+                    }, 0) || 0
+                    const savings = originalPrice - comboPrice
+                    const savingsPercent = originalPrice > 0 ? Math.round((savings / originalPrice) * 100) : 0
+                    
+                    return (
+                      <div
+                        key={combo.id}
+                        className="bg-gradient-to-br from-orange-500/10 to-yellow-500/10 rounded-2xl border border-orange-500/30 overflow-hidden hover:border-orange-500/50 transition-all"
+                      >
+                        {/* Combo Image */}
+                        <div className="relative aspect-square bg-neutral-900">
+                          {combo.image_url ? (
+                            <img
+                              src={combo.image_url}
+                              alt={combo.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-6xl">🎁</div>
+                          )}
+                          {savingsPercent > 0 && (
+                            <div className="absolute top-3 right-3 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                              -{savingsPercent}%
+                            </div>
+                          )}
+                          <div className="absolute top-3 left-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                            COMBO
+                          </div>
+                        </div>
+                        
+                        {/* Combo Info */}
+                        <div className="p-4">
+                          <h3 className="font-semibold text-white text-lg mb-2">{combo.name}</h3>
+                          
+                          {/* Items in combo */}
+                          <div className="space-y-1 mb-3">
+                            {combo.combo_items?.map((ci) => (
+                              <div key={ci.id} className="text-sm text-neutral-400 flex items-center gap-2">
+                                <span className="text-orange-400">•</span>
+                                <span>{ci.quantity}× {ci.items?.name || 'Item'}</span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Pricing */}
+                          <div className="flex items-baseline gap-2 mb-3">
+                            {originalPrice > comboPrice && (
+                              <span className="text-sm text-neutral-500 line-through">
+                                {formatCurrency(originalPrice, currency)}
+                              </span>
+                            )}
+                            <span className="text-xl font-bold text-orange-500">
+                              {formatCurrency(comboPrice, currency)}
+                            </span>
+                          </div>
+                          
+                          {savings > 0 && (
+                            <div className="text-sm text-emerald-400 mb-3">
+                              💰 Bespaar {formatCurrency(savings, currency)}
+                            </div>
+                          )}
+                          
+                          {/* Add to Cart Button */}
+                          <button
+                            onClick={() => addToCart(combo)}
+                            className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                          >
+                            Toevoegen aan winkelwagen
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* New Products Section */}
           {newestProducts.length > 0 && (
             <ProductCarousel

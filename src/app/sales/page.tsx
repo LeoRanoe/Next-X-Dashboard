@@ -22,6 +22,8 @@ interface CartItem {
   availableStock: number
   isComboItem?: boolean
   comboId?: string
+  customPrice?: number | null // Custom price for discounts
+  discountReason?: string // Reason for custom price
 }
 
 interface ComboSale {
@@ -56,6 +58,8 @@ interface InvoiceData {
     unitPrice: number
     subtotal: number
     isCombo?: boolean
+    originalPrice?: number // Original price before discount
+    discountReason?: string // Reason for discount
   }>
   currency: Currency
   paymentMethod: string
@@ -69,6 +73,8 @@ interface SalesStats {
   weekSales: number
   weekOrders: number
 }
+
+type WalletType = Database['public']['Tables']['wallets']['Row']
 
 export default function SalesPage() {
   const [items, setItems] = useState<Item[]>([])
@@ -107,6 +113,14 @@ export default function SalesPage() {
   
   // Preview invoice without print
   const [showPreview, setShowPreview] = useState(false)
+  
+  // Custom price editing
+  const [editingPriceItemId, setEditingPriceItemId] = useState<string | null>(null)
+  const [tempCustomPrice, setTempCustomPrice] = useState<string>('')
+  const [tempDiscountReason, setTempDiscountReason] = useState<string>('')
+  
+  // Location wallets
+  const [locationWallets, setLocationWallets] = useState<WalletType[]>([])
 
   const loadData = async () => {
     setLoading(true)
@@ -198,6 +212,15 @@ export default function SalesPage() {
     }
   }
 
+  const loadLocationWallets = async (locationId: string) => {
+    const { data } = await supabase
+      .from('wallets')
+      .select('*')
+      .eq('location_id', locationId)
+    
+    if (data) setLocationWallets(data)
+  }
+
   const loadReservations = async (locationId: string) => {
     const { data } = await supabase
       .from('reservations')
@@ -223,6 +246,7 @@ export default function SalesPage() {
     if (selectedLocation) {
       loadStock(selectedLocation)
       loadReservations(selectedLocation)
+      loadLocationWallets(selectedLocation)
     }
   }, [selectedLocation])
 
@@ -331,11 +355,15 @@ export default function SalesPage() {
   }
 
   const calculateTotal = () => {
-    // Regular cart items
+    // Regular cart items (with custom price support)
     const cartTotal = cart.reduce((sum, cartItem) => {
-      const price = currency === 'SRD' 
+      // Use custom price if set, otherwise use regular price
+      const regularPrice = currency === 'SRD' 
         ? (cartItem.item.selling_price_srd || 0)
         : (cartItem.item.selling_price_usd || 0)
+      const price = cartItem.customPrice !== undefined && cartItem.customPrice !== null 
+        ? cartItem.customPrice 
+        : regularPrice
       return sum + (price * cartItem.quantity)
     }, 0)
     
@@ -370,6 +398,11 @@ export default function SalesPage() {
     const invoiceNumber = generateInvoiceNumber()
     
     try {
+      // Find or select the appropriate wallet for this location, currency, and payment method
+      const matchingWallet = locationWallets.find(
+        w => w.currency === currency && w.type === paymentMethod
+      )
+      
       const { data: sale, error: saleError } = await supabase
         .from('sales')
         .insert({
@@ -377,7 +410,8 @@ export default function SalesPage() {
           currency,
           exchange_rate: currentRate?.usd_to_srd || null,
           total_amount: total,
-          payment_method: paymentMethod
+          payment_method: paymentMethod,
+          wallet_id: matchingWallet?.id || null
         })
         .select()
         .single()
@@ -391,23 +425,32 @@ export default function SalesPage() {
 
       // Process regular cart items
       for (const cartItem of cart) {
-        const price = currency === 'SRD'
+        const originalPrice = currency === 'SRD'
           ? (cartItem.item.selling_price_srd || 0)
           : (cartItem.item.selling_price_usd || 0)
+        
+        // Use custom price if set
+        const isCustomPrice = cartItem.customPrice !== undefined && cartItem.customPrice !== null
+        const finalPrice = isCustomPrice ? cartItem.customPrice! : originalPrice
         
         await supabase.from('sale_items').insert({
           sale_id: sale.id,
           item_id: cartItem.item.id,
           quantity: cartItem.quantity,
-          unit_price: price,
-          subtotal: price * cartItem.quantity
+          unit_price: finalPrice,
+          subtotal: finalPrice * cartItem.quantity,
+          is_custom_price: isCustomPrice,
+          original_price: isCustomPrice ? originalPrice : null,
+          discount_reason: isCustomPrice ? cartItem.discountReason || null : null
         })
 
         saleItems.push({
           name: cartItem.item.name,
           quantity: cartItem.quantity,
-          unitPrice: price,
-          subtotal: price * cartItem.quantity
+          unitPrice: finalPrice,
+          subtotal: finalPrice * cartItem.quantity,
+          originalPrice: isCustomPrice ? originalPrice : undefined,
+          discountReason: isCustomPrice ? cartItem.discountReason : undefined
         })
 
         const { data: stock } = await supabase
@@ -516,6 +559,31 @@ export default function SalesPage() {
             paid: false
           })
         }
+      }
+
+      // Credit the wallet for this sale
+      if (matchingWallet) {
+        // Update wallet balance
+        const { data: updatedWallet } = await supabase
+          .from('wallets')
+          .update({ balance: matchingWallet.balance + total })
+          .eq('id', matchingWallet.id)
+          .select()
+          .single()
+
+        // Create wallet transaction record
+        await supabase.from('wallet_transactions').insert({
+          wallet_id: matchingWallet.id,
+          sale_id: sale.id,
+          amount: total,
+          transaction_type: 'credit',
+          description: `Sale ${invoiceNumber}`,
+          previous_balance: matchingWallet.balance,
+          new_balance: matchingWallet.balance + total
+        })
+        
+        // Reload wallets to reflect new balance
+        if (selectedLocation) loadLocationWallets(selectedLocation)
       }
 
       // Log activity
@@ -1037,23 +1105,111 @@ export default function SalesPage() {
                       
                       {/* Regular Cart Items */}
                       {cart.map((cartItem) => {
-                        const price = currency === 'SRD'
+                        const originalPrice = currency === 'SRD'
                           ? (cartItem.item.selling_price_srd || 0)
                           : (cartItem.item.selling_price_usd || 0)
+                        const hasCustomPrice = cartItem.customPrice !== undefined && cartItem.customPrice !== null
+                        const displayPrice = hasCustomPrice ? cartItem.customPrice! : originalPrice
+                        const isEditing = editingPriceItemId === cartItem.item.id
                         
                         return (
-                          <div key={cartItem.item.id} className="p-3.5 bg-muted/50 rounded-xl border border-border/50">
+                          <div key={cartItem.item.id} className={`p-3.5 rounded-xl border ${hasCustomPrice ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-muted/50 border-border/50'}`}>
                             <div className="flex justify-between items-start mb-3">
                               <div className="flex-1 min-w-0">
                                 <div className="font-semibold text-foreground truncate">{cartItem.item.name}</div>
-                                <div className="text-sm text-muted-foreground mt-0.5">
-                                  {formatCurrency(price, currency)} × {cartItem.quantity}
-                                </div>
+                                {hasCustomPrice ? (
+                                  <div className="text-sm mt-0.5">
+                                    <span className="text-muted-foreground line-through mr-2">
+                                      {formatCurrency(originalPrice, currency)}
+                                    </span>
+                                    <span className="text-emerald-500 font-medium">
+                                      {formatCurrency(displayPrice, currency)} × {cartItem.quantity}
+                                    </span>
+                                    {cartItem.discountReason && (
+                                      <div className="text-xs text-emerald-600 mt-0.5">
+                                        💰 {cartItem.discountReason}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="text-sm text-muted-foreground mt-0.5">
+                                    {formatCurrency(originalPrice, currency)} × {cartItem.quantity}
+                                  </div>
+                                )}
                               </div>
                               <div className="font-bold text-foreground ml-3 text-right">
-                                {formatCurrency(price * cartItem.quantity, currency)}
+                                {formatCurrency(displayPrice * cartItem.quantity, currency)}
                               </div>
                             </div>
+                            
+                            {/* Custom Price Editing */}
+                            {cartItem.item.allow_custom_price && (
+                              <div className="mb-3">
+                                {isEditing ? (
+                                  <div className="bg-background p-2 rounded-lg border border-border space-y-2">
+                                    <div className="flex gap-2">
+                                      <Input
+                                        type="number"
+                                        placeholder="Custom price"
+                                        value={tempCustomPrice}
+                                        onChange={(e) => setTempCustomPrice(e.target.value)}
+                                        className="flex-1 h-8 text-sm"
+                                      />
+                                      <Button
+                                        size="sm"
+                                        variant="primary"
+                                        onClick={() => {
+                                          const price = parseFloat(tempCustomPrice)
+                                          if (!isNaN(price) && price >= 0) {
+                                            setCart(cart.map(c => 
+                                              c.item.id === cartItem.item.id 
+                                                ? { ...c, customPrice: price, discountReason: tempDiscountReason || undefined }
+                                                : c
+                                            ))
+                                          }
+                                          setEditingPriceItemId(null)
+                                          setTempCustomPrice('')
+                                          setTempDiscountReason('')
+                                        }}
+                                      >
+                                        <Check size={14} />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          setEditingPriceItemId(null)
+                                          setTempCustomPrice('')
+                                          setTempDiscountReason('')
+                                        }}
+                                      >
+                                        <X size={14} />
+                                      </Button>
+                                    </div>
+                                    <Input
+                                      type="text"
+                                      placeholder="Reason for discount (optional)"
+                                      value={tempDiscountReason}
+                                      onChange={(e) => setTempDiscountReason(e.target.value)}
+                                      className="h-8 text-sm"
+                                    />
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setEditingPriceItemId(cartItem.item.id)
+                                      setTempCustomPrice(hasCustomPrice ? String(cartItem.customPrice) : String(originalPrice))
+                                      setTempDiscountReason(cartItem.discountReason || '')
+                                    }}
+                                    className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                                  >
+                                    <DollarSign size={12} />
+                                    {hasCustomPrice ? 'Edit Custom Price' : 'Set Custom Price'}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                            
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => updateQuantity(cartItem.item.id, -1)}
@@ -1069,6 +1225,18 @@ export default function SalesPage() {
                               >
                                 <Plus size={14} />
                               </button>
+                              {hasCustomPrice && (
+                                <button
+                                  onClick={() => setCart(cart.map(c => 
+                                    c.item.id === cartItem.item.id 
+                                      ? { ...c, customPrice: undefined, discountReason: undefined }
+                                      : c
+                                  ))}
+                                  className="text-xs text-orange-500 hover:text-orange-600 font-medium"
+                                >
+                                  Reset
+                                </button>
+                              )}
                               <button
                                 onClick={() => removeFromCart(cartItem.item.id)}
                                 className="ml-auto text-sm text-destructive hover:text-destructive/80 font-medium transition-colors"

@@ -75,6 +75,8 @@ export interface Database {
           selling_price_usd: number | null
           image_url: string | null
           is_public: boolean
+          is_combo: boolean
+          allow_custom_price: boolean
           created_at: string
           updated_at: string
         }
@@ -88,6 +90,8 @@ export interface Database {
           selling_price_usd?: number | null
           image_url?: string | null
           is_public?: boolean
+          is_combo?: boolean
+          allow_custom_price?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -101,6 +105,8 @@ export interface Database {
           selling_price_usd?: number | null
           image_url?: string | null
           is_public?: boolean
+          is_combo?: boolean
+          allow_custom_price?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -110,6 +116,10 @@ export interface Database {
           id: string
           name: string
           address: string | null
+          seller_name: string | null
+          seller_phone: string | null
+          commission_rate: number
+          is_active: boolean
           created_at: string
           updated_at: string
         }
@@ -117,6 +127,10 @@ export interface Database {
           id?: string
           name: string
           address?: string | null
+          seller_name?: string | null
+          seller_phone?: string | null
+          commission_rate?: number
+          is_active?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -124,6 +138,10 @@ export interface Database {
           id?: string
           name?: string
           address?: string | null
+          seller_name?: string | null
+          seller_phone?: string | null
+          commission_rate?: number
+          is_active?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -275,6 +293,7 @@ export interface Database {
           id: string
           location_id: string
           seller_id: string | null
+          wallet_id: string | null
           currency: string
           exchange_rate: number | null
           total_amount: number
@@ -286,6 +305,7 @@ export interface Database {
           id?: string
           location_id: string
           seller_id?: string | null
+          wallet_id?: string | null
           currency: string
           exchange_rate?: number | null
           total_amount: number
@@ -297,6 +317,7 @@ export interface Database {
           id?: string
           location_id?: string
           seller_id?: string | null
+          wallet_id?: string | null
           currency?: string
           exchange_rate?: number | null
           total_amount?: number
@@ -313,6 +334,9 @@ export interface Database {
           quantity: number
           unit_price: number
           subtotal: number
+          is_custom_price: boolean
+          original_price: number | null
+          discount_reason: string | null
           created_at: string
         }
         Insert: {
@@ -322,6 +346,9 @@ export interface Database {
           quantity: number
           unit_price: number
           subtotal: number
+          is_custom_price?: boolean
+          original_price?: number | null
+          discount_reason?: string | null
           created_at?: string
         }
         Update: {
@@ -331,6 +358,9 @@ export interface Database {
           quantity?: number
           unit_price?: number
           subtotal?: number
+          is_custom_price?: boolean
+          original_price?: number | null
+          discount_reason?: string | null
           created_at?: string
         }
       }
@@ -341,6 +371,7 @@ export interface Database {
           type: string
           currency: string
           balance: number
+          location_id: string | null
           created_at: string
           updated_at: string
         }
@@ -350,6 +381,7 @@ export interface Database {
           type: string
           currency: string
           balance?: number
+          location_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -359,6 +391,7 @@ export interface Database {
           type?: string
           currency?: string
           balance?: number
+          location_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -694,6 +727,64 @@ export interface Database {
           value?: string
           created_at?: string
           updated_at?: string
+        }
+      }
+      combo_items: {
+        Row: {
+          id: string
+          combo_id: string
+          item_id: string
+          quantity: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          combo_id: string
+          item_id: string
+          quantity?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          combo_id?: string
+          item_id?: string
+          quantity?: number
+          created_at?: string
+        }
+      }
+      wallet_transactions: {
+        Row: {
+          id: string
+          wallet_id: string
+          sale_id: string | null
+          type: string
+          amount: number
+          balance_before: number
+          balance_after: number
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          wallet_id: string
+          sale_id?: string | null
+          type: string
+          amount: number
+          balance_before: number
+          balance_after: number
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          wallet_id?: string
+          sale_id?: string | null
+          type?: string
+          amount?: number
+          balance_before?: number
+          balance_after?: number
+          description?: string | null
+          created_at?: string
         }
       }
     }
