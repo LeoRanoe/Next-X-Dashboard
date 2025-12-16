@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Plus, Tag, Receipt, Trash2, Edit, X, Search, Filter, ArrowUpDown } from 'lucide-react'
+import { Plus, Tag, Receipt, Trash2, Edit, X, Search, Filter, ArrowUpDown, MapPin, Building2 } from 'lucide-react'
 import { PageHeader, PageContainer, Button, Input, Select, Textarea, EmptyState, LoadingSpinner, StatBox, Badge } from '@/components/UI'
 import { Modal } from '@/components/PageCards'
 import { formatCurrency, type Currency } from '@/lib/currency'
@@ -13,10 +13,12 @@ import { useCurrency } from '@/lib/CurrencyContext'
 type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row']
 type Expense = Database['public']['Tables']['expenses']['Row']
 type Wallet = Database['public']['Tables']['wallets']['Row']
+type Location = Database['public']['Tables']['locations']['Row']
 
 interface ExpenseWithDetails extends Expense {
   expense_categories?: ExpenseCategory | null
   wallets?: Wallet
+  locations?: Location | null
 }
 
 type SortField = 'date' | 'amount' | 'category'
@@ -27,6 +29,7 @@ export default function ExpensesPage() {
   const [categories, setCategories] = useState<ExpenseCategory[]>([])
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>([])
   const [wallets, setWallets] = useState<Wallet[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
   const [showCategoryForm, setShowCategoryForm] = useState(false)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [editingExpense, setEditingExpense] = useState<ExpenseWithDetails | null>(null)
@@ -35,6 +38,7 @@ export default function ExpensesPage() {
   const [submitting, setSubmitting] = useState(false)
   const [categoryName, setCategoryName] = useState('')
   const [expenseForm, setExpenseForm] = useState({
+    location_id: '',
     category_id: '',
     wallet_id: '',
     amount: '',
@@ -47,20 +51,28 @@ export default function ExpensesPage() {
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [filterWallet, setFilterWallet] = useState<string>('')
   const [filterCurrency, setFilterCurrency] = useState<string>('')
+  const [filterLocation, setFilterLocation] = useState<string>('')
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
+  // Get wallets filtered by selected location in form
+  const walletsForSelectedLocation = expenseForm.location_id
+    ? wallets.filter(w => w.location_id === expenseForm.location_id)
+    : wallets
+
   const loadData = async () => {
     setLoading(true)
-    const [categoriesRes, expensesRes, walletsRes] = await Promise.all([
+    const [categoriesRes, expensesRes, walletsRes, locationsRes] = await Promise.all([
       supabase.from('expense_categories').select('*').order('name'),
-      supabase.from('expenses').select('*, expense_categories(*), wallets(*)').order('created_at', { ascending: false }),
-      supabase.from('wallets').select('*').order('person_name')
+      supabase.from('expenses').select('*, expense_categories(*), wallets(*), locations(*)').order('created_at', { ascending: false }),
+      supabase.from('wallets').select('*').order('person_name'),
+      supabase.from('locations').select('*').eq('is_active', true).order('name')
     ])
     
     if (categoriesRes.data) setCategories(categoriesRes.data)
     if (expensesRes.data) setExpenses(expensesRes.data as ExpenseWithDetails[])
     if (walletsRes.data) setWallets(walletsRes.data)
+    if (locationsRes.data) setLocations(locationsRes.data)
     setLoading(false)
   }
 
@@ -75,7 +87,7 @@ export default function ExpensesPage() {
   }
 
   const resetExpenseForm = () => {
-    setExpenseForm({ category_id: '', wallet_id: '', amount: '', currency: 'SRD', description: '' })
+    setExpenseForm({ location_id: '', category_id: '', wallet_id: '', amount: '', currency: 'SRD', description: '' })
     setEditingExpense(null)
     setShowExpenseForm(false)
   }
@@ -86,13 +98,15 @@ export default function ExpensesPage() {
       const matchesSearch = !searchQuery || 
         expense.expense_categories?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        expense.wallets?.person_name?.toLowerCase().includes(searchQuery.toLowerCase())
+        expense.wallets?.person_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        expense.locations?.name?.toLowerCase().includes(searchQuery.toLowerCase())
       
       const matchesCategory = !filterCategory || expense.category_id === filterCategory
       const matchesWallet = !filterWallet || expense.wallet_id === filterWallet
       const matchesCurrency = !filterCurrency || expense.currency === filterCurrency
+      const matchesLocation = !filterLocation || expense.location_id === filterLocation
       
-      return matchesSearch && matchesCategory && matchesWallet && matchesCurrency
+      return matchesSearch && matchesCategory && matchesWallet && matchesCurrency && matchesLocation
     })
     .sort((a, b) => {
       let comparison = 0
@@ -124,11 +138,12 @@ export default function ExpensesPage() {
     setFilterCategory('')
     setFilterWallet('')
     setFilterCurrency('')
+    setFilterLocation('')
     setSortField('date')
     setSortOrder('desc')
   }
 
-  const hasActiveFilters = searchQuery || filterCategory || filterWallet || filterCurrency
+  const hasActiveFilters = searchQuery || filterCategory || filterWallet || filterCurrency || filterLocation
 
   const handleSubmitCategory = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -186,9 +201,15 @@ export default function ExpensesPage() {
     
     const amount = parseFloat(expenseForm.amount)
     const wallet = wallets.find(w => w.id === expenseForm.wallet_id)
+    const location = locations.find(l => l.id === expenseForm.location_id)
     
     if (!wallet) {
       alert('Select a wallet')
+      return
+    }
+
+    if (!expenseForm.location_id) {
+      alert('Select a location')
       return
     }
 
@@ -206,6 +227,7 @@ export default function ExpensesPage() {
         }
 
         await supabase.from('expenses').update({
+          location_id: expenseForm.location_id,
           category_id: expenseForm.category_id || null,
           wallet_id: expenseForm.wallet_id,
           amount,
@@ -219,13 +241,24 @@ export default function ExpensesPage() {
           .update({ balance: wallet.balance - difference })
           .eq('id', wallet.id)
 
+        // Log wallet transaction
+        await supabase.from('wallet_transactions').insert({
+          wallet_id: wallet.id,
+          type: difference > 0 ? 'debit' : 'credit',
+          amount: Math.abs(difference),
+          currency: wallet.currency,
+          description: `Expense update: ${expenseForm.description || 'No description'}`,
+          reference_type: 'expense',
+          reference_id: editingExpense.id
+        })
+
         const category = categories.find(c => c.id === expenseForm.category_id)
         await logActivity({
           action: 'update',
           entityType: 'expense',
           entityId: editingExpense.id,
           entityName: category?.name || 'Uncategorized',
-          details: `Updated expense: ${formatCurrency(amount, expenseForm.currency)} from ${wallet.person_name}'s ${wallet.type}`
+          details: `Updated expense: ${formatCurrency(amount, expenseForm.currency)} at ${location?.name}`
         })
       } else {
         if (wallet.balance < amount) {
@@ -235,6 +268,7 @@ export default function ExpensesPage() {
         }
 
         const { data } = await supabase.from('expenses').insert({
+          location_id: expenseForm.location_id,
           category_id: expenseForm.category_id || null,
           wallet_id: expenseForm.wallet_id,
           amount,
@@ -247,13 +281,26 @@ export default function ExpensesPage() {
           .update({ balance: wallet.balance - amount })
           .eq('id', wallet.id)
 
+        // Log wallet transaction
+        if (data) {
+          await supabase.from('wallet_transactions').insert({
+            wallet_id: wallet.id,
+            type: 'debit',
+            amount,
+            currency: wallet.currency,
+            description: `Expense: ${expenseForm.description || 'No description'}`,
+            reference_type: 'expense',
+            reference_id: data.id
+          })
+        }
+
         const category = categories.find(c => c.id === expenseForm.category_id)
         await logActivity({
           action: 'create',
           entityType: 'expense',
           entityId: data?.id,
           entityName: category?.name || 'Uncategorized',
-          details: `Created expense: ${formatCurrency(amount, expenseForm.currency)} from ${wallet.person_name}'s ${wallet.type}${expenseForm.description ? ` - ${expenseForm.description}` : ''}`
+          details: `Created expense: ${formatCurrency(amount, expenseForm.currency)} at ${location?.name}${expenseForm.description ? ` - ${expenseForm.description}` : ''}`
         })
       }
 
@@ -267,6 +314,7 @@ export default function ExpensesPage() {
   const handleEditExpense = (expense: ExpenseWithDetails) => {
     setEditingExpense(expense)
     setExpenseForm({
+      location_id: expense.location_id || '',
       category_id: expense.category_id || '',
       wallet_id: expense.wallet_id,
       amount: expense.amount.toString(),
@@ -287,6 +335,17 @@ export default function ExpensesPage() {
         .from('wallets')
         .update({ balance: expense.wallets.balance + expense.amount })
         .eq('id', expense.wallet_id)
+      
+      // Log wallet transaction for refund
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: expense.wallet_id,
+        type: 'credit',
+        amount: expense.amount,
+        currency: expense.wallets.currency,
+        description: `Expense refund: ${expense.description || 'No description'}`,
+        reference_type: 'expense_refund',
+        reference_id: expense.id
+      })
     }
 
     await logActivity({
@@ -294,7 +353,7 @@ export default function ExpensesPage() {
       entityType: 'expense',
       entityId: expense.id,
       entityName: expense.expense_categories?.name || 'Uncategorized',
-      details: `Deleted expense: ${formatCurrency(expense.amount, expense.currency as Currency)} - Refunded to ${expense.wallets?.person_name}`
+      details: `Deleted expense: ${formatCurrency(expense.amount, expense.currency as Currency)} at ${expense.locations?.name || 'Unknown location'}`
     })
     
     loadData()
@@ -394,7 +453,7 @@ export default function ExpensesPage() {
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
               <input
@@ -405,6 +464,15 @@ export default function ExpensesPage() {
                 className="input-field pl-9 text-sm"
               />
             </div>
+            <Select
+              value={filterLocation}
+              onChange={(e) => setFilterLocation(e.target.value)}
+            >
+              <option value="">All Locations</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </Select>
             <Select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
@@ -420,7 +488,7 @@ export default function ExpensesPage() {
             >
               <option value="">All Wallets</option>
               {wallets.map((wallet) => (
-                <option key={wallet.id} value={wallet.id}>{wallet.person_name} - {wallet.type}</option>
+                <option key={wallet.id} value={wallet.id}>{wallet.person_name || locations.find(l => l.id === wallet.location_id)?.name} - {wallet.type}</option>
               ))}
             </Select>
             <Select
@@ -489,10 +557,19 @@ export default function ExpensesPage() {
                       {expense.description && (
                         <p className="text-sm text-muted-foreground mt-1 truncate">{expense.description}</p>
                       )}
-                      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground flex-wrap">
+                        {expense.locations && (
+                          <>
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin size={12} />
+                              {expense.locations.name}
+                            </span>
+                            <span>•</span>
+                          </>
+                        )}
                         <span className="inline-flex items-center gap-1">
                           <span className="text-sm">{expense.wallets?.type === 'cash' ? '💵' : '🏦'}</span>
-                          {expense.wallets?.person_name}
+                          {expense.wallets?.person_name || locations.find(l => l.id === expense.wallets?.location_id)?.name}
                         </span>
                         <span>•</span>
                         <span>{new Date(expense.created_at).toLocaleDateString()}</span>
@@ -553,6 +630,17 @@ export default function ExpensesPage() {
       <Modal isOpen={showExpenseForm} onClose={resetExpenseForm} title={editingExpense ? 'Edit Expense' : 'Record Expense'}>
         <form onSubmit={handleSubmitExpense} className="space-y-4">
           <Select
+            label="Location"
+            value={expenseForm.location_id}
+            onChange={(e) => setExpenseForm({ ...expenseForm, location_id: e.target.value, wallet_id: '' })}
+            required
+          >
+            <option value="">Select Location</option>
+            {locations.map((loc) => (
+              <option key={loc.id} value={loc.id}>{loc.name}</option>
+            ))}
+          </Select>
+          <Select
             label="Category"
             value={expenseForm.category_id}
             onChange={(e) => setExpenseForm({ ...expenseForm, category_id: e.target.value })}
@@ -574,11 +662,12 @@ export default function ExpensesPage() {
               })
             }}
             required
+            disabled={!expenseForm.location_id}
           >
-            <option value="">Select Wallet</option>
-            {wallets.map((wallet) => (
+            <option value="">{expenseForm.location_id ? 'Select Wallet' : 'Select location first'}</option>
+            {walletsForSelectedLocation.map((wallet) => (
               <option key={wallet.id} value={wallet.id}>
-                {wallet.person_name} - {wallet.type} ({formatCurrency(wallet.balance, wallet.currency as Currency)})
+                {wallet.type} - {wallet.currency} ({formatCurrency(wallet.balance, wallet.currency as Currency)})
               </option>
             ))}
           </Select>

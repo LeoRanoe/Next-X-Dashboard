@@ -3,70 +3,95 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database.types'
-import { Wallet, Plus, DollarSign, Edit, Trash2, Search, User, X } from 'lucide-react'
+import { 
+  Wallet, Plus, DollarSign, Edit, Trash2, MapPin, ArrowUpRight, ArrowDownLeft, 
+  TrendingUp, History, Building2, Banknote, CreditCard
+} from 'lucide-react'
 import { PageHeader, PageContainer, Button, Input, Select, EmptyState, LoadingSpinner, StatBox, Badge } from '@/components/UI'
 import { Modal } from '@/components/PageCards'
 import { formatCurrency, type Currency } from '@/lib/currency'
 import { logActivity } from '@/lib/activityLog'
 
 type WalletType = Database['public']['Tables']['wallets']['Row']
+type Location = Database['public']['Tables']['locations']['Row']
+type WalletTransaction = Database['public']['Tables']['wallet_transactions']['Row']
 
-interface PersonWallets {
-  personName: string
+interface WalletWithLocation extends WalletType {
+  locations?: Location
+}
+
+interface LocationWithWallets extends Location {
   wallets: WalletType[]
-  totalUSD: number
   totalSRD: number
+  totalUSD: number
+}
+
+interface TransactionWithDetails extends WalletTransaction {
+  wallets?: WalletType & { locations?: Location }
 }
 
 export default function WalletsPage() {
-  const [wallets, setWallets] = useState<WalletType[]>([])
+  const [wallets, setWallets] = useState<WalletWithLocation[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
+  const [transactions, setTransactions] = useState<TransactionWithDetails[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showTransactionForm, setShowTransactionForm] = useState(false)
-  const [selectedWallet, setSelectedWallet] = useState<WalletType | null>(null)
-  const [editingWallet, setEditingWallet] = useState<WalletType | null>(null)
+  const [showTransactionHistory, setShowTransactionHistory] = useState(false)
+  const [selectedWallet, setSelectedWallet] = useState<WalletWithLocation | null>(null)
+  const [editingWallet, setEditingWallet] = useState<WalletWithLocation | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  
+  // View mode: 'locations' (grouped by location) or 'all' (flat list)
+  const [viewMode, setViewMode] = useState<'locations' | 'all'>('locations')
+  
   const [walletForm, setWalletForm] = useState({
-    person_name: '',
+    location_id: '',
     type: 'cash' as 'cash' | 'bank',
     currency: 'SRD' as Currency,
     balance: ''
   })
+  
   const [transactionForm, setTransactionForm] = useState({
     type: 'add' as 'add' | 'remove',
-    amount: ''
+    amount: '',
+    description: ''
   })
-  
-  // Filter state
-  const [searchQuery, setSearchQuery] = useState('')
 
-  const loadWallets = async () => {
+  const loadData = async () => {
     setLoading(true)
-    const { data } = await supabase.from('wallets').select('*').order('person_name')
-    if (data) {
-      console.log('Loaded wallets:', data)
-      setWallets(data)
-    }
+    const [walletsRes, locationsRes, transactionsRes] = await Promise.all([
+      supabase.from('wallets').select('*, locations(*)').order('created_at'),
+      supabase.from('locations').select('*').eq('is_active', true).order('name'),
+      supabase.from('wallet_transactions').select('*, wallets(*, locations(*))').order('created_at', { ascending: false }).limit(50)
+    ])
+    
+    if (walletsRes.data) setWallets(walletsRes.data as WalletWithLocation[])
+    if (locationsRes.data) setLocations(locationsRes.data)
+    if (transactionsRes.data) setTransactions(transactionsRes.data as TransactionWithDetails[])
     setLoading(false)
   }
 
   useEffect(() => {
-    loadWallets()
+    loadData()
   }, [])
 
   const resetForm = () => {
-    setWalletForm({ person_name: '', type: 'cash', currency: 'SRD', balance: '' })
+    setWalletForm({ location_id: '', type: 'cash', currency: 'SRD', balance: '' })
     setEditingWallet(null)
     setShowForm(false)
   }
 
   const handleSubmitWallet = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (submitting) return
+    if (submitting || !walletForm.location_id) return
     setSubmitting(true)
+    
     try {
+      const location = locations.find(l => l.id === walletForm.location_id)
       const data = {
-        person_name: walletForm.person_name,
+        location_id: walletForm.location_id,
+        person_name: location?.name || 'Unknown', // Keep for backwards compatibility
         type: walletForm.type,
         currency: walletForm.currency,
         balance: parseFloat(walletForm.balance) || 0
@@ -78,30 +103,43 @@ export default function WalletsPage() {
           action: 'update',
           entityType: 'wallet',
           entityId: editingWallet.id,
-          entityName: walletForm.person_name,
-          details: `Updated wallet: ${walletForm.type} ${walletForm.currency}`
+          entityName: `${location?.name} - ${walletForm.type} ${walletForm.currency}`,
+          details: `Updated wallet for location ${location?.name}`
         })
       } else {
+        // Check if wallet already exists for this location/type/currency
+        const existing = wallets.find(w => 
+          w.location_id === walletForm.location_id && 
+          w.type === walletForm.type && 
+          w.currency === walletForm.currency
+        )
+        
+        if (existing) {
+          alert(`A ${walletForm.type} ${walletForm.currency} wallet already exists for this location`)
+          setSubmitting(false)
+          return
+        }
+        
         const { data: newWallet } = await supabase.from('wallets').insert(data).select().single()
         await logActivity({
           action: 'create',
           entityType: 'wallet',
           entityId: newWallet?.id,
-          entityName: walletForm.person_name,
-          details: `Created ${walletForm.type} wallet in ${walletForm.currency} with initial balance ${formatCurrency(parseFloat(walletForm.balance) || 0, walletForm.currency)}`
+          entityName: `${location?.name} - ${walletForm.type} ${walletForm.currency}`,
+          details: `Created ${walletForm.type} ${walletForm.currency} wallet for ${location?.name} with balance ${formatCurrency(parseFloat(walletForm.balance) || 0, walletForm.currency)}`
         })
       }
       resetForm()
-      loadWallets()
+      loadData()
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleEditWallet = (wallet: WalletType) => {
+  const handleEditWallet = (wallet: WalletWithLocation) => {
     setEditingWallet(wallet)
     setWalletForm({
-      person_name: wallet.person_name,
+      location_id: wallet.location_id || '',
       type: wallet.type as 'cash' | 'bank',
       currency: wallet.currency as Currency,
       balance: wallet.balance.toString()
@@ -109,18 +147,19 @@ export default function WalletsPage() {
     setShowForm(true)
   }
 
-  const handleDeleteWallet = async (wallet: WalletType) => {
-    if (!confirm(`Delete wallet "${wallet.person_name}"? This cannot be undone.`)) return
+  const handleDeleteWallet = async (wallet: WalletWithLocation) => {
+    const locationName = wallet.locations?.name || 'Unknown'
+    if (!confirm(`Delete ${wallet.type} ${wallet.currency} wallet for "${locationName}"? This cannot be undone.`)) return
     
     await supabase.from('wallets').delete().eq('id', wallet.id)
     await logActivity({
       action: 'delete',
       entityType: 'wallet',
       entityId: wallet.id,
-      entityName: wallet.person_name,
-      details: `Deleted ${wallet.type} wallet (${wallet.currency}) with balance ${formatCurrency(wallet.balance, wallet.currency as Currency)}`
+      entityName: `${locationName} - ${wallet.type} ${wallet.currency}`,
+      details: `Deleted wallet with balance ${formatCurrency(wallet.balance, wallet.currency as Currency)}`
     })
-    loadWallets()
+    loadData()
   }
 
   const handleTransaction = async (e: React.FormEvent) => {
@@ -130,81 +169,102 @@ export default function WalletsPage() {
     setSubmitting(true)
     try {
       const amount = parseFloat(transactionForm.amount)
+      if (isNaN(amount) || amount <= 0) {
+        alert('Enter a valid amount')
+        setSubmitting(false)
+        return
+      }
+      
+      const previousBalance = selectedWallet.balance
       const newBalance = transactionForm.type === 'add'
-        ? selectedWallet.balance + amount
-        : selectedWallet.balance - amount
+        ? previousBalance + amount
+        : previousBalance - amount
 
+      if (newBalance < 0) {
+        alert('Insufficient balance')
+        setSubmitting(false)
+        return
+      }
+
+      // Update wallet balance
       await supabase
         .from('wallets')
         .update({ balance: newBalance })
         .eq('id', selectedWallet.id)
 
+      // Create transaction record
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: selectedWallet.id,
+        transaction_type: transactionForm.type === 'add' ? 'credit' : 'debit',
+        amount: amount,
+        previous_balance: previousBalance,
+        new_balance: newBalance,
+        description: transactionForm.description || `Manual ${transactionForm.type === 'add' ? 'deposit' : 'withdrawal'}`,
+        reference_type: 'adjustment'
+      })
+
+      const locationName = selectedWallet.locations?.name || 'Unknown'
       await logActivity({
         action: 'update',
         entityType: 'wallet',
         entityId: selectedWallet.id,
-        entityName: selectedWallet.person_name,
-        details: `${transactionForm.type === 'add' ? 'Added' : 'Removed'} ${formatCurrency(amount, selectedWallet.currency as Currency)} - New balance: ${formatCurrency(newBalance, selectedWallet.currency as Currency)}`
+        entityName: `${locationName} - ${selectedWallet.type} ${selectedWallet.currency}`,
+        details: `${transactionForm.type === 'add' ? 'Added' : 'Removed'} ${formatCurrency(amount, selectedWallet.currency as Currency)} - Balance: ${formatCurrency(newBalance, selectedWallet.currency as Currency)}`
       })
 
-      setTransactionForm({ type: 'add', amount: '' })
+      setTransactionForm({ type: 'add', amount: '', description: '' })
       setShowTransactionForm(false)
       setSelectedWallet(null)
-      loadWallets()
+      loadData()
     } finally {
       setSubmitting(false)
     }
   }
 
-  const getTotalByType = (type: 'cash' | 'bank', currency: Currency) => {
+  // Group wallets by location
+  const getLocationWallets = (): LocationWithWallets[] => {
+    const locationMap = new Map<string, LocationWithWallets>()
+    
+    // Initialize with all locations
+    locations.forEach(loc => {
+      locationMap.set(loc.id, {
+        ...loc,
+        wallets: [],
+        totalSRD: 0,
+        totalUSD: 0
+      })
+    })
+    
+    // Add wallets to their locations
+    wallets.forEach(wallet => {
+      if (wallet.location_id && locationMap.has(wallet.location_id)) {
+        const loc = locationMap.get(wallet.location_id)!
+        loc.wallets.push(wallet)
+        if (wallet.currency === 'SRD') {
+          loc.totalSRD += wallet.balance
+        } else {
+          loc.totalUSD += wallet.balance
+        }
+      }
+    })
+    
+    return Array.from(locationMap.values()).filter(l => l.wallets.length > 0)
+  }
+
+  // Calculate totals
+  const getTotalByTypeAndCurrency = (type: 'cash' | 'bank', currency: Currency) => {
     return wallets
       .filter(w => w.type === type && w.currency === currency)
       .reduce((sum, w) => sum + w.balance, 0)
   }
 
-  // Group wallets by person
-  const groupWalletsByPerson = (): PersonWallets[] => {
-    const grouped = wallets.reduce((acc, wallet) => {
-      // Normalize person name to handle case-insensitive grouping
-      const normalizedName = wallet.person_name.trim()
-      
-      if (!acc[normalizedName]) {
-        acc[normalizedName] = {
-          personName: normalizedName,
-          wallets: [],
-          totalUSD: 0,
-          totalSRD: 0
-        }
-      }
-      acc[normalizedName].wallets.push(wallet)
-      if (wallet.currency === 'USD') {
-        acc[normalizedName].totalUSD += Number(wallet.balance)
-      } else {
-        acc[normalizedName].totalSRD += Number(wallet.balance)
-      }
-      return acc
-    }, {} as Record<string, PersonWallets>)
-    
-    return Object.values(grouped).sort((a, b) => a.personName.localeCompare(b.personName))
-  }
-  
-  // Filter people
-  const filteredPeople = groupWalletsByPerson().filter(person => 
-    !searchQuery || person.personName.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  console.log('Grouped people:', filteredPeople)
-
-  const clearFilters = () => {
-    setSearchQuery('')
-  }
-
-  const hasActiveFilters = searchQuery
+  const grandTotalSRD = wallets.filter(w => w.currency === 'SRD').reduce((sum, w) => sum + w.balance, 0)
+  const grandTotalUSD = wallets.filter(w => w.currency === 'USD').reduce((sum, w) => sum + w.balance, 0)
 
   if (loading) {
     return (
       <div className="min-h-screen">
-        <PageHeader title="Wallets" subtitle="Manage cash and bank balances" />
+        <PageHeader title="Wallets" subtitle="Manage location wallets and finances" />
         <LoadingSpinner />
       </div>
     )
@@ -214,225 +274,341 @@ export default function WalletsPage() {
     <div className="min-h-screen pb-20 lg:pb-0">
       <PageHeader 
         title="Wallets" 
-        subtitle="Manage cash and bank balances"
+        subtitle="Manage location wallets and finances"
         icon={<Wallet size={24} />}
         action={
-          <Button onClick={() => setShowForm(true)} variant="primary">
-            <Plus size={20} />
-            <span className="hidden sm:inline">New Wallet</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowTransactionHistory(true)} variant="secondary">
+              <History size={20} />
+              <span className="hidden sm:inline">History</span>
+            </Button>
+            <Button onClick={() => setShowForm(true)} variant="primary">
+              <Plus size={20} />
+              <span className="hidden sm:inline">New Wallet</span>
+            </Button>
+          </div>
         }
       />
 
       <PageContainer>
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <div className="col-span-2 lg:col-span-1 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl p-4 border border-primary/20">
+            <div className="flex items-center gap-2 text-primary mb-2">
+              <TrendingUp size={20} />
+              <span className="text-sm font-medium">Grand Total</span>
+            </div>
+            <div className="text-xl font-bold text-foreground">{formatCurrency(grandTotalSRD, 'SRD')}</div>
+            <div className="text-lg text-muted-foreground">{formatCurrency(grandTotalUSD, 'USD')}</div>
+          </div>
           <StatBox 
             label="Cash SRD" 
-            value={formatCurrency(getTotalByType('cash', 'SRD'), 'SRD')} 
-            icon={<DollarSign size={20} />}
+            value={formatCurrency(getTotalByTypeAndCurrency('cash', 'SRD'), 'SRD')} 
+            icon={<Banknote size={20} />}
           />
           <StatBox 
             label="Cash USD" 
-            value={formatCurrency(getTotalByType('cash', 'USD'), 'USD')} 
-            icon={<DollarSign size={20} />}
+            value={formatCurrency(getTotalByTypeAndCurrency('cash', 'USD'), 'USD')} 
+            icon={<Banknote size={20} />}
           />
           <StatBox 
             label="Bank SRD" 
-            value={formatCurrency(getTotalByType('bank', 'SRD'), 'SRD')} 
-            icon={<DollarSign size={20} />}
+            value={formatCurrency(getTotalByTypeAndCurrency('bank', 'SRD'), 'SRD')} 
+            icon={<CreditCard size={20} />}
           />
           <StatBox 
             label="Bank USD" 
-            value={formatCurrency(getTotalByType('bank', 'USD'), 'USD')} 
-            icon={<DollarSign size={20} />}
+            value={formatCurrency(getTotalByTypeAndCurrency('bank', 'USD'), 'USD')} 
+            icon={<CreditCard size={20} />}
           />
         </div>
 
-        {/* Filters Section */}
-        <div className="bg-card rounded-2xl border border-border p-4 lg:p-5 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-foreground flex items-center gap-2">
-              <Search size={18} className="text-primary" />
-              Search People
-            </h2>
-            {hasActiveFilters && (
-              <Button onClick={clearFilters} variant="ghost" size="sm">
-                <X size={16} />
-                Clear
-              </Button>
-            )}
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-            <input
-              type="text"
-              placeholder="Search by person name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-sm text-muted-foreground">View:</span>
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            <button
+              onClick={() => setViewMode('locations')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                viewMode === 'locations' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-card text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <MapPin size={16} className="inline mr-1" />
+              By Location
+            </button>
+            <button
+              onClick={() => setViewMode('all')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                viewMode === 'all' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-card text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Wallet size={16} className="inline mr-1" />
+              All Wallets
+            </button>
           </div>
         </div>
 
-        {/* People & Their Wallets */}
-        <div>
-          <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-            <User size={18} className="text-primary" />
-            People ({filteredPeople.length})
-          </h2>
-          {filteredPeople.length === 0 ? (
-            <EmptyState
-              icon={Wallet}
-              title={hasActiveFilters ? "No matching people" : "No wallets yet"}
-              description={hasActiveFilters ? "Try adjusting your search." : "Create your first wallet to get started!"}
-            />
-          ) : (
-            <div className="space-y-6">
-              {filteredPeople.map((person) => (
-                <div 
-                  key={person.personName} 
-                  className="bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200"
-                >
-                  {/* Person Header */}
-                  <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-4 border-b border-border">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-2xl">
-                          👤
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg text-foreground">{person.personName}</h3>
-                          <p className="text-sm text-muted-foreground">{person.wallets.length} wallet{person.wallets.length !== 1 ? 's' : ''}</p>
-                        </div>
+        {/* Wallets Display */}
+        {wallets.length === 0 ? (
+          <EmptyState
+            icon={Wallet}
+            title="No wallets yet"
+            description="Create wallets for your locations to track sales and expenses"
+          />
+        ) : viewMode === 'locations' ? (
+          /* Grouped by Location View */
+          <div className="space-y-6">
+            {getLocationWallets().map((location) => (
+              <div 
+                key={location.id} 
+                className="bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/30 transition-all"
+              >
+                {/* Location Header */}
+                <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-4 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                        <Building2 size={24} className="text-primary" />
                       </div>
-                      <div className="flex gap-3 text-right">
-                        {person.totalUSD > 0 && (
-                          <div>
-                            <div className="text-xs text-muted-foreground">USD Total</div>
-                            <div className="font-bold text-lg text-primary">{formatCurrency(person.totalUSD, 'USD')}</div>
-                          </div>
-                        )}
-                        {person.totalSRD > 0 && (
-                          <div>
-                            <div className="text-xs text-muted-foreground">SRD Total</div>
-                            <div className="font-bold text-lg text-primary">{formatCurrency(person.totalSRD, 'SRD')}</div>
-                          </div>
+                      <div>
+                        <h3 className="font-bold text-lg text-foreground">{location.name}</h3>
+                        {location.seller_name && (
+                          <p className="text-sm text-muted-foreground">Seller: {location.seller_name}</p>
                         )}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Wallets Grid */}
-                  <div className="p-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {person.wallets.map((wallet) => (
-                        <div 
-                          key={wallet.id} 
-                          className="bg-muted/50 p-4 rounded-xl border border-border hover:bg-muted transition-colors group"
-                        >
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
-                                wallet.type === 'cash' 
-                                  ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]' 
-                                  : 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]'
-                              }`}>
-                                {wallet.type === 'cash' ? '💵' : '🏦'}
-                              </div>
-                              <div>
-                                <p className="font-medium text-sm">{wallet.type === 'cash' ? 'Cash' : 'Bank'}</p>
-                                <Badge variant="default">{wallet.currency}</Badge>
-                              </div>
-                            </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => handleEditWallet(wallet)}
-                                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                                title="Edit"
-                              >
-                                <Edit size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteWallet(wallet)}
-                                className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="text-xl font-bold text-foreground">
-                              {formatCurrency(wallet.balance, wallet.currency as Currency)}
-                            </div>
-                            <Button
-                              onClick={() => {
-                                setSelectedWallet(wallet)
-                                setShowTransactionForm(true)
-                              }}
-                              variant="secondary"
-                              size="sm"
-                            >
-                              +/−
-                            </Button>
-                          </div>
+                    <div className="flex gap-4 text-right">
+                      {location.totalUSD > 0 && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">USD</div>
+                          <div className="font-bold text-lg text-primary">{formatCurrency(location.totalUSD, 'USD')}</div>
                         </div>
-                      ))}
+                      )}
+                      {location.totalSRD > 0 && (
+                        <div>
+                          <div className="text-xs text-muted-foreground">SRD</div>
+                          <div className="font-bold text-lg text-primary">{formatCurrency(location.totalSRD, 'SRD')}</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                {/* Wallets Grid */}
+                <div className="p-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {location.wallets.map((wallet) => (
+                      <div 
+                        key={wallet.id} 
+                        className={`p-4 rounded-xl border transition-all group ${
+                          wallet.type === 'cash' 
+                            ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40' 
+                            : 'bg-blue-500/5 border-blue-500/20 hover:border-blue-500/40'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            wallet.type === 'cash' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-blue-500/20 text-blue-500'
+                          }`}>
+                            {wallet.type === 'cash' ? <Banknote size={16} /> : <CreditCard size={16} />}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm capitalize">{wallet.type}</p>
+                            <Badge variant={wallet.currency === 'USD' ? 'info' : 'success'}>{wallet.currency}</Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="text-2xl font-bold text-foreground mb-3">
+                          {formatCurrency(wallet.balance, wallet.currency as Currency)}
+                        </div>
+                        
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => {
+                              setSelectedWallet(wallet as WalletWithLocation)
+                              setShowTransactionForm(true)
+                            }}
+                            className="flex-1 py-1.5 text-xs font-medium rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            Add/Remove
+                          </button>
+                          <button
+                            onClick={() => handleEditWallet(wallet as WalletWithLocation)}
+                            className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteWallet(wallet as WalletWithLocation)}
+                            className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Add Wallet Button */}
+                    <button
+                      onClick={() => {
+                        setWalletForm(prev => ({ ...prev, location_id: location.id }))
+                        setShowForm(true)
+                      }}
+                      className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary min-h-[120px]"
+                    >
+                      <Plus size={24} />
+                      <span className="text-sm font-medium">Add Wallet</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {/* Locations without wallets */}
+            {locations.filter(l => !wallets.some(w => w.location_id === l.id)).length > 0 && (
+              <div className="bg-muted/50 rounded-2xl border border-dashed border-border p-6">
+                <h3 className="font-medium text-foreground mb-3">Locations without wallets:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {locations.filter(l => !wallets.some(w => w.location_id === l.id)).map(loc => (
+                    <button
+                      key={loc.id}
+                      onClick={() => {
+                        setWalletForm(prev => ({ ...prev, location_id: loc.id }))
+                        setShowForm(true)
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-card border border-border hover:border-primary text-sm font-medium transition-colors"
+                    >
+                      <Plus size={14} className="inline mr-1" />
+                      {loc.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Flat List View */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {wallets.map((wallet) => (
+              <div 
+                key={wallet.id} 
+                className={`p-5 rounded-xl border transition-all group ${
+                  wallet.type === 'cash' 
+                    ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40' 
+                    : 'bg-blue-500/5 border-blue-500/20 hover:border-blue-500/40'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      wallet.type === 'cash' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-blue-500/20 text-blue-500'
+                    }`}>
+                      {wallet.type === 'cash' ? <Banknote size={20} /> : <CreditCard size={20} />}
+                    </div>
+                    <div>
+                      <p className="font-medium capitalize">{wallet.type} {wallet.currency}</p>
+                      <p className="text-sm text-muted-foreground">{wallet.locations?.name || 'No location'}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleEditWallet(wallet)}
+                      className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteWallet(wallet)}
+                      className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="text-3xl font-bold text-foreground mb-4">
+                  {formatCurrency(wallet.balance, wallet.currency as Currency)}
+                </div>
+                
+                <Button
+                  onClick={() => {
+                    setSelectedWallet(wallet)
+                    setShowTransactionForm(true)
+                  }}
+                  variant="secondary"
+                  size="sm"
+                  fullWidth
+                >
+                  <DollarSign size={16} />
+                  Add / Remove Money
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </PageContainer>
 
       {/* Create/Edit Wallet Modal */}
-      <Modal 
-        isOpen={showForm} 
-        onClose={resetForm} 
-        title={editingWallet ? 'Edit Wallet' : 'Create New Wallet'}
-      >
+      <Modal isOpen={showForm} onClose={resetForm} title={editingWallet ? 'Edit Wallet' : 'New Wallet'}>
         <form onSubmit={handleSubmitWallet} className="space-y-4">
-          <Input
-            label="Person Name"
-            type="text"
-            value={walletForm.person_name}
-            onChange={(e) => setWalletForm({ ...walletForm, person_name: e.target.value })}
-            placeholder="Enter person name"
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4">
+            <p className="text-sm text-muted-foreground">
+              <strong className="text-foreground">Each location can have 4 wallets:</strong><br />
+              Cash SRD, Cash USD, Bank SRD, Bank USD. Sales auto-credit and expenses auto-debit these wallets.
+            </p>
+          </div>
+          
+          <Select
+            label="Location"
+            value={walletForm.location_id}
+            onChange={(e) => setWalletForm({ ...walletForm, location_id: e.target.value })}
             required
-          />
-          <Select
-            label="Type"
-            value={walletForm.type}
-            onChange={(e) => setWalletForm({ ...walletForm, type: e.target.value as 'cash' | 'bank' })}
           >
-            <option value="cash">💵 Cash</option>
-            <option value="bank">🏦 Bank</option>
+            <option value="">Select location...</option>
+            {locations.map(loc => (
+              <option key={loc.id} value={loc.id}>{loc.name}</option>
+            ))}
           </Select>
-          <Select
-            label="Currency"
-            value={walletForm.currency}
-            onChange={(e) => setWalletForm({ ...walletForm, currency: e.target.value as Currency })}
-          >
-            <option value="SRD">SRD (Suriname Dollar)</option>
-            <option value="USD">USD (US Dollar)</option>
-          </Select>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Type"
+              value={walletForm.type}
+              onChange={(e) => setWalletForm({ ...walletForm, type: e.target.value as 'cash' | 'bank' })}
+            >
+              <option value="cash">💵 Cash</option>
+              <option value="bank">🏦 Bank</option>
+            </Select>
+            
+            <Select
+              label="Currency"
+              value={walletForm.currency}
+              onChange={(e) => setWalletForm({ ...walletForm, currency: e.target.value as Currency })}
+            >
+              <option value="SRD">SRD</option>
+              <option value="USD">USD</option>
+            </Select>
+          </div>
+          
           <Input
-            label={editingWallet ? 'Balance' : 'Initial Balance'}
+            label="Initial Balance"
             type="number"
             step="0.01"
             value={walletForm.balance}
             onChange={(e) => setWalletForm({ ...walletForm, balance: e.target.value })}
             placeholder="0.00"
           />
-          <div className="flex gap-3">
-            <Button type="submit" variant="primary" fullWidth loading={submitting}>
-              {editingWallet ? 'Update Wallet' : 'Create Wallet'}
-            </Button>
-            <Button type="button" variant="secondary" fullWidth onClick={resetForm}>
+          
+          <div className="flex gap-2 pt-2">
+            <Button type="button" onClick={resetForm} variant="secondary" fullWidth>
               Cancel
+            </Button>
+            <Button type="submit" variant="primary" fullWidth loading={submitting}>
+              {editingWallet ? 'Update' : 'Create'} Wallet
             </Button>
           </div>
         </form>
@@ -440,74 +616,127 @@ export default function WalletsPage() {
 
       {/* Transaction Modal */}
       <Modal 
-        isOpen={showTransactionForm && !!selectedWallet} 
+        isOpen={showTransactionForm} 
         onClose={() => {
           setShowTransactionForm(false)
           setSelectedWallet(null)
+          setTransactionForm({ type: 'add', amount: '', description: '' })
         }} 
-        title={selectedWallet ? `Transaction: ${selectedWallet.person_name}` : 'Transaction'}
+        title="Add / Remove Money"
       >
         {selectedWallet && (
           <form onSubmit={handleTransaction} className="space-y-4">
-            <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-5 rounded-xl border border-primary/20">
-              <div className="text-sm text-muted-foreground mb-1">Current Balance</div>
-              <div className="text-3xl font-bold text-primary">
+            <div className="bg-muted rounded-xl p-4 text-center">
+              <p className="text-sm text-muted-foreground mb-1">
+                {selectedWallet.locations?.name} - {selectedWallet.type} {selectedWallet.currency}
+              </p>
+              <p className="text-2xl font-bold text-foreground">
                 {formatCurrency(selectedWallet.balance, selectedWallet.currency as Currency)}
-              </div>
-              <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
-                <span className="text-base">{selectedWallet.type === 'cash' ? '💵' : '🏦'}</span>
-                <span className="font-medium">{selectedWallet.type === 'cash' ? 'Cash' : 'Bank'}</span>
-                <span>•</span>
-                <span>{selectedWallet.currency}</span>
-              </div>
+              </p>
             </div>
-            <div>
-              <label className="input-label">Transaction Type</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setTransactionForm({ ...transactionForm, type: 'add' })}
-                  className={`py-3.5 px-4 rounded-xl font-semibold transition-all duration-200 active:scale-98 ${
-                    transactionForm.type === 'add'
-                      ? 'bg-[hsl(var(--success))] text-white shadow-lg shadow-[hsl(var(--success))]/25'
-                      : 'bg-muted text-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  ➕ Add Money
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTransactionForm({ ...transactionForm, type: 'remove' })}
-                  className={`py-3.5 px-4 rounded-xl font-semibold transition-all duration-200 active:scale-98 ${
-                    transactionForm.type === 'remove'
-                      ? 'bg-destructive text-destructive-foreground shadow-lg shadow-destructive/25'
-                      : 'bg-muted text-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  ➖ Remove Money
-                </button>
-              </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTransactionForm({ ...transactionForm, type: 'add' })}
+                className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+                  transactionForm.type === 'add'
+                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500'
+                    : 'border-border hover:border-emerald-500/50'
+                }`}
+              >
+                <ArrowDownLeft size={20} />
+                Add Money
+              </button>
+              <button
+                type="button"
+                onClick={() => setTransactionForm({ ...transactionForm, type: 'remove' })}
+                className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+                  transactionForm.type === 'remove'
+                    ? 'border-destructive bg-destructive/10 text-destructive'
+                    : 'border-border hover:border-destructive/50'
+                }`}
+              >
+                <ArrowUpRight size={20} />
+                Remove Money
+              </button>
             </div>
+            
             <Input
               label="Amount"
               type="number"
               step="0.01"
+              min="0.01"
               value={transactionForm.amount}
               onChange={(e) => setTransactionForm({ ...transactionForm, amount: e.target.value })}
               placeholder="0.00"
               required
             />
-            <Button
-              type="submit"
-              variant={transactionForm.type === 'add' ? 'primary' : 'danger'}
-              fullWidth
-              size="lg"
+            
+            <Input
+              label="Description (optional)"
+              type="text"
+              value={transactionForm.description}
+              onChange={(e) => setTransactionForm({ ...transactionForm, description: e.target.value })}
+              placeholder="e.g. Cash from drawer"
+            />
+            
+            <Button 
+              type="submit" 
+              variant={transactionForm.type === 'add' ? 'primary' : 'danger'} 
+              fullWidth 
               loading={submitting}
             >
-              {transactionForm.type === 'add' ? '✓ Confirm Add' : '✓ Confirm Remove'}
+              {transactionForm.type === 'add' ? 'Add' : 'Remove'} {transactionForm.amount ? formatCurrency(parseFloat(transactionForm.amount), selectedWallet.currency as Currency) : 'Money'}
             </Button>
           </form>
         )}
+      </Modal>
+
+      {/* Transaction History Modal */}
+      <Modal 
+        isOpen={showTransactionHistory} 
+        onClose={() => setShowTransactionHistory(false)} 
+        title="Transaction History"
+      >
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          {transactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No transactions yet
+            </div>
+          ) : (
+            transactions.map((tx) => (
+              <div 
+                key={tx.id} 
+                className={`p-3 rounded-lg border ${
+                  tx.type === 'credit' 
+                    ? 'bg-emerald-500/5 border-emerald-500/20' 
+                    : 'bg-red-500/5 border-red-500/20'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    {tx.type === 'credit' ? (
+                      <ArrowDownLeft size={16} className="text-emerald-500" />
+                    ) : (
+                      <ArrowUpRight size={16} className="text-red-500" />
+                    )}
+                    <span className="font-medium text-sm">
+                      {tx.wallets?.locations?.name} - {tx.wallets?.type} {tx.wallets?.currency}
+                    </span>
+                  </div>
+                  <span className={`font-bold ${tx.type === 'credit' ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount, (tx.wallets?.currency || 'SRD') as Currency)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{tx.description || tx.reference_type}</span>
+                  <span>{new Date(tx.created_at).toLocaleString()}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </Modal>
     </div>
   )

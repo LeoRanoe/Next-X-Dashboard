@@ -367,7 +367,7 @@ export interface Database {
       wallets: {
         Row: {
           id: string
-          person_name: string
+          person_name: string | null
           type: string
           currency: string
           balance: number
@@ -377,7 +377,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          person_name: string
+          person_name?: string | null
           type: string
           currency: string
           balance?: number
@@ -387,7 +387,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          person_name?: string
+          person_name?: string | null
           type?: string
           currency?: string
           balance?: number
@@ -418,6 +418,7 @@ export interface Database {
           id: string
           category_id: string | null
           wallet_id: string
+          location_id: string | null
           amount: number
           currency: string
           description: string | null
@@ -427,6 +428,7 @@ export interface Database {
           id?: string
           category_id?: string | null
           wallet_id: string
+          location_id?: string | null
           amount: number
           currency: string
           description?: string | null
@@ -436,6 +438,7 @@ export interface Database {
           id?: string
           category_id?: string | null
           wallet_id?: string
+          location_id?: string | null
           amount?: number
           currency?: string
           description?: string | null
@@ -471,25 +474,31 @@ export interface Database {
       commissions: {
         Row: {
           id: string
-          seller_id: string
+          seller_id: string | null
+          location_id: string
           sale_id: string
           commission_amount: number
+          commission_rate: number
           paid: boolean
           created_at: string
         }
         Insert: {
           id?: string
-          seller_id: string
+          seller_id?: string | null
+          location_id: string
           sale_id: string
           commission_amount: number
+          commission_rate: number
           paid?: boolean
           created_at?: string
         }
         Update: {
           id?: string
-          seller_id?: string
+          seller_id?: string | null
+          location_id?: string
           sale_id?: string
           commission_amount?: number
+          commission_rate?: number
           paid?: boolean
           created_at?: string
         }
@@ -759,9 +768,10 @@ export interface Database {
           sale_id: string | null
           type: string
           amount: number
-          balance_before: number
-          balance_after: number
+          currency: string
           description: string | null
+          reference_type: string | null
+          reference_id: string | null
           created_at: string
         }
         Insert: {
@@ -770,9 +780,10 @@ export interface Database {
           sale_id?: string | null
           type: string
           amount: number
-          balance_before: number
-          balance_after: number
+          currency?: string
           description?: string | null
+          reference_type?: string | null
+          reference_id?: string | null
           created_at?: string
         }
         Update: {
@@ -781,9 +792,10 @@ export interface Database {
           sale_id?: string | null
           type?: string
           amount?: number
-          balance_before?: number
-          balance_after?: number
+          currency?: string
           description?: string | null
+          reference_type?: string | null
+          reference_id?: string | null
           created_at?: string
         }
       }
