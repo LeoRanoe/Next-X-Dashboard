@@ -159,18 +159,68 @@ export default function ReviewsManagementPage() {
   return (
     <PageContainer>
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/cms" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors">
+      <div className="flex items-center gap-3 lg:gap-4 mb-4 lg:mb-6">
+        <Link href="/cms" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors active:scale-95">
           <ChevronLeft size={20} className="text-neutral-400" />
         </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">Product Reviews</h1>
-          <p className="text-neutral-400 text-sm">Manage customer reviews and ratings</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl lg:text-2xl font-bold text-white truncate">Product Reviews</h1>
+          <p className="text-neutral-400 text-xs lg:text-sm hidden sm:block">Manage customer reviews and ratings</p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      {/* Stats - Mobile Horizontal Scroll */}
+      <div className="lg:hidden mb-4 -mx-4 px-4">
+        <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
+          <div className="bg-neutral-900 rounded-xl p-3 border border-neutral-800 flex-shrink-0 w-[130px]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <MessageSquare size={16} className="text-blue-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-white">{reviews.length}</p>
+                <p className="text-[10px] text-neutral-500">Total</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-neutral-900 rounded-xl p-3 border border-neutral-800 flex-shrink-0 w-[130px]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                <Star size={16} className="text-amber-400 fill-amber-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-white">{avgRating}</p>
+                <p className="text-[10px] text-neutral-500">Avg Rating</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-neutral-900 rounded-xl p-3 border border-neutral-800 flex-shrink-0 w-[130px]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                <Eye size={16} className="text-orange-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-white">{pendingCount}</p>
+                <p className="text-[10px] text-neutral-500">Pending</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-neutral-900 rounded-xl p-3 border border-neutral-800 flex-shrink-0 w-[130px]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                <Check size={16} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-white">{approvedCount}</p>
+                <p className="text-[10px] text-neutral-500">Approved</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats - Desktop Grid */}
+      <div className="hidden lg:grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-neutral-900 rounded-xl p-4 border border-neutral-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -218,38 +268,40 @@ export default function ReviewsManagementPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 mb-4 lg:mb-6">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
           <input
             type="text"
             placeholder="Search reviews..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500"
+            className="w-full lg:max-w-md pl-10 pr-4 py-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as 'all' | 'pending' | 'approved')}
-          className="px-4 py-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-orange-500"
-        >
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-        </select>
-        <select
-          value={ratingFilter || ''}
-          onChange={(e) => setRatingFilter(e.target.value ? parseInt(e.target.value) : null)}
-          className="px-4 py-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white focus:outline-none focus:border-orange-500"
-        >
-          <option value="">All Ratings</option>
-          <option value="5">5 Stars</option>
-          <option value="4">4 Stars</option>
-          <option value="3">3 Stars</option>
-          <option value="2">2 Stars</option>
-          <option value="1">1 Star</option>
-        </select>
+        <div className="flex gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'pending' | 'approved')}
+            className="flex-1 sm:flex-none px-3 lg:px-4 py-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white text-sm focus:outline-none focus:border-orange-500"
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+          </select>
+          <select
+            value={ratingFilter || ''}
+            onChange={(e) => setRatingFilter(e.target.value ? parseInt(e.target.value) : null)}
+            className="flex-1 sm:flex-none px-3 lg:px-4 py-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white text-sm focus:outline-none focus:border-orange-500"
+          >
+            <option value="">Rating</option>
+            <option value="5">5★</option>
+            <option value="4">4★</option>
+            <option value="3">3★</option>
+            <option value="2">2★</option>
+            <option value="1">1★</option>
+          </select>
+        </div>
       </div>
 
       {/* Reviews List */}
@@ -268,20 +320,20 @@ export default function ReviewsManagementPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 lg:space-y-4">
           {filteredReviews.map((review) => (
             <div
               key={review.id}
-              className={`bg-neutral-900 rounded-2xl border overflow-hidden ${
+              className={`bg-neutral-900 rounded-xl lg:rounded-2xl border overflow-hidden ${
                 review.is_approved 
                   ? 'border-neutral-800' 
                   : 'border-amber-500/30 bg-amber-500/5'
               }`}
             >
-              <div className="p-5">
-                <div className="flex items-start gap-4">
+              <div className="p-3 lg:p-5">
+                <div className="flex items-start gap-3 lg:gap-4">
                   {/* Product Image */}
-                  <div className="w-16 h-16 rounded-xl bg-neutral-800 flex-shrink-0 overflow-hidden">
+                  <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-lg lg:rounded-xl bg-neutral-800 flex-shrink-0 overflow-hidden">
                     {review.item?.image_url ? (
                       <img 
                         src={review.item.image_url} 
@@ -290,36 +342,37 @@ export default function ReviewsManagementPage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package size={24} className="text-neutral-600" />
+                        <Package size={20} className="lg:hidden text-neutral-600" />
+                        <Package size={24} className="hidden lg:block text-neutral-600" />
                       </div>
                     )}
                   </div>
 
                   {/* Review Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-white">{review.name}</span>
+                    <div className="flex items-start justify-between gap-2 lg:gap-4 mb-1.5 lg:mb-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 lg:gap-2 mb-0.5 lg:mb-1 flex-wrap">
+                          <span className="font-medium text-white text-sm lg:text-base truncate">{review.name}</span>
                           {review.is_verified && (
-                            <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] lg:text-xs bg-emerald-500/20 text-emerald-400 px-1.5 lg:px-2 py-0.5 rounded-full flex-shrink-0">
                               Verified
                             </span>
                           )}
                           {!review.is_approved && (
-                            <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] lg:text-xs bg-amber-500/20 text-amber-400 px-1.5 lg:px-2 py-0.5 rounded-full flex-shrink-0">
                               Pending
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-neutral-500">
-                          on <span className="text-neutral-300">{review.item?.name || 'Unknown Product'}</span>
-                          {' · '}{formatDate(review.created_at)}
+                        <p className="text-xs lg:text-sm text-neutral-500 truncate">
+                          on <span className="text-neutral-300">{review.item?.name || 'Unknown'}</span>
+                          <span className="hidden sm:inline">{' · '}{formatDate(review.created_at)}</span>
                         </p>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-2">
+                      {/* Desktop Actions */}
+                      <div className="hidden sm:flex items-center gap-2">
                         {!review.is_approved && (
                           <button
                             onClick={() => approveReview(review)}
@@ -349,26 +402,53 @@ export default function ReviewsManagementPage() {
                     </div>
 
                     {/* Rating */}
-                    <div className="flex items-center gap-1 mb-3">
+                    <div className="flex items-center gap-0.5 lg:gap-1 mb-2 lg:mb-3">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          size={16}
-                          className={star <= review.rating 
+                          size={14}
+                          className={`lg:w-4 lg:h-4 ${star <= review.rating 
                             ? 'text-amber-400 fill-amber-400' 
                             : 'text-neutral-700'
-                          }
+                          }`}
                         />
                       ))}
                     </div>
 
                     {/* Review Text */}
                     {review.title && (
-                      <h4 className="font-medium text-white mb-1">{review.title}</h4>
+                      <h4 className="font-medium text-white text-sm lg:text-base mb-0.5 lg:mb-1">{review.title}</h4>
                     )}
                     {review.content && (
-                      <p className="text-neutral-300 text-sm">{review.content}</p>
+                      <p className="text-neutral-300 text-xs lg:text-sm line-clamp-3 lg:line-clamp-none">{review.content}</p>
                     )}
+
+                    {/* Mobile Actions */}
+                    <div className="flex items-center gap-1.5 mt-3 sm:hidden">
+                      {!review.is_approved && (
+                        <button
+                          onClick={() => approveReview(review)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs transition-colors active:scale-95"
+                        >
+                          <ThumbsUp size={12} />
+                          Approve
+                        </button>
+                      )}
+                      {review.is_approved && (
+                        <button
+                          onClick={() => rejectReview(review)}
+                          className="p-1.5 rounded-lg bg-neutral-800 text-neutral-400 transition-colors active:scale-95"
+                        >
+                          <EyeOff size={14} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteReview(review)}
+                        className="p-1.5 rounded-lg bg-neutral-800 text-neutral-400 hover:text-red-400 transition-colors active:scale-95"
+                      >
+                        <XIcon size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

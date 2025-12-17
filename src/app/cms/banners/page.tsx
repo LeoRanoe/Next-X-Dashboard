@@ -177,60 +177,124 @@ export default function BannersPage() {
 
   return (
     <PageContainer>
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/cms" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors">
-          <ChevronLeft size={20} className="text-neutral-400" />
+      {/* Header - Mobile optimized */}
+      <div className="flex items-center gap-3 mb-4 lg:mb-6">
+        <Link href="/cms" className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 active:bg-gray-600 transition-colors flex-shrink-0">
+          <ChevronLeft size={20} className="text-gray-400" />
         </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">Banners</h1>
-          <p className="text-neutral-400 text-sm">Manage homepage sliders and promotions</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg lg:text-2xl font-bold text-white">Banners</h1>
+          <p className="text-gray-400 text-xs lg:text-sm hidden sm:block">Manage homepage sliders</p>
         </div>
         <button
           onClick={() => {
             resetForm()
             setShowForm(true)
           }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+          className="flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium text-sm hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.98] transition-all"
         >
           <Plus size={18} />
-          Add Banner
+          <span className="hidden sm:inline">Add Banner</span>
         </button>
       </div>
 
-      {/* Banners Grid */}
+      {/* Banners List - Mobile optimized */}
       {banners.length === 0 ? (
-        <div className="text-center py-16 bg-neutral-900 rounded-2xl border border-neutral-800">
-          <div className="w-16 h-16 rounded-2xl bg-neutral-800 flex items-center justify-center mx-auto mb-4">
-            <ImageIcon size={24} className="text-neutral-500" />
+        <div className="text-center py-12 lg:py-16 bg-gray-800/50 rounded-2xl border border-gray-700/50">
+          <div className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <ImageIcon size={24} className="text-gray-500" />
           </div>
           <h3 className="text-lg font-semibold text-white mb-2">No banners yet</h3>
-          <p className="text-neutral-400 mb-4">Create your first homepage banner</p>
+          <p className="text-gray-400 text-sm mb-4">Create your first homepage banner</p>
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 text-white font-medium"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 text-white font-medium text-sm active:scale-[0.98]"
           >
             <Plus size={18} />
             Add Banner
           </button>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-3">
           {banners.map((banner, index) => (
             <div 
               key={banner.id}
-              className={`bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden ${
+              className={`bg-gray-800/60 rounded-2xl border border-gray-700/50 overflow-hidden ${
                 !banner.is_active ? 'opacity-60' : ''
               }`}
             >
-              <div className="flex">
+              {/* Mobile Layout */}
+              <div className="lg:hidden">
+                <div className="flex gap-3 p-3">
+                  {/* Banner Preview */}
+                  <div className="w-24 h-20 flex-shrink-0 bg-gray-700 rounded-xl overflow-hidden">
+                    <img 
+                      src={banner.image_url} 
+                      alt={banner.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-white text-sm truncate mb-1">{banner.title}</h3>
+                    {banner.subtitle && (
+                      <p className="text-xs text-gray-400 truncate mb-2">{banner.subtitle}</p>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        banner.is_active 
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {banner.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                      {banner.link_url && (
+                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                          <ExternalLink size={10} />
+                          Link
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Actions */}
+                <div className="flex items-center justify-end gap-1 px-3 pb-3 pt-0">
+                  <button
+                    onClick={() => toggleActive(banner)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      banner.is_active 
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-gray-700/50 text-gray-400 active:text-white'
+                    }`}
+                  >
+                    {banner.is_active ? <Eye size={16} /> : <EyeOff size={16} />}
+                  </button>
+                  <button
+                    onClick={() => handleEdit(banner)}
+                    className="p-2 rounded-lg bg-gray-700/50 text-gray-400 active:text-white transition-colors"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteModal({ show: true, banner })}
+                    className="p-2 rounded-lg bg-gray-700/50 text-gray-400 active:text-red-400 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Desktop Layout */}
+              <div className="hidden lg:flex">
                 {/* Drag Handle */}
-                <div className="flex items-center px-3 bg-neutral-800/50 cursor-move">
-                  <GripVertical size={20} className="text-neutral-500" />
+                <div className="flex items-center px-3 bg-gray-800/50 cursor-move">
+                  <GripVertical size={20} className="text-gray-500" />
                 </div>
 
                 {/* Banner Preview */}
-                <div className="w-48 h-28 flex-shrink-0 bg-neutral-800">
+                <div className="w-48 h-28 flex-shrink-0 bg-gray-700">
                   <img 
                     src={banner.image_url} 
                     alt={banner.title}
@@ -244,13 +308,13 @@ export default function BannersPage() {
                     <div>
                       <h3 className="font-semibold text-white mb-1">{banner.title}</h3>
                       {banner.subtitle && (
-                        <p className="text-sm text-neutral-400 mb-2">{banner.subtitle}</p>
+                        <p className="text-sm text-gray-400 mb-2">{banner.subtitle}</p>
                       )}
-                      <div className="flex items-center gap-3 text-xs text-neutral-500">
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span className={`px-2 py-0.5 rounded-full ${
                           banner.is_active 
-                            ? 'bg-emerald-500/20 text-emerald-500'
-                            : 'bg-neutral-500/20 text-neutral-500'
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-gray-500/20 text-gray-400'
                         }`}>
                           {banner.is_active ? 'Active' : 'Inactive'}
                         </span>
@@ -275,21 +339,21 @@ export default function BannersPage() {
                         onClick={() => toggleActive(banner)}
                         className={`p-2 rounded-lg transition-colors ${
                           banner.is_active 
-                            ? 'bg-emerald-500/20 text-emerald-500'
-                            : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-gray-700 text-gray-400 hover:text-white'
                         }`}
                       >
                         {banner.is_active ? <Eye size={16} /> : <EyeOff size={16} />}
                       </button>
                       <button
                         onClick={() => handleEdit(banner)}
-                        className="p-2 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
+                        className="p-2 rounded-lg bg-gray-700 text-gray-400 hover:text-white transition-colors"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => setDeleteModal({ show: true, banner })}
-                        className="p-2 rounded-lg bg-neutral-800 text-neutral-400 hover:text-red-500 transition-colors"
+                        className="p-2 rounded-lg bg-gray-700 text-gray-400 hover:text-red-400 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>

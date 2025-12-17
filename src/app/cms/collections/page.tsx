@@ -249,23 +249,25 @@ export default function CollectionsPage() {
   return (
     <PageContainer>
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/cms" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors">
+      <div className="flex items-center gap-3 lg:gap-4 mb-4 lg:mb-6">
+        <Link href="/cms" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors active:scale-95">
           <ChevronLeft size={20} className="text-neutral-400" />
         </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">Collections</h1>
-          <p className="text-neutral-400 text-sm">Curate product collections for your store</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl lg:text-2xl font-bold text-white truncate">Collections</h1>
+          <p className="text-neutral-400 text-xs lg:text-sm hidden sm:block">Curate product collections for your store</p>
         </div>
         <button
           onClick={() => {
             resetForm()
             setShowForm(true)
           }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+          className="flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2 lg:py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm lg:text-base font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all active:scale-95"
         >
-          <Plus size={18} />
-          New Collection
+          <Plus size={16} className="lg:hidden" />
+          <Plus size={18} className="hidden lg:block" />
+          <span className="hidden sm:inline">New Collection</span>
+          <span className="sm:hidden">New</span>
         </button>
       </div>
 
@@ -286,68 +288,196 @@ export default function CollectionsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
           {collections.map((collection) => {
             const itemCount = collectionItems[collection.id]?.length || 0
             return (
               <div 
                 key={collection.id}
-                className={`bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden ${
+                className={`bg-neutral-900 rounded-xl lg:rounded-2xl border border-neutral-800 overflow-hidden ${
                   !collection.is_active ? 'opacity-60' : ''
                 }`}
               >
-                {/* Image */}
-                <div className="aspect-video bg-neutral-800 relative">
-                  {collection.image_url ? (
-                    <img 
-                      src={collection.image_url} 
-                      alt={collection.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package size={32} className="text-neutral-600" />
+                {/* Mobile Layout */}
+                <div className="sm:hidden">
+                  <div className="flex gap-3 p-3">
+                    {/* Thumbnail */}
+                    <div className="w-20 h-20 rounded-lg bg-neutral-800 flex-shrink-0 overflow-hidden">
+                      {collection.image_url ? (
+                        <img 
+                          src={collection.image_url} 
+                          alt={collection.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package size={24} className="text-neutral-600" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {collection.is_featured && (
-                    <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-amber-500 text-white text-xs font-medium flex items-center gap-1">
-                      <Star size={12} fill="currentColor" />
-                      Featured
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-semibold text-white text-sm truncate">{collection.name}</h3>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {collection.is_featured && (
+                            <Star size={12} fill="currentColor" className="text-amber-500" />
+                          )}
+                          <span className={`w-2 h-2 rounded-full ${
+                            collection.is_active ? 'bg-emerald-500' : 'bg-neutral-500'
+                          }`} />
+                        </div>
+                      </div>
+                      <p className="text-xs text-neutral-500 mb-1">{itemCount} items</p>
+                      {collection.description && (
+                        <p className="text-xs text-neutral-400 line-clamp-2">{collection.description}</p>
+                      )}
                     </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold text-white">{collection.name}</h3>
-                      <p className="text-sm text-neutral-500">{itemCount} items</p>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                      collection.is_active 
-                        ? 'bg-emerald-500/20 text-emerald-500'
-                        : 'bg-neutral-500/20 text-neutral-500'
-                    }`}>
-                      {collection.is_active ? 'Active' : 'Inactive'}
-                    </span>
                   </div>
                   
-                  {collection.description && (
-                    <p className="text-sm text-neutral-400 mb-3 line-clamp-2">{collection.description}</p>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 pt-3 border-t border-neutral-800">
+                  {/* Mobile Actions */}
+                  <div className="flex items-center gap-1 px-3 pb-3">
                     <button
                       onClick={() => {
                         setSelectedCollectionId(collection.id)
                         setShowItemSelector(true)
                       }}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-neutral-800 text-neutral-300 text-sm hover:text-white transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg bg-neutral-800 text-neutral-300 text-xs hover:text-white transition-colors active:scale-95"
                     >
-                      <Package size={14} />
-                      Manage Items
+                      <Package size={12} />
+                      Items
+                    </button>
+                    <button
+                      onClick={() => toggleFeatured(collection)}
+                      className={`p-2 rounded-lg transition-colors active:scale-95 ${
+                        collection.is_featured 
+                          ? 'bg-amber-500/20 text-amber-500'
+                          : 'bg-neutral-800 text-neutral-400'
+                      }`}
+                    >
+                      <Star size={14} fill={collection.is_featured ? 'currentColor' : 'none'} />
+                    </button>
+                    <button
+                      onClick={() => toggleActive(collection)}
+                      className={`p-2 rounded-lg transition-colors active:scale-95 ${
+                        collection.is_active 
+                          ? 'bg-emerald-500/20 text-emerald-500'
+                          : 'bg-neutral-800 text-neutral-400'
+                      }`}
+                    >
+                      {collection.is_active ? <Eye size={14} /> : <EyeOff size={14} />}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(collection)}
+                      className="p-2 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white transition-colors active:scale-95"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => setDeleteModal({ show: true, collection })}
+                      className="p-2 rounded-lg bg-neutral-800 text-neutral-400 hover:text-red-500 transition-colors active:scale-95"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden sm:block">
+                  {/* Image */}
+                  <div className="aspect-video bg-neutral-800 relative">
+                    {collection.image_url ? (
+                      <img 
+                        src={collection.image_url} 
+                        alt={collection.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package size={32} className="text-neutral-600" />
+                      </div>
+                    )}
+                    {collection.is_featured && (
+                      <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-amber-500 text-white text-xs font-medium flex items-center gap-1">
+                        <Star size={12} fill="currentColor" />
+                        Featured
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-white">{collection.name}</h3>
+                        <p className="text-sm text-neutral-500">{itemCount} items</p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${
+                        collection.is_active 
+                          ? 'bg-emerald-500/20 text-emerald-500'
+                          : 'bg-neutral-500/20 text-neutral-500'
+                      }`}>
+                        {collection.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    
+                    {collection.description && (
+                      <p className="text-sm text-neutral-400 mb-3 line-clamp-2">{collection.description}</p>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-3 border-t border-neutral-800">
+                      <button
+                        onClick={() => {
+                          setSelectedCollectionId(collection.id)
+                          setShowItemSelector(true)
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-neutral-800 text-neutral-300 text-sm hover:text-white transition-colors"
+                      >
+                        <Package size={14} />
+                        Manage Items
+                      </button>
+                      <button
+                        onClick={() => toggleFeatured(collection)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          collection.is_featured 
+                            ? 'bg-amber-500/20 text-amber-500'
+                            : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        <Star size={16} fill={collection.is_featured ? 'currentColor' : 'none'} />
+                      </button>
+                      <button
+                        onClick={() => toggleActive(collection)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          collection.is_active 
+                            ? 'bg-emerald-500/20 text-emerald-500'
+                            : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        {collection.is_active ? <Eye size={16} /> : <EyeOff size={16} />}
+                      </button>
+                      <button
+                        onClick={() => handleEdit(collection)}
+                        className="p-2 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteModal({ show: true, collection })}
+                        className="p-2 rounded-lg bg-neutral-800 text-neutral-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
                     </button>
                     <button
                       onClick={() => toggleFeatured(collection)}

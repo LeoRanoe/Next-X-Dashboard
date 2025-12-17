@@ -202,25 +202,66 @@ export default function PagesManagementPage() {
   return (
     <PageContainer>
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/cms" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors">
+      <div className="flex items-center gap-3 lg:gap-4 mb-4 lg:mb-6">
+        <Link href="/cms" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors active:scale-95">
           <ChevronLeft size={20} className="text-neutral-400" />
         </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">Static Pages</h1>
-          <p className="text-neutral-400 text-sm">Manage store pages like About, Terms, etc.</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl lg:text-2xl font-bold text-white truncate">Static Pages</h1>
+          <p className="text-neutral-400 text-xs lg:text-sm hidden sm:block">Manage store pages like About, Terms, etc.</p>
         </div>
         <button
           onClick={openNewPageEditor}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+          className="flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2 lg:py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm lg:text-base font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all active:scale-95"
         >
-          <Plus size={18} />
-          New Page
+          <Plus size={16} className="lg:hidden" />
+          <Plus size={18} className="hidden lg:block" />
+          <span className="hidden sm:inline">New Page</span>
+          <span className="sm:hidden">New</span>
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+      {/* Stats - Mobile Horizontal Scroll */}
+      <div className="lg:hidden mb-4 -mx-4 px-4">
+        <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
+          <div className="bg-neutral-900 rounded-xl p-3 border border-neutral-800 flex-shrink-0 w-[130px]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                <FileText size={16} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-white">{pages.length}</p>
+                <p className="text-[10px] text-neutral-500">Total</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-neutral-900 rounded-xl p-3 border border-neutral-800 flex-shrink-0 w-[130px]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <Globe size={16} className="text-blue-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-white">{pages.filter(p => p.is_published).length}</p>
+                <p className="text-[10px] text-neutral-500">Published</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-neutral-900 rounded-xl p-3 border border-neutral-800 flex-shrink-0 w-[130px]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                <EyeOff size={16} className="text-amber-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-white">{pages.filter(p => !p.is_published).length}</p>
+                <p className="text-[10px] text-neutral-500">Drafts</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats - Desktop Grid */}
+      <div className="hidden lg:grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-neutral-900 rounded-xl p-4 border border-neutral-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
@@ -257,15 +298,15 @@ export default function PagesManagementPage() {
       </div>
 
       {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
+      <div className="mb-4 lg:mb-6">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
           <input
             type="text"
             placeholder="Search pages..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500"
+            className="w-full lg:max-w-md pl-10 pr-4 py-2.5 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500"
           />
         </div>
       </div>
@@ -293,14 +334,71 @@ export default function PagesManagementPage() {
           )}
         </div>
       ) : (
-        <div className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden">
+        <div className="bg-neutral-900 rounded-xl lg:rounded-2xl border border-neutral-800 overflow-hidden">
           <div className="divide-y divide-neutral-800">
             {filteredPages.map((page) => (
               <div
                 key={page.id}
-                className={`p-4 hover:bg-neutral-800/30 transition-colors ${!page.is_published ? 'opacity-70' : ''}`}
+                className={`p-3 lg:p-4 hover:bg-neutral-800/30 transition-colors ${!page.is_published ? 'opacity-70' : ''}`}
               >
-                <div className="flex items-center gap-4">
+                {/* Mobile Layout */}
+                <div className="sm:hidden">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0">
+                      <FileText size={16} className="text-neutral-500" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-white text-sm truncate">{page.title}</h3>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] flex-shrink-0 ${
+                          page.is_published 
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-amber-500/20 text-amber-400'
+                        }`}>
+                          {page.is_published ? 'Live' : 'Draft'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-neutral-500 truncate">/p/{page.slug}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Mobile Actions */}
+                  <div className="flex items-center gap-1.5 mt-3 ml-12">
+                    <Link
+                      href={`/p/${page.slug}`}
+                      target="_blank"
+                      className="p-1.5 text-neutral-500 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors active:scale-95"
+                    >
+                      <ExternalLink size={14} />
+                    </Link>
+                    <button
+                      onClick={() => togglePublished(page)}
+                      className={`p-1.5 rounded-lg transition-colors active:scale-95 ${
+                        page.is_published
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-neutral-800 text-neutral-500'
+                      }`}
+                    >
+                      {page.is_published ? <Eye size={14} /> : <EyeOff size={14} />}
+                    </button>
+                    <button
+                      onClick={() => openEditPageEditor(page)}
+                      className="p-1.5 text-neutral-500 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors active:scale-95"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => deletePage(page)}
+                      className="p-1.5 text-neutral-500 hover:text-red-500 hover:bg-neutral-800 rounded-lg transition-colors active:scale-95"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden sm:flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0">
                     <FileText size={18} className="text-neutral-500" />
                   </div>

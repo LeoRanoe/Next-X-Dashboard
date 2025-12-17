@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { 
   FileText, Image, MessageSquare, Tag, Star, Users, 
   BookOpen, Megaphone, HelpCircle, ChevronRight, Plus, 
-  TrendingUp, Eye, Calendar, Layout, Settings
+  TrendingUp, Eye, Calendar, Layout, Settings, ArrowRight
 } from 'lucide-react'
 import Link from 'next/link'
 import { PageHeader, PageContainer, LoadingSpinner } from '@/components/UI'
@@ -97,28 +97,28 @@ export default function CMSPage() {
   const quickActions: QuickAction[] = [
     {
       title: 'New Blog Post',
-      description: 'Write and publish articles',
+      description: 'Write articles',
       icon: <Plus size={20} />,
       href: '/cms/blog/new',
       color: 'from-blue-500 to-indigo-600'
     },
     {
       title: 'Add Banner',
-      description: 'Create homepage banners',
+      description: 'Create banners',
       icon: <Image size={20} />,
       href: '/cms/banners/new',
       color: 'from-purple-500 to-pink-600'
     },
     {
       title: 'New Collection',
-      description: 'Curate product collections',
+      description: 'Curate products',
       icon: <Layout size={20} />,
       href: '/cms/collections/new',
       color: 'from-orange-500 to-red-600'
     },
     {
       title: 'Create Page',
-      description: 'Build static pages',
+      description: 'Build pages',
       icon: <FileText size={20} />,
       href: '/cms/pages/new',
       color: 'from-emerald-500 to-teal-600'
@@ -129,7 +129,7 @@ export default function CMSPage() {
     {
       title: 'Blog',
       description: 'Manage articles, categories, and tags',
-      icon: <BookOpen size={24} />,
+      icon: <BookOpen size={22} />,
       href: '/cms/blog',
       stats: [
         { label: 'Total Posts', value: stats.blogPosts },
@@ -140,7 +140,7 @@ export default function CMSPage() {
     {
       title: 'Banners',
       description: 'Homepage sliders and promotions',
-      icon: <Megaphone size={24} />,
+      icon: <Megaphone size={22} />,
       href: '/cms/banners',
       stats: [
         { label: 'Active Banners', value: stats.banners }
@@ -150,7 +150,7 @@ export default function CMSPage() {
     {
       title: 'Collections',
       description: 'Curated product collections',
-      icon: <Layout size={24} />,
+      icon: <Layout size={22} />,
       href: '/cms/collections',
       stats: [
         { label: 'Collections', value: stats.collections }
@@ -160,7 +160,7 @@ export default function CMSPage() {
     {
       title: 'Pages',
       description: 'About, FAQ, Terms, etc.',
-      icon: <FileText size={24} />,
+      icon: <FileText size={22} />,
       href: '/cms/pages',
       stats: [
         { label: 'Pages', value: stats.pages }
@@ -170,7 +170,7 @@ export default function CMSPage() {
     {
       title: 'Reviews',
       description: 'Customer reviews and ratings',
-      icon: <Star size={24} />,
+      icon: <Star size={22} />,
       href: '/cms/reviews',
       stats: [
         { label: 'Total', value: stats.reviews },
@@ -181,7 +181,7 @@ export default function CMSPage() {
     {
       title: 'Testimonials',
       description: 'Customer testimonials',
-      icon: <MessageSquare size={24} />,
+      icon: <MessageSquare size={22} />,
       href: '/cms/testimonials',
       stats: [
         { label: 'Testimonials', value: stats.testimonials }
@@ -191,7 +191,7 @@ export default function CMSPage() {
     {
       title: 'FAQ',
       description: 'Frequently asked questions',
-      icon: <HelpCircle size={24} />,
+      icon: <HelpCircle size={22} />,
       href: '/cms/faq',
       stats: [
         { label: 'Questions', value: stats.faqs }
@@ -201,7 +201,7 @@ export default function CMSPage() {
     {
       title: 'Subscribers',
       description: 'Newsletter subscribers',
-      icon: <Users size={24} />,
+      icon: <Users size={22} />,
       href: '/cms/subscribers',
       stats: [
         { label: 'Subscribers', value: stats.subscribers }
@@ -222,63 +222,120 @@ export default function CMSPage() {
 
   return (
     <PageContainer>
-      <PageHeader
-        title="Content Management"
-        subtitle="Manage your store's content, blog, and pages"
-        icon={<Settings size={28} />}
-      />
+      {/* Mobile-optimized Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/25">
+            <Settings size={20} />
+          </div>
+          <div>
+            <h1 className="text-xl lg:text-2xl font-bold text-white">Content Management</h1>
+            <p className="text-xs lg:text-sm text-gray-400 hidden sm:block">Manage your store&apos;s content</p>
+          </div>
+        </div>
+      </div>
 
-      {/* Quick Actions */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Quick Actions - Mobile Scroll, Desktop Grid */}
+      <div className="mb-6 lg:mb-8">
+        <h2 className="text-base lg:text-lg font-semibold text-white mb-3 lg:mb-4">Quick Actions</h2>
+        
+        {/* Mobile: Horizontal scroll */}
+        <div className="lg:hidden overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none">
+          <div className="flex gap-3" style={{ width: 'max-content' }}>
+            {quickActions.map((action) => (
+              <Link
+                key={action.title}
+                href={action.href}
+                className="group relative overflow-hidden rounded-2xl bg-gray-800/80 border border-gray-700/50 p-4 active:scale-[0.98] transition-all duration-200 w-[140px] flex-shrink-0"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-active:opacity-10 transition-opacity duration-200`} />
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center text-white mb-3 shadow-lg`}>
+                  {action.icon}
+                </div>
+                <h3 className="font-semibold text-white text-sm mb-0.5">{action.title}</h3>
+                <p className="text-xs text-gray-500">{action.description}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: Grid */}
+        <div className="hidden lg:grid grid-cols-4 gap-4">
           {quickActions.map((action) => (
             <Link
               key={action.title}
               href={action.href}
-              className="group relative overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-800 p-5 hover:border-neutral-700 transition-all duration-300"
+              className="group relative overflow-hidden rounded-2xl bg-gray-800/80 border border-gray-700/50 p-5 hover:border-gray-600 transition-all duration-300"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center text-white mb-4`}>
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center text-white mb-4 shadow-lg`}>
                 {action.icon}
               </div>
               <h3 className="font-semibold text-white mb-1">{action.title}</h3>
-              <p className="text-sm text-neutral-400">{action.description}</p>
+              <p className="text-sm text-gray-400">{action.description}</p>
               <ChevronRight 
                 size={18} 
-                className="absolute top-5 right-5 text-neutral-600 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" 
+                className="absolute top-5 right-5 text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" 
               />
             </Link>
           ))}
         </div>
       </div>
 
-      {/* Management Sections */}
+      {/* Content Sections */}
       <div>
-        <h2 className="text-lg font-semibold text-white mb-4">Content Sections</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="text-base lg:text-lg font-semibold text-white mb-3 lg:mb-4">Content Sections</h2>
+        
+        {/* Mobile: List view, Desktop: Grid */}
+        <div className="space-y-2 lg:hidden">
           {managementSections.map((section) => (
             <Link
               key={section.title}
               href={section.href}
-              className="group bg-neutral-900 rounded-2xl border border-neutral-800 p-5 hover:border-neutral-700 transition-all duration-300"
+              className="group flex items-center gap-4 bg-gray-800/60 rounded-xl border border-gray-700/50 p-4 active:bg-gray-800 active:scale-[0.99] transition-all duration-150"
+            >
+              <div className={`w-11 h-11 rounded-xl ${section.color} flex items-center justify-center text-white shadow-lg flex-shrink-0`}>
+                {section.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white text-sm">{section.title}</h3>
+                <p className="text-xs text-gray-500 truncate">{section.description}</p>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="text-right">
+                  <div className="text-lg font-bold text-white">{section.stats[0].value}</div>
+                  <div className="text-[10px] text-gray-500">{section.stats[0].label}</div>
+                </div>
+                <ArrowRight size={18} className="text-gray-600 group-active:text-white transition-colors" />
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Desktop: Grid view */}
+        <div className="hidden lg:grid grid-cols-4 gap-4">
+          {managementSections.map((section) => (
+            <Link
+              key={section.title}
+              href={section.href}
+              className="group bg-gray-800/60 rounded-2xl border border-gray-700/50 p-5 hover:border-gray-600 hover:bg-gray-800/80 transition-all duration-300"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className={`w-12 h-12 rounded-xl ${section.color} flex items-center justify-center text-white`}>
+                <div className={`w-12 h-12 rounded-xl ${section.color} flex items-center justify-center text-white shadow-lg`}>
                   {section.icon}
                 </div>
                 <ChevronRight 
                   size={18} 
-                  className="text-neutral-600 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" 
+                  className="text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" 
                 />
               </div>
               <h3 className="font-semibold text-white mb-1">{section.title}</h3>
-              <p className="text-sm text-neutral-400 mb-4">{section.description}</p>
+              <p className="text-sm text-gray-400 mb-4">{section.description}</p>
               <div className="flex gap-4">
                 {section.stats.map((stat, idx) => (
                   <div key={idx}>
                     <div className="text-xl font-bold text-white">{stat.value}</div>
-                    <div className="text-xs text-neutral-500">{stat.label}</div>
+                    <div className="text-xs text-gray-500">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -288,17 +345,18 @@ export default function CMSPage() {
       </div>
 
       {/* Store Settings Link */}
-      <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/20">
-        <div className="flex items-center justify-between">
+      <div className="mt-6 lg:mt-8 p-4 lg:p-6 rounded-2xl bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/20">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h3 className="font-semibold text-white mb-1">Store Settings</h3>
-            <p className="text-sm text-neutral-400">Configure store info, hero section, and more</p>
+            <p className="text-xs lg:text-sm text-gray-400">Configure store info, hero section, and more</p>
           </div>
           <Link
             href="/settings"
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all duration-300"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.98] transition-all duration-200"
           >
             Go to Settings
+            <ArrowRight size={16} />
           </Link>
         </div>
       </div>

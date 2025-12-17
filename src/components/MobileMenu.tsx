@@ -1,6 +1,6 @@
 'use client'
 
-import { X, ChevronDown, ChevronRight } from 'lucide-react'
+import { X, ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { 
@@ -28,7 +28,7 @@ import {
   ClipboardList,
   Newspaper
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface MobileMenuProps {
   isOpen: boolean
@@ -45,19 +45,36 @@ interface NavItem {
 interface NavSection {
   title: string
   items: NavItem[]
+  defaultExpanded?: boolean
 }
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Auto-expand current section based on path
+  const getCurrentSection = () => {
+    if (pathname.startsWith('/cms')) return 'Content'
+    if (pathname.startsWith('/orders') || pathname.startsWith('/sales') || pathname.startsWith('/reservations')) return 'Operations'
+    if (pathname.startsWith('/exchange') || pathname.startsWith('/wallets') || pathname.startsWith('/expenses') || pathname.startsWith('/commissions') || pathname.startsWith('/budgets')) return 'Finance'
+    if (pathname.startsWith('/reports') || pathname.startsWith('/activity')) return 'Analytics'
+    if (pathname.startsWith('/settings')) return 'System'
+    return 'Store'
+  }
+  
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    'Store': true,
-    'Content': true,
-    'Operations': true,
-    'Finance': true,
-    'Analytics': true,
-    'System': true,
+    [getCurrentSection()]: true,
   })
+
+  // Update expanded section when path changes
+  useEffect(() => {
+    const currentSection = getCurrentSection()
+    setExpandedSections(prev => ({
+      ...prev,
+      [currentSection]: true,
+    }))
+  }, [pathname])
 
   const navSections: NavSection[] = [
     {
@@ -128,27 +145,37 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     onClose()
   }
 
+  // Filter items based on search
+  const filteredSections = searchQuery
+    ? navSections.map(section => ({
+        ...section,
+        items: section.items.filter(item => 
+          item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      })).filter(section => section.items.length > 0)
+    : navSections
+
   if (!isOpen) return null
 
   return (
     <>
       {/* Backdrop */}
       <div 
-        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
+        className="lg:hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40 animate-in fade-in duration-200"
         onClick={onClose}
       />
       
       {/* Menu Panel */}
-      <div className="lg:hidden fixed top-0 left-0 h-full w-[300px] bg-gray-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto">
+      <div className="lg:hidden fixed top-0 left-0 h-full w-[85vw] max-w-[320px] bg-gray-900 text-white z-50 animate-in slide-in-from-left duration-300 flex flex-col">
         {/* Header */}
-        <div className="p-5 border-b border-gray-800/50 flex items-center justify-between">
+        <div className="p-4 border-b border-gray-800/50 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3 flex-1">
-            <div className="relative h-10 w-32">
+            <div className="relative h-9 w-28">
               <Image
                 src="/nextx-logo-dark.png"
                 alt="NextX Logo"
-                width={128}
-                height={40}
+                width={112}
+                height={36}
                 className="object-contain"
                 priority
               />
@@ -156,33 +183,46 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-xl transition-colors"
+            className="p-2.5 hover:bg-gray-800 active:bg-gray-700 rounded-xl transition-colors"
+            aria-label="Close menu"
           >
-            <X size={20} />
+            <X size={22} />
           </button>
         </div>
 
+        {/* Search */}
+        <div className="p-3 border-b border-gray-800/30 flex-shrink-0">
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search menu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-gray-800/50 border border-gray-700/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
+            />
+          </div>
+        </div>
+
         {/* Navigation */}
-        <nav className="py-4 px-3 pb-24">
-          <div className="space-y-2">
-            {navSections.map((section) => (
-              <div key={section.title} className="mb-2">
+        <nav className="flex-1 overflow-y-auto py-3 px-2 overscroll-contain">
+          <div className="space-y-1">
+            {filteredSections.map((section) => (
+              <div key={section.title} className="mb-1">
                 {/* Section Header */}
                 <button
                   onClick={() => toggleSection(section.title)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wider hover:text-gray-300 active:text-white transition-colors rounded-lg active:bg-gray-800/50"
                 >
                   <span>{section.title}</span>
-                  {expandedSections[section.title] ? (
-                    <ChevronDown size={14} />
-                  ) : (
-                    <ChevronRight size={14} />
-                  )}
+                  <div className={`transition-transform duration-200 ${expandedSections[section.title] ? 'rotate-0' : '-rotate-90'}`}>
+                    <ChevronDown size={16} />
+                  </div>
                 </button>
 
                 {/* Section Items */}
-                {expandedSections[section.title] && (
-                  <div className="space-y-1">
+                <div className={`overflow-hidden transition-all duration-200 ${expandedSections[section.title] ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="space-y-0.5 py-1">
                     {section.items.map((item) => {
                       const Icon = item.icon
                       const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
@@ -191,32 +231,34 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         <button
                           key={item.path}
                           onClick={() => handleNavigation(item.path, item.external)}
-                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] ${
                             isActive 
-                              ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/20' 
-                              : 'text-gray-400 hover:bg-gray-800/60 hover:text-white active:bg-gray-700'
+                              ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25' 
+                              : 'text-gray-400 hover:bg-gray-800/60 hover:text-white active:bg-gray-700/80'
                           }`}
                         >
-                          <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                          <div className={`p-1.5 rounded-lg ${isActive ? 'bg-white/20' : 'bg-gray-800/50'}`}>
+                            <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                          </div>
                           <span className="font-medium text-sm flex-1 text-left">{item.name}</span>
                           {item.external && (
-                            <ExternalLink size={12} className="text-gray-500" />
+                            <ExternalLink size={14} className={isActive ? 'text-white/70' : 'text-gray-600'} />
                           )}
                         </button>
                       )
                     })}
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
         </nav>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800/50 bg-gray-900">
+        <div className="p-4 border-t border-gray-800/50 bg-gray-900/80 flex-shrink-0">
           <div className="text-center text-xs text-gray-500">
-            <p className="font-medium">NextX Dashboard v1.0</p>
-            <p className="mt-1">© 2025 All rights reserved</p>
+            <p className="font-semibold">NextX Dashboard v1.0</p>
+            <p className="mt-0.5">© 2025 All rights reserved</p>
           </div>
         </div>
       </div>
