@@ -141,7 +141,7 @@ export default function ProductDetailPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-sm text-neutral-500">Product laden...</p>
@@ -153,10 +153,10 @@ export default function ProductDetailPage() {
   // Product not found
   if (!product) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-6">
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center px-6">
         <div className="text-center">
-          <Package size={64} className="text-neutral-700 mx-auto mb-4" strokeWidth={1} />
-          <h1 className="text-xl font-semibold text-white mb-2">Product niet gevonden</h1>
+          <Package size={64} className="text-neutral-300 mx-auto mb-4" strokeWidth={1} />
+          <h1 className="text-xl font-semibold text-neutral-900 mb-2">Product niet gevonden</h1>
           <p className="text-sm text-neutral-500 mb-6">Dit product bestaat niet of is niet meer beschikbaar.</p>
           <Link
             href="/catalog"
@@ -174,15 +174,15 @@ export default function ProductDetailPage() {
   const total = price * quantity
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="min-h-screen bg-neutral-50 text-neutral-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-neutral-950/80 backdrop-blur-xl border-b border-white/[0.04]">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-neutral-200/80 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Back button */}
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] -ml-2 pl-2"
+              className="flex items-center gap-2 text-neutral-500 hover:text-neutral-900 transition-colors min-h-[44px] min-w-[44px] -ml-2 pl-2"
             >
               <ArrowLeft size={20} />
               <span className="hidden sm:inline">Terug</span>
@@ -204,17 +204,17 @@ export default function ProductDetailPage() {
                   <Store size={16} className="text-white" />
                 </div>
               )}
-              <span className="font-semibold text-white">{settings.store_name}</span>
+              <span className="font-semibold text-neutral-900">{settings.store_name}</span>
             </Link>
 
             {/* Currency toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-neutral-100 border border-neutral-200">
               <button
                 onClick={() => setCurrency('SRD')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors min-h-[36px] ${
                   currency === 'SRD' 
-                    ? 'bg-orange-500 text-white' 
-                    : 'text-neutral-400 hover:text-white'
+                    ? 'bg-orange-500 text-white shadow-sm' 
+                    : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
                 SRD
@@ -223,8 +223,8 @@ export default function ProductDetailPage() {
                 onClick={() => setCurrency('USD')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors min-h-[36px] ${
                   currency === 'USD' 
-                    ? 'bg-orange-500 text-white' 
-                    : 'text-neutral-400 hover:text-white'
+                    ? 'bg-orange-500 text-white shadow-sm' 
+                    : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
                 USD
@@ -240,7 +240,7 @@ export default function ProductDetailPage() {
           {/* Image Gallery - Left Column */}
           <div className="relative">
             {/* Main Image */}
-            <div className="aspect-square bg-neutral-900 relative">
+            <div className="aspect-square bg-white relative border-b lg:border-b-0 lg:border-r border-neutral-200">
               {images.length > 0 ? (
                 <>
                   <Image
@@ -257,14 +257,14 @@ export default function ProductDetailPage() {
                     <>
                       <button
                         onClick={() => setCurrentImageIndex(i => Math.max(0, i - 1))}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center text-neutral-700 hover:bg-white transition-colors"
                         disabled={currentImageIndex === 0}
                       >
                         <ChevronLeft size={24} />
                       </button>
                       <button
                         onClick={() => setCurrentImageIndex(i => Math.min(images.length - 1, i + 1))}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-lg flex items-center justify-center text-neutral-700 hover:bg-white transition-colors"
                         disabled={currentImageIndex === images.length - 1}
                       >
                         <ChevronRight size={24} />
@@ -273,15 +273,15 @@ export default function ProductDetailPage() {
                   )}
                 </>
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Package size={120} className="text-neutral-800" strokeWidth={1} />
+                <div className="absolute inset-0 flex items-center justify-center bg-neutral-100">
+                  <Package size={120} className="text-neutral-300" strokeWidth={1} />
                 </div>
               )}
 
               {/* Category badge */}
               {category && (
                 <div className="absolute top-4 left-4">
-                  <span className="px-4 py-2 rounded-xl bg-black/60 backdrop-blur-xl border border-white/[0.1] text-sm font-medium text-white">
+                  <span className="px-4 py-2 rounded-xl bg-white/95 backdrop-blur-xl border border-neutral-200 shadow-sm text-sm font-medium text-neutral-700">
                     {category.name}
                   </span>
                 </div>
@@ -294,8 +294,8 @@ export default function ProductDetailPage() {
                     <button
                       key={idx}
                       onClick={() => setCurrentImageIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        idx === currentImageIndex ? 'bg-white' : 'bg-white/40'
+                      className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                        idx === currentImageIndex ? 'bg-orange-500' : 'bg-neutral-400/50'
                       }`}
                     />
                   ))}
@@ -305,7 +305,7 @@ export default function ProductDetailPage() {
 
             {/* Thumbnail strip (for desktop, when multiple images) */}
             {images.length > 1 && (
-              <div className="hidden lg:flex gap-3 p-4">
+              <div className="hidden lg:flex gap-3 p-4 bg-white">
                 {images.map((img, idx) => (
                   <button
                     key={idx}
@@ -313,7 +313,7 @@ export default function ProductDetailPage() {
                     className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-colors ${
                       idx === currentImageIndex 
                         ? 'border-orange-500' 
-                        : 'border-transparent hover:border-white/20'
+                        : 'border-neutral-200 hover:border-neutral-300'
                     }`}
                   >
                     <Image
@@ -331,29 +331,29 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Product Info - Right Column */}
-          <div className="px-4 sm:px-6 lg:px-0 lg:pr-8 py-6 lg:py-8">
+          <div className="px-4 sm:px-6 lg:px-0 lg:pr-8 py-6 lg:py-8 bg-white lg:bg-transparent">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-4">
-              <Link href="/catalog" className="hover:text-white transition-colors">
+              <Link href="/catalog" className="hover:text-neutral-900 transition-colors">
                 Catalogus
               </Link>
               {category && (
                 <>
                   <span>/</span>
-                  <span>{category.name}</span>
+                  <span className="text-neutral-700">{category.name}</span>
                 </>
               )}
             </nav>
 
             {/* Product Title */}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight mb-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 tracking-tight mb-4">
               {product.name}
             </h1>
 
             {/* Price */}
             <div className="mb-6">
               <div className="flex items-baseline gap-3">
-                <span className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
+                <span className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-orange-500 via-orange-600 to-amber-500 bg-clip-text text-transparent">
                   {formatCurrency(price, currency)}
                 </span>
                 {currency === 'SRD' && product.selling_price_usd && (
@@ -365,14 +365,14 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Pickup Info Banner */}
-            <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-4 mb-6">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 mb-6">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                  <Store size={20} className="text-green-500" />
+                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Store size={20} className="text-green-600" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white mb-1">Alleen ophalen</p>
-                  <p className="text-sm text-neutral-400">
+                  <p className="font-semibold text-neutral-900 mb-1">Alleen ophalen</p>
+                  <p className="text-sm text-neutral-600">
                     Dit product is beschikbaar voor ophalen bij onze winkel in {settings.store_address}
                   </p>
                 </div>
@@ -382,10 +382,10 @@ export default function ProductDetailPage() {
             {/* Description */}
             {product.description && (
               <div className="mb-8">
-                <h2 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+                <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-3">
                   Beschrijving
                 </h2>
-                <p className="text-neutral-300 leading-relaxed whitespace-pre-line">
+                <p className="text-neutral-700 leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
               </div>
@@ -393,42 +393,42 @@ export default function ProductDetailPage() {
 
             {/* Features */}
             <div className="grid grid-cols-2 gap-3 mb-8">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 border border-neutral-200">
                 <MapPin size={18} className="text-orange-500" />
-                <span className="text-sm text-neutral-300">Ophalen in winkel</span>
+                <span className="text-sm text-neutral-700">Ophalen in winkel</span>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 border border-neutral-200">
                 <Clock size={18} className="text-orange-500" />
-                <span className="text-sm text-neutral-300">Snel beschikbaar</span>
+                <span className="text-sm text-neutral-700">Snel beschikbaar</span>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 border border-neutral-200">
                 <Shield size={18} className="text-orange-500" />
-                <span className="text-sm text-neutral-300">Kwaliteit gegarandeerd</span>
+                <span className="text-sm text-neutral-700">Kwaliteit gegarandeerd</span>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 border border-neutral-200">
                 <Check size={18} className="text-orange-500" />
-                <span className="text-sm text-neutral-300">Op voorraad</span>
+                <span className="text-sm text-neutral-700">Op voorraad</span>
               </div>
             </div>
 
             {/* Order Section - Desktop */}
-            <div className="hidden lg:block border-t border-white/[0.06] pt-6">
+            <div className="hidden lg:block border-t border-neutral-200 pt-6">
               {/* Quantity Selector */}
               <div className="mb-4">
-                <label className="text-sm font-medium text-neutral-400 mb-2 block">Aantal</label>
-                <div className="flex items-center gap-1 w-fit p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                <label className="text-sm font-medium text-neutral-500 mb-2 block">Aantal</label>
+                <div className="flex items-center gap-1 w-fit p-1 rounded-xl bg-neutral-100 border border-neutral-200">
                   <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    className="w-11 h-11 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                    className="w-11 h-11 rounded-lg flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-white transition-colors"
                   >
                     -
                   </button>
-                  <span className="w-12 text-center text-lg font-semibold text-white">
+                  <span className="w-12 text-center text-lg font-semibold text-neutral-900">
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity(q => q + 1)}
-                    className="w-11 h-11 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                    className="w-11 h-11 rounded-lg flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-white transition-colors"
                   >
                     +
                   </button>
@@ -437,7 +437,7 @@ export default function ProductDetailPage() {
 
               {/* Pickup Date Selection */}
               <div className="mb-6">
-                <label className="text-sm font-medium text-neutral-400 mb-2 block">Gewenste ophaaldatum</label>
+                <label className="text-sm font-medium text-neutral-500 mb-2 block">Gewenste ophaaldatum</label>
                 <div className="flex gap-2">
                   {[
                     { value: 'today', label: 'Vandaag' },
@@ -449,8 +449,8 @@ export default function ProductDetailPage() {
                       onClick={() => setPickupDate(option.value as typeof pickupDate)}
                       className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
                         pickupDate === option.value
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-white/[0.04] border border-white/[0.06] text-neutral-400 hover:text-white hover:border-white/[0.1]'
+                          ? 'bg-orange-500 text-white shadow-sm'
+                          : 'bg-neutral-100 border border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:border-neutral-300'
                       }`}
                     >
                       {option.label}
@@ -461,9 +461,9 @@ export default function ProductDetailPage() {
 
               {/* Total */}
               {quantity > 1 && (
-                <div className="flex items-center justify-between py-4 border-t border-white/[0.06] mb-4">
-                  <span className="text-neutral-400">Totaal ({quantity} stuks)</span>
-                  <span className="text-2xl font-bold text-white">{formatCurrency(total, currency)}</span>
+                <div className="flex items-center justify-between py-4 border-t border-neutral-200 mb-4">
+                  <span className="text-neutral-500">Totaal ({quantity} stuks)</span>
+                  <span className="text-2xl font-bold text-neutral-900">{formatCurrency(total, currency)}</span>
                 </div>
               )}
 
@@ -485,23 +485,23 @@ export default function ProductDetailPage() {
       </main>
 
       {/* Mobile Sticky Bottom CTA */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-neutral-950/95 backdrop-blur-xl border-t border-white/[0.06] p-4 pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-neutral-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] p-4 pb-safe">
         {/* Quantity & Date Row */}
         <div className="flex items-center gap-3 mb-3">
           {/* Quantity */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-neutral-100 border border-neutral-200">
             <button
               onClick={() => setQuantity(q => Math.max(1, q - 1))}
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-white transition-colors"
             >
               -
             </button>
-            <span className="w-8 text-center text-base font-semibold text-white">
+            <span className="w-8 text-center text-base font-semibold text-neutral-900">
               {quantity}
             </span>
             <button
               onClick={() => setQuantity(q => q + 1)}
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-neutral-500 hover:text-neutral-900 hover:bg-white transition-colors"
             >
               +
             </button>
@@ -518,8 +518,8 @@ export default function ProductDetailPage() {
                 onClick={() => setPickupDate(option.value as typeof pickupDate)}
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                   pickupDate === option.value
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-white/[0.04] border border-white/[0.06] text-neutral-400'
+                    ? 'bg-orange-500 text-white shadow-sm'
+                    : 'bg-neutral-100 border border-neutral-200 text-neutral-600'
                 }`}
               >
                 {option.label}
@@ -532,7 +532,7 @@ export default function ProductDetailPage() {
         <div className="flex items-center gap-4">
           <div className="flex-shrink-0">
             <p className="text-xs text-neutral-500">Totaal</p>
-            <p className="text-xl font-bold text-white">{formatCurrency(total, currency)}</p>
+            <p className="text-xl font-bold text-neutral-900">{formatCurrency(total, currency)}</p>
           </div>
           <button
             onClick={handleOrderForPickup}

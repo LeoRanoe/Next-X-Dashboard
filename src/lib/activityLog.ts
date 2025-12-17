@@ -27,6 +27,17 @@ export type EntityType =
   | 'commission'
   | 'exchange_rate'
   | 'purchase_order'
+  | 'blog_post'
+  | 'blog_category'
+  | 'banner'
+  | 'collection'
+  | 'page'
+  | 'testimonial'
+  | 'faq'
+  | 'review'
+  | 'subscriber'
+  | 'settings'
+  | 'seller_category_rate'
 
 interface LogActivityParams {
   action: ActionType

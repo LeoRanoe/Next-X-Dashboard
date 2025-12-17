@@ -329,3 +329,207 @@ model PurchaseOrderItem {
 
   @@map("purchase_order_items")
 }
+
+// ==================== CMS & CONTENT MODELS ====================
+
+// Blog posts for content marketing
+model BlogPost {
+  id            String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title         String
+  slug          String        @unique
+  excerpt       String?
+  content       String        @db.Text
+  coverImage    String?       @map("cover_image")
+  authorId      String?       @map("author_id") @db.Uuid
+  categoryId    String?       @map("category_id") @db.Uuid
+  status        String        @default("draft") // draft, published, archived
+  isFeatured    Boolean       @default(false) @map("is_featured")
+  metaTitle     String?       @map("meta_title")
+  metaDesc      String?       @map("meta_description")
+  viewCount     Int           @default(0) @map("view_count")
+  publishedAt   DateTime?     @map("published_at") @db.Timestamptz(6)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  category      BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags          BlogPostTag[]
+
+  @@map("blog_posts")
+}
+
+model BlogCategory {
+  id          String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String
+  slug        String     @unique
+  description String?
+  color       String?    // For UI display
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  posts       BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id        String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String        @unique
+  slug      String        @unique
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  posts     BlogPostTag[]
+
+  @@map("blog_tags")
+}
+
+model BlogPostTag {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  tagId     String   @map("tag_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag       BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@map("blog_post_tags")
+}
+
+// Homepage banners/sliders
+model Banner {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title       String
+  subtitle    String?
+  imageUrl    String   @map("image_url")
+  mobileImage String?  @map("mobile_image")
+  linkUrl     String?  @map("link_url")
+  linkText    String?  @map("link_text")
+  position    Int      @default(0) // For ordering
+  isActive    Boolean  @default(true) @map("is_active")
+  startDate   DateTime? @map("start_date") @db.Timestamptz(6)
+  endDate     DateTime? @map("end_date") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("banners")
+}
+
+// Static pages (About, FAQ, Terms, etc.)
+model Page {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title       String
+  slug        String   @unique
+  content     String   @db.Text
+  metaTitle   String?  @map("meta_title")
+  metaDesc    String?  @map("meta_description")
+  isPublished Boolean  @default(false) @map("is_published")
+  template    String   @default("default") // default, full-width, landing
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("pages")
+}
+
+// Product images gallery (multiple images per item)
+model ItemImage {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  itemId    String   @map("item_id") @db.Uuid
+  imageUrl  String   @map("image_url")
+  altText   String?  @map("alt_text")
+  position  Int      @default(0)
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("item_images")
+}
+
+// Product specifications/features
+model ItemFeature {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  itemId    String   @map("item_id") @db.Uuid
+  name      String   // e.g., "Screen Size", "Battery Life"
+  value     String   // e.g., "6.5 inches", "5000mAh"
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("item_features")
+}
+
+// Promotional/featured collections
+model Collection {
+  id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String
+  slug        String           @unique
+  description String?
+  imageUrl    String?          @map("image_url")
+  isActive    Boolean          @default(true) @map("is_active")
+  isFeatured  Boolean          @default(false) @map("is_featured")
+  position    Int              @default(0)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  items       CollectionItem[]
+
+  @@map("collections")
+}
+
+model CollectionItem {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  collectionId String     @map("collection_id") @db.Uuid
+  itemId       String     @map("item_id") @db.Uuid
+  position     Int        @default(0)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, itemId])
+  @@map("collection_items")
+}
+
+// Customer reviews
+model Review {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  itemId     String   @map("item_id") @db.Uuid
+  name       String
+  email      String?
+  rating     Int      // 1-5
+  title      String?
+  content    String?  @db.Text
+  isVerified Boolean  @default(false) @map("is_verified")
+  isApproved Boolean  @default(false) @map("is_approved")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("reviews")
+}
+
+// Newsletter subscribers
+model Subscriber {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email        String   @unique
+  name         String?
+  isActive     Boolean  @default(true) @map("is_active")
+  subscribedAt DateTime @default(now()) @map("subscribed_at") @db.Timestamptz(6)
+
+  @@map("subscribers")
+}
+
+// FAQ entries
+model FAQ {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  question  String
+  answer    String   @db.Text
+  category  String?
+  position  Int      @default(0)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("faqs")
+}
+
+// Testimonials/social proof
+model Testimonial {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String
+  role      String?  // e.g., "Verified Buyer", "Tech Enthusiast"
+  content   String   @db.Text
+  avatarUrl String?  @map("avatar_url")
+  rating    Int?     // 1-5
+  isActive  Boolean  @default(true) @map("is_active")
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("testimonials")
+}

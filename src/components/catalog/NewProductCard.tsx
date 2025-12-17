@@ -1,0 +1,209 @@
+'use client'
+
+import Image from 'next/image'
+import Link from 'next/link'
+import { Plus, Package, ShoppingCart, Eye } from 'lucide-react'
+import { formatCurrency, type Currency } from '@/lib/currency'
+
+interface NewProductCardProps {
+  id: string
+  name: string
+  description?: string | null
+  imageUrl?: string | null
+  price: number
+  currency: Currency
+  categoryName?: string | null
+  quantity: number
+  onAddToCart: () => void
+  onQuickView: () => void
+}
+
+export function NewProductCard({
+  id,
+  name,
+  description,
+  imageUrl,
+  price,
+  currency,
+  categoryName,
+  quantity,
+  onAddToCart,
+  onQuickView
+}: NewProductCardProps) {
+  return (
+    <article className="group relative bg-white rounded-2xl border border-neutral-100 overflow-hidden hover:border-neutral-200 hover:shadow-lg hover:shadow-neutral-100 transition-all duration-300">
+      {/* Image Container */}
+      <Link href={`/catalog/${id}`} className="block relative aspect-square bg-neutral-50 overflow-hidden">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            unoptimized
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Package size={48} className="text-neutral-200" strokeWidth={1} />
+          </div>
+        )}
+        
+        {/* Category Badge */}
+        {categoryName && (
+          <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-medium text-neutral-600 shadow-sm">
+            {categoryName}
+          </span>
+        )}
+        
+        {/* Hover Actions */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+        <div className="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              onAddToCart()
+            }}
+            className="flex-1 h-11 rounded-xl bg-neutral-900 text-white text-sm font-medium flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors shadow-lg"
+          >
+            <Plus size={16} />
+            Toevoegen
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              onQuickView()
+            }}
+            className="w-11 h-11 rounded-xl bg-white text-neutral-900 flex items-center justify-center hover:bg-neutral-100 transition-colors shadow-lg"
+          >
+            <Eye size={18} />
+          </button>
+        </div>
+        
+        {/* In Cart Indicator */}
+        {quantity > 0 && (
+          <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-neutral-900 text-white text-xs font-bold flex items-center justify-center shadow-lg">
+            {quantity}
+          </div>
+        )}
+      </Link>
+      
+      {/* Content */}
+      <div className="p-4">
+        {/* Name */}
+        <Link href={`/catalog/${id}`}>
+          <h3 className="font-medium text-neutral-900 line-clamp-2 leading-snug group-hover:text-neutral-700 transition-colors">
+            {name}
+          </h3>
+        </Link>
+        
+        {/* Description */}
+        {description && (
+          <p className="mt-1 text-sm text-neutral-500 line-clamp-1">
+            {description}
+          </p>
+        )}
+        
+        {/* Price */}
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-lg font-bold text-neutral-900">
+            {formatCurrency(price, currency)}
+          </span>
+          
+          {/* Quick Add Button (Mobile) */}
+          <button
+            onClick={onAddToCart}
+            className="lg:hidden w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-neutral-700 transition-colors"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+// Grid Component
+interface NewProductGridProps {
+  children: React.ReactNode
+  isEmpty?: boolean
+  onClearFilters?: () => void
+  emptyMessage?: string
+}
+
+export function NewProductGrid({ 
+  children, 
+  isEmpty, 
+  onClearFilters,
+  emptyMessage = "Geen producten gevonden" 
+}: NewProductGridProps) {
+  if (isEmpty) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6">
+        <div className="w-20 h-20 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4">
+          <Package size={32} className="text-neutral-400" strokeWidth={1.5} />
+        </div>
+        <h3 className="text-lg font-medium text-neutral-900 mb-2">
+          {emptyMessage}
+        </h3>
+        <p className="text-sm text-neutral-500 mb-6 text-center max-w-sm">
+          Probeer een andere zoekterm of bekijk alle producten
+        </p>
+        {onClearFilters && (
+          <button
+            onClick={onClearFilters}
+            className="px-6 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors"
+          >
+            Bekijk alle producten
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+      {children}
+    </div>
+  )
+}
+
+// Section Header Component
+interface ProductSectionHeaderProps {
+  title: string
+  subtitle?: string
+  count?: number
+  action?: {
+    label: string
+    onClick: () => void
+  }
+}
+
+export function ProductSectionHeader({ 
+  title, 
+  subtitle,
+  count,
+  action 
+}: ProductSectionHeaderProps) {
+  return (
+    <div className="flex items-end justify-between mb-6">
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">
+          {title}
+        </h2>
+        {(subtitle || count !== undefined) && (
+          <p className="text-sm text-neutral-500 mt-1">
+            {subtitle || `${count} producten`}
+          </p>
+        )}
+      </div>
+      {action && (
+        <button
+          onClick={action.onClick}
+          className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors"
+        >
+          {action.label} →
+        </button>
+      )}
+    </div>
+  )
+}

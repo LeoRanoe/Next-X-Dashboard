@@ -21,8 +21,12 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // For public routes like login and catalog (including dynamic product pages), don't show admin layout
-  const isPublicRoute = pathname === '/login' || pathname.startsWith('/catalog')
+  // Public routes - these don't show admin layout (sidebar, topbar, etc.)
+  const publicRoutes = ['/login', '/catalog', '/blog', '/p/']
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(route)
+  )
+  
   if (isPublicRoute) {
     return <>{children}</>
   }

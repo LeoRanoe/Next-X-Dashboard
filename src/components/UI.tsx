@@ -372,3 +372,59 @@ export function StatBox({
   )
 }
 
+// Modal component
+export function Modal({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children,
+  size = 'md'
+}: { 
+  isOpen: boolean
+  onClose: () => void
+  title?: string
+  children: React.ReactNode
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+}) {
+  if (!isOpen) return null
+
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-[90vw]'
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className={`relative w-full ${sizeClasses[size]} max-h-[90vh] overflow-auto bg-card rounded-2xl shadow-xl border border-border`}>
+        {title && (
+          <div className="flex items-center justify-between p-4 lg:p-6 border-b border-border">
+            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        )}
+        <div className={title ? 'p-4 lg:p-6' : 'p-4 lg:p-6'}>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+

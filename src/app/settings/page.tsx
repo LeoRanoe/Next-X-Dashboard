@@ -127,7 +127,7 @@ export default function SettingsPage() {
 
       await logActivity({
         action: 'update',
-        entityType: 'budget', // Using existing type
+        entityType: 'settings',
         entityName: 'Store Settings',
         details: 'Updated store settings'
       })

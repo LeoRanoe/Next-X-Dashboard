@@ -1,6 +1,6 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { X, ChevronDown, ChevronRight } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { 
@@ -15,36 +15,116 @@ import {
   Target,
   BarChart3,
   LayoutDashboard,
-  Activity
+  Activity,
+  Settings,
+  Store,
+  ExternalLink,
+  FileText,
+  Layers,
+  Image as ImageIcon,
+  MessageSquareText,
+  HelpCircle,
+  FileEdit,
+  ClipboardList,
+  Newspaper
 } from 'lucide-react'
+import { useState } from 'react'
 
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
 }
 
+interface NavItem {
+  name: string
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
+  path: string
+  external?: boolean
+}
+
+interface NavSection {
+  title: string
+  items: NavItem[]
+}
+
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    'Store': true,
+    'Content': true,
+    'Operations': true,
+    'Finance': true,
+    'Analytics': true,
+    'System': true,
+  })
 
-  const navItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
-    { name: 'Items', icon: Package, path: '/items' },
-    { name: 'Locations', icon: MapPin, path: '/locations' },
-    { name: 'Stock', icon: Package, path: '/stock' },
-    { name: 'Exchange', icon: DollarSign, path: '/exchange' },
-    { name: 'Sales', icon: ShoppingCart, path: '/sales' },
-    { name: 'Reservations', icon: Calendar, path: '/reservations' },
-    { name: 'Wallets', icon: Wallet, path: '/wallets' },
-    { name: 'Expenses', icon: Receipt, path: '/expenses' },
-    { name: 'Commissions', icon: Users, path: '/commissions' },
-    { name: 'Budgets', icon: Target, path: '/budgets' },
-    { name: 'Reports', icon: BarChart3, path: '/reports' },
-    { name: 'Activity Log', icon: Activity, path: '/activity' },
+  const navSections: NavSection[] = [
+    {
+      title: 'Store',
+      items: [
+        { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+        { name: 'View Catalog', icon: Store, path: '/catalog', external: true },
+        { name: 'Products', icon: Package, path: '/items' },
+        { name: 'Stock', icon: Layers, path: '/stock' },
+        { name: 'Locations', icon: MapPin, path: '/locations' },
+      ],
+    },
+    {
+      title: 'Content',
+      items: [
+        { name: 'CMS Hub', icon: FileText, path: '/cms' },
+        { name: 'Blog', icon: Newspaper, path: '/cms/blog' },
+        { name: 'Banners', icon: ImageIcon, path: '/cms/banners' },
+        { name: 'Collections', icon: Layers, path: '/cms/collections' },
+        { name: 'Pages', icon: FileEdit, path: '/cms/pages' },
+        { name: 'Testimonials', icon: MessageSquareText, path: '/cms/testimonials' },
+        { name: 'FAQ', icon: HelpCircle, path: '/cms/faq' },
+      ],
+    },
+    {
+      title: 'Operations',
+      items: [
+        { name: 'Orders', icon: ClipboardList, path: '/orders' },
+        { name: 'Sales', icon: ShoppingCart, path: '/sales' },
+        { name: 'Reservations', icon: Calendar, path: '/reservations' },
+      ],
+    },
+    {
+      title: 'Finance',
+      items: [
+        { name: 'Exchange', icon: DollarSign, path: '/exchange' },
+        { name: 'Wallets', icon: Wallet, path: '/wallets' },
+        { name: 'Expenses', icon: Receipt, path: '/expenses' },
+        { name: 'Commissions', icon: Users, path: '/commissions' },
+        { name: 'Budgets', icon: Target, path: '/budgets' },
+      ],
+    },
+    {
+      title: 'Analytics',
+      items: [
+        { name: 'Reports', icon: BarChart3, path: '/reports' },
+        { name: 'Activity Log', icon: Activity, path: '/activity' },
+      ],
+    },
+    {
+      title: 'System',
+      items: [
+        { name: 'Settings', icon: Settings, path: '/settings' },
+      ],
+    },
   ]
 
-  const handleNavigation = (path: string) => {
-    router.push(path)
+  const toggleSection = (title: string) => {
+    setExpandedSections(prev => ({ ...prev, [title]: !prev[title] }))
+  }
+
+  const handleNavigation = (path: string, external?: boolean) => {
+    if (external) {
+      window.open(path, '_blank')
+    } else {
+      router.push(path)
+    }
     onClose()
   }
 
@@ -59,7 +139,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       />
       
       {/* Menu Panel */}
-      <div className="lg:hidden fixed top-0 left-0 h-full w-[280px] bg-gray-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto">
+      <div className="lg:hidden fixed top-0 left-0 h-full w-[300px] bg-gray-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto">
         {/* Header */}
         <div className="p-5 border-b border-gray-800/50 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
@@ -83,27 +163,52 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="py-4 px-3">
-          <div className="space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.path
-              
-              return (
+        <nav className="py-4 px-3 pb-24">
+          <div className="space-y-2">
+            {navSections.map((section) => (
+              <div key={section.title} className="mb-2">
+                {/* Section Header */}
                 <button
-                  key={item.path}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                    isActive 
-                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/20' 
-                      : 'text-gray-400 hover:bg-gray-800/60 hover:text-white active:bg-gray-700'
-                  }`}
+                  onClick={() => toggleSection(section.title)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors"
                 >
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                  <span className="font-medium text-sm">{item.name}</span>
+                  <span>{section.title}</span>
+                  {expandedSections[section.title] ? (
+                    <ChevronDown size={14} />
+                  ) : (
+                    <ChevronRight size={14} />
+                  )}
                 </button>
-              )
-            })}
+
+                {/* Section Items */}
+                {expandedSections[section.title] && (
+                  <div className="space-y-1">
+                    {section.items.map((item) => {
+                      const Icon = item.icon
+                      const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
+                      
+                      return (
+                        <button
+                          key={item.path}
+                          onClick={() => handleNavigation(item.path, item.external)}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/20' 
+                              : 'text-gray-400 hover:bg-gray-800/60 hover:text-white active:bg-gray-700'
+                          }`}
+                        >
+                          <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                          <span className="font-medium text-sm flex-1 text-left">{item.name}</span>
+                          {item.external && (
+                            <ExternalLink size={12} className="text-gray-500" />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </nav>
 

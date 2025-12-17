@@ -29,6 +29,10 @@ interface CartDrawerProps {
   locations: Location[]
   selectedLocation: string
   onLocationChange: (locationId: string) => void
+  pickupDate: 'today' | 'tomorrow' | 'custom'
+  onPickupDateChange: (date: 'today' | 'tomorrow' | 'custom') => void
+  customPickupDate: string
+  onCustomPickupDateChange: (date: string) => void
   onUpdateQuantity: (itemId: string, quantity: number) => void
   onAddOne: (itemId: string) => void
   customerName: string
@@ -50,6 +54,10 @@ export function CartDrawer({
   locations,
   selectedLocation,
   onLocationChange,
+  pickupDate,
+  onPickupDateChange,
+  customPickupDate,
+  onCustomPickupDateChange,
   onUpdateQuantity,
   onAddOne,
   customerName,
@@ -224,6 +232,61 @@ export function CartDrawer({
                 </div>
               </div>
             )}
+
+            {/* Pickup Date Selector */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs text-neutral-400 font-medium">
+                📅 Gewenste ophaaldatum
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onPickupDateChange('today')}
+                  className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    pickupDate === 'today'
+                      ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                      : 'bg-white/[0.03] border border-white/[0.06] text-neutral-400 hover:bg-white/[0.06]'
+                  }`}
+                >
+                  Vandaag
+                </button>
+                <button
+                  onClick={() => onPickupDateChange('tomorrow')}
+                  className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    pickupDate === 'tomorrow'
+                      ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                      : 'bg-white/[0.03] border border-white/[0.06] text-neutral-400 hover:bg-white/[0.06]'
+                  }`}
+                >
+                  Morgen
+                </button>
+                <button
+                  onClick={() => onPickupDateChange('custom')}
+                  className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    pickupDate === 'custom'
+                      ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                      : 'bg-white/[0.03] border border-white/[0.06] text-neutral-400 hover:bg-white/[0.06]'
+                  }`}
+                >
+                  Anders
+                </button>
+              </div>
+              
+              {/* Custom Date Picker - Only shown when "Anders" is selected */}
+              {pickupDate === 'custom' && (
+                <div className="pt-2">
+                  <input
+                    type="date"
+                    value={customPickupDate}
+                    onChange={(e) => onCustomPickupDateChange(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full h-12 px-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white focus:outline-none focus:border-orange-500/50 transition-colors cursor-pointer"
+                    style={{
+                      colorScheme: 'dark'
+                    }}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Customer inputs */}
             <input

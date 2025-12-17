@@ -1,0 +1,252 @@
+'use client'
+
+import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { Search, ShoppingCart, Menu, X, ChevronDown } from 'lucide-react'
+
+interface Category {
+  id: string
+  name: string
+}
+
+interface NewHeaderProps {
+  storeName: string
+  logoUrl?: string
+  categories: Category[]
+  currency: 'SRD' | 'USD'
+  onCurrencyChange: (currency: 'SRD' | 'USD') => void
+  cartCount: number
+  onCartClick: () => void
+  searchQuery: string
+  onSearchChange: (query: string) => void
+  selectedCategory: string
+  onCategoryChange: (categoryId: string) => void
+}
+
+export function NewHeader({
+  storeName,
+  logoUrl,
+  categories,
+  currency,
+  onCurrencyChange,
+  cartCount,
+  onCartClick,
+  searchQuery,
+  onSearchChange,
+  selectedCategory,
+  onCategoryChange
+}: NewHeaderProps) {
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+
+  return (
+    <>
+      <header className="sticky top-0 z-50 bg-white border-b border-neutral-200">
+        {/* Top bar */}
+        <div className="border-b border-neutral-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-10 text-xs">
+              <div className="hidden sm:flex items-center gap-4 text-neutral-500">
+                <span>Alleen afhalen • Geen bezorging</span>
+              </div>
+              <div className="flex items-center gap-4 ml-auto">
+                {/* Currency Selector */}
+                <div className="flex items-center gap-1 text-neutral-600">
+                  <button
+                    onClick={() => onCurrencyChange('SRD')}
+                    className={`px-2 py-0.5 rounded transition-colors ${
+                      currency === 'SRD' 
+                        ? 'bg-neutral-900 text-white' 
+                        : 'hover:bg-neutral-100'
+                    }`}
+                  >
+                    SRD
+                  </button>
+                  <span className="text-neutral-300">/</span>
+                  <button
+                    onClick={() => onCurrencyChange('USD')}
+                    className={`px-2 py-0.5 rounded transition-colors ${
+                      currency === 'USD' 
+                        ? 'bg-neutral-900 text-white' 
+                        : 'hover:bg-neutral-100'
+                    }`}
+                  >
+                    USD
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main header */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 gap-4">
+            {/* Logo */}
+            <Link href="/catalog" className="flex-shrink-0">
+              {logoUrl ? (
+                <Image 
+                  src={logoUrl} 
+                  alt={storeName} 
+                  width={120} 
+                  height={40} 
+                  className="h-8 w-auto object-contain"
+                  unoptimized
+                />
+              ) : (
+                <span className="text-xl font-bold text-neutral-900 tracking-tight">
+                  {storeName}
+                </span>
+              )}
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-8">
+              <button
+                onClick={() => onCategoryChange('')}
+                className={`text-sm font-medium transition-colors ${
+                  !selectedCategory 
+                    ? 'text-neutral-900' 
+                    : 'text-neutral-500 hover:text-neutral-900'
+                }`}
+              >
+                Alle Producten
+              </button>
+              {categories.slice(0, 5).map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => onCategoryChange(cat.id)}
+                  className={`text-sm font-medium transition-colors ${
+                    selectedCategory === cat.id 
+                      ? 'text-neutral-900' 
+                      : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+              {categories.length > 5 && (
+                <div className="relative group">
+                  <button className="flex items-center gap-1 text-sm font-medium text-neutral-500 hover:text-neutral-900 transition-colors">
+                    Meer
+                    <ChevronDown size={14} />
+                  </button>
+                  <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                    <div className="bg-white rounded-xl shadow-xl border border-neutral-200 py-2 min-w-[160px]">
+                      {categories.slice(5).map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => onCategoryChange(cat.id)}
+                          className="w-full px-4 py-2 text-sm text-left text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </nav>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              {/* Search Toggle */}
+              <button
+                onClick={() => setShowSearch(!showSearch)}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                <Search size={20} />
+              </button>
+
+              {/* Cart */}
+              <button
+                onClick={onCartClick}
+                className="relative w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                <ShoppingCart size={20} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-neutral-900 text-white text-[10px] font-bold flex items-center justify-center">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Mobile Menu Toggle */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="lg:hidden w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Search Bar (Expandable) */}
+        {showSearch && (
+          <div className="border-t border-neutral-100 bg-neutral-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="relative max-w-xl mx-auto">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+                <input
+                  type="text"
+                  placeholder="Zoek producten..."
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  autoFocus
+                  className="w-full h-12 pl-11 pr-4 rounded-full bg-white border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => onSearchChange('')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Menu */}
+        {showMobileMenu && (
+          <div className="lg:hidden border-t border-neutral-100 bg-white">
+            <div className="px-4 py-4 space-y-1">
+              <button
+                onClick={() => {
+                  onCategoryChange('')
+                  setShowMobileMenu(false)
+                }}
+                className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors ${
+                  !selectedCategory 
+                    ? 'bg-neutral-100 text-neutral-900' 
+                    : 'text-neutral-600 hover:bg-neutral-50'
+                }`}
+              >
+                Alle Producten
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    onCategoryChange(cat.id)
+                    setShowMobileMenu(false)
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors ${
+                    selectedCategory === cat.id 
+                      ? 'bg-neutral-100 text-neutral-900' 
+                      : 'text-neutral-600 hover:bg-neutral-50'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </header>
+    </>
+  )
+}
