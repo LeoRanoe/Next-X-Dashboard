@@ -76,8 +76,38 @@ export default function CommissionsPage() {
     if (locationsRes.data) setLocations(locationsRes.data)
     if (walletsRes.data) setWallets(walletsRes.data)
     if (categoriesRes.data) setCategories(categoriesRes.data)
-    if (sellersRes.data) setSellers(sellersRes.data)
     if (ratesRes.data) setSellerCategoryRates(ratesRes.data)
+    
+    // Auto-create sellers from locations that have seller_name but no corresponding seller
+    let currentSellers = sellersRes.data || []
+    if (locationsRes.data) {
+      const locationsWithSellers = locationsRes.data.filter(loc => loc.seller_name)
+      const sellersToCreate: { name: string; location_id: string; commission_rate: number }[] = []
+      
+      for (const loc of locationsWithSellers) {
+        const existingSeller = currentSellers.find(s => s.location_id === loc.id)
+        if (!existingSeller && loc.seller_name) {
+          sellersToCreate.push({
+            name: loc.seller_name,
+            location_id: loc.id,
+            commission_rate: loc.commission_rate
+          })
+        }
+      }
+      
+      if (sellersToCreate.length > 0) {
+        const { data: newSellers } = await supabase
+          .from('sellers')
+          .insert(sellersToCreate)
+          .select()
+        
+        if (newSellers) {
+          currentSellers = [...currentSellers, ...newSellers]
+        }
+      }
+    }
+    
+    setSellers(currentSellers)
     setLoading(false)
   }
 

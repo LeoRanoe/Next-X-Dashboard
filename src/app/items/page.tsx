@@ -152,17 +152,23 @@ export default function ItemsPage() {
       if (editingItem) {
         await supabase.from('items').update(data).eq('id', editingItem.id)
         
-        // Update combo items if this is a combo
-        if (itemForm.is_combo) {
+        // Update combo items if this is a combo or was a combo
+        if (itemForm.is_combo || editingItem.is_combo) {
+          // Always delete existing combo items first
           await supabase.from('combo_items').delete().eq('combo_id', editingItem.id)
-          if (comboItems.length > 0) {
-            await supabase.from('combo_items').insert(
+          
+          // Insert new combo items if we still have a combo with items
+          if (itemForm.is_combo && comboItems.length > 0) {
+            const { error: insertError } = await supabase.from('combo_items').insert(
               comboItems.map(ci => ({
                 combo_id: editingItem.id,
                 item_id: ci.item_id,
                 quantity: ci.quantity
               }))
             )
+            if (insertError) {
+              console.error('Failed to insert combo items:', insertError)
+            }
           }
         }
         
@@ -206,6 +212,7 @@ export default function ItemsPage() {
 
   const handleEditItem = (item: ItemWithComboItems) => {
     setEditingItem(item)
+    const isCombo = item.is_combo ?? false
     setItemForm({
       name: item.name,
       description: item.description || '',
@@ -215,10 +222,10 @@ export default function ItemsPage() {
       selling_price_usd: item.selling_price_usd?.toString() || '',
       image_url: item.image_url || '',
       is_public: item.is_public ?? true,
-      is_combo: item.is_combo ?? false,
+      is_combo: isCombo,
       allow_custom_price: item.allow_custom_price ?? false
     })
-    if (item.is_combo && item.combo_items) {
+    if (isCombo && item.combo_items && item.combo_items.length > 0) {
       setComboItems(item.combo_items.map(ci => ({
         item_id: ci.item_id,
         quantity: ci.quantity
@@ -226,7 +233,7 @@ export default function ItemsPage() {
     } else {
       setComboItems([])
     }
-    if (item.is_combo) {
+    if (isCombo) {
       setShowComboForm(true)
     } else {
       setShowItemForm(true)

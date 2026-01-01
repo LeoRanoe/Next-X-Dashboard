@@ -28,8 +28,8 @@ type SortOrder = 'asc' | 'desc'
 
 interface OrderItemForm {
   item_id: string
-  quantity: number
-  unit_cost: number
+  quantity: string
+  unit_cost: string
 }
 
 export default function OrdersPage() {
@@ -52,7 +52,7 @@ export default function OrdersPage() {
     notes: '',
     expected_arrival: ''
   })
-  const [orderItems, setOrderItems] = useState<OrderItemForm[]>([{ item_id: '', quantity: 1, unit_cost: 0 }])
+  const [orderItems, setOrderItems] = useState<OrderItemForm[]>([{ item_id: '', quantity: '1', unit_cost: '' }])
   
   // Filter and sort states
   const [searchQuery, setSearchQuery] = useState('')
@@ -83,7 +83,7 @@ export default function OrdersPage() {
 
   const resetOrderForm = () => {
     setOrderForm({ wallet_id: '', location_id: '', currency: 'USD', notes: '', expected_arrival: '' })
-    setOrderItems([{ item_id: '', quantity: 1, unit_cost: 0 }])
+    setOrderItems([{ item_id: '', quantity: '1', unit_cost: '' }])
     setEditingOrder(null)
     setShowOrderForm(false)
   }
@@ -138,11 +138,15 @@ export default function OrdersPage() {
   const hasActiveFilters = searchQuery || filterStatus || filterLocation
 
   const calculateTotal = () => {
-    return orderItems.reduce((sum, item) => sum + (item.quantity * item.unit_cost), 0)
+    return orderItems.reduce((sum, item) => {
+      const qty = parseFloat(item.quantity) || 0
+      const cost = parseFloat(item.unit_cost) || 0
+      return sum + (qty * cost)
+    }, 0)
   }
 
   const addOrderItem = () => {
-    setOrderItems([...orderItems, { item_id: '', quantity: 1, unit_cost: 0 }])
+    setOrderItems([...orderItems, { item_id: '', quantity: '1', unit_cost: '' }])
   }
 
   const removeOrderItem = (index: number) => {
@@ -151,17 +155,17 @@ export default function OrdersPage() {
     }
   }
 
-  const updateOrderItem = (index: number, field: keyof OrderItemForm, value: string | number) => {
+  const updateOrderItem = (index: number, field: keyof OrderItemForm, value: string) => {
     const newItems = [...orderItems]
     if (field === 'item_id') {
-      newItems[index][field] = value as string
+      newItems[index][field] = value
       // Auto-fill unit cost from item's purchase price
       const item = items.find(i => i.id === value)
       if (item) {
-        newItems[index].unit_cost = item.purchase_price_usd
+        newItems[index].unit_cost = item.purchase_price_usd.toString()
       }
     } else {
-      newItems[index][field] = value as number
+      newItems[index][field] = value
     }
     setOrderItems(newItems)
   }
@@ -179,7 +183,7 @@ export default function OrdersPage() {
     }
 
     // Validate items
-    const validItems = orderItems.filter(item => item.item_id && item.quantity > 0)
+    const validItems = orderItems.filter(item => item.item_id && parseFloat(item.quantity) > 0)
     if (validItems.length === 0) {
       alert('Add at least one item to the order')
       return
@@ -218,13 +222,17 @@ export default function OrdersPage() {
         await supabase.from('purchase_order_items').delete().eq('order_id', editingOrder.id)
         
         await supabase.from('purchase_order_items').insert(
-          validItems.map(item => ({
-            order_id: editingOrder.id,
-            item_id: item.item_id,
-            quantity: item.quantity,
-            unit_cost: item.unit_cost,
-            subtotal: item.quantity * item.unit_cost
-          }))
+          validItems.map(item => {
+            const qty = parseFloat(item.quantity) || 0
+            const cost = parseFloat(item.unit_cost) || 0
+            return {
+              order_id: editingOrder.id,
+              item_id: item.item_id,
+              quantity: qty,
+              unit_cost: cost,
+              subtotal: qty * cost
+            }
+          })
         )
 
         await logActivity({
@@ -251,13 +259,17 @@ export default function OrdersPage() {
 
         // Insert order items
         await supabase.from('purchase_order_items').insert(
-          validItems.map(item => ({
-            order_id: newOrder.id,
-            item_id: item.item_id,
-            quantity: item.quantity,
-            unit_cost: item.unit_cost,
-            subtotal: item.quantity * item.unit_cost
-          }))
+          validItems.map(item => {
+            const qty = parseFloat(item.quantity) || 0
+            const cost = parseFloat(item.unit_cost) || 0
+            return {
+              order_id: newOrder.id,
+              item_id: item.item_id,
+              quantity: qty,
+              unit_cost: cost,
+              subtotal: qty * cost
+            }
+          })
         )
 
         // Deduct from wallet balance
@@ -380,9 +392,9 @@ export default function OrdersPage() {
     setOrderItems(
       order.purchase_order_items?.map(item => ({
         item_id: item.item_id,
-        quantity: item.quantity,
-        unit_cost: item.unit_cost
-      })) || [{ item_id: '', quantity: 1, unit_cost: 0 }]
+        quantity: item.quantity.toString(),
+        unit_cost: item.unit_cost.toString()
+      })) || [{ item_id: '', quantity: '1', unit_cost: '' }]
     )
     setShowOrderForm(true)
   }
@@ -753,9 +765,10 @@ export default function OrdersPage() {
                     <Input
                       type="number"
                       min="1"
+                      step="1"
                       placeholder="Qty"
                       value={orderItem.quantity}
-                      onChange={(e) => updateOrderItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                      onChange={(e) => updateOrderItem(index, 'quantity', e.target.value)}
                       required
                     />
                   </div>
@@ -766,12 +779,12 @@ export default function OrdersPage() {
                       min="0"
                       placeholder="Unit cost"
                       value={orderItem.unit_cost}
-                      onChange={(e) => updateOrderItem(index, 'unit_cost', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateOrderItem(index, 'unit_cost', e.target.value)}
                       required
                     />
                   </div>
                   <div className="w-24 text-right pt-2 text-sm font-medium">
-                    {formatCurrency(orderItem.quantity * orderItem.unit_cost, orderForm.currency)}
+                    {formatCurrency((parseFloat(orderItem.quantity) || 0) * (parseFloat(orderItem.unit_cost) || 0), orderForm.currency)}
                   </div>
                   {orderItems.length > 1 && (
                     <Button
