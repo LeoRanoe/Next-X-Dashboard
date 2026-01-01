@@ -478,46 +478,6 @@ export default function CollectionsPage() {
           })}
         </div>
       )}
-                    </button>
-                    <button
-                      onClick={() => toggleFeatured(collection)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        collection.is_featured 
-                          ? 'bg-amber-500/20 text-amber-500'
-                          : 'bg-neutral-800 text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      <Star size={16} fill={collection.is_featured ? 'currentColor' : 'none'} />
-                    </button>
-                    <button
-                      onClick={() => toggleActive(collection)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        collection.is_active 
-                          ? 'bg-emerald-500/20 text-emerald-500'
-                          : 'bg-neutral-800 text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      {collection.is_active ? <Eye size={16} /> : <EyeOff size={16} />}
-                    </button>
-                    <button
-                      onClick={() => handleEdit(collection)}
-                      className="p-2 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => setDeleteModal({ show: true, collection })}
-                      className="p-2 rounded-lg bg-neutral-800 text-neutral-400 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
 
       {/* Collection Form Modal */}
       {showForm && (
